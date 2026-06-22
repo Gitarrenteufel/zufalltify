@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Spotify Random Album - V1.3</title>
+<title>Spotify Random Album - V1.4</title>
 <style>
 body{font-family:Arial,sans-serif;max-width:700px;margin:40px auto;padding:20px}
 button{padding:12px 18px;font-size:16px;cursor:pointer;margin:4px}
@@ -12,7 +12,7 @@ input{padding:10px;width:300px}
 </style>
 </head>
 <body>
-<h1>Spotify Random Album - V1.3</h1>
+<h1>Spotify Random Album - V1.4</h1>
 
 <button id="loginBtn">Mit Spotify anmelden</button>
 
@@ -21,7 +21,13 @@ input{padding:10px;width:300px}
 <hr>
 
 <input id="artistInput" placeholder="z.B. Iron Maiden">
-<button id="searchBtn">Künstler suchen</button><button id="deviceBtn">🎵 Geräte anzeigen</button><button id="followedBtn">❤️ Gefolgte Künstler</button><button id="surpriseBtn">🎲 Überrasch mich</button>
+<button id="searchBtn">Künstler suchen</button><button id="deviceBtn">📱 Gerät wählen</button><button id="followedBtn">❤️ Gefolgte Künstler</button><button id="surpriseBtn">🎲 Überrasch mich</button>
+
+<div id="deviceSelector" style="display:none;margin-top:16px;padding:12px;border:1px solid #ccc;border-radius:6px;">
+  <strong>Abspielgerät wählen:</strong>
+  <div id="deviceList" style="margin-top:8px"></div>
+</div>
+<div id="selectedDevice" style="margin-top:8px;font-size:14px;color:#555"></div>
 
 <div id="artistResult"></div><div id="spotifyLink" style="margin-top:20px"></div><div id="playResult" style="margin-top:20px"></div><div id="deviceResult" style="margin-top:20px"></div><div id="followedResult" style="margin-top:20px;white-space:pre-wrap"></div><div id="surpriseResult" style="margin-top:20px;white-space:pre-wrap"></div>
 
@@ -231,19 +237,20 @@ async function playAlbum(){
   const token = localStorage.getItem("spotify_access_token");
   if(!currentAlbumUri) return;
 
-  const response = await fetch(
-    "https://api.spotify.com/v1/me/player/play",
-    {
-      method:"PUT",
-      headers:{
-        "Authorization":"Bearer " + token,
-        "Content-Type":"application/json"
-      },
-      body: JSON.stringify({
-        context_uri: currentAlbumUri
-      })
-    }
-  );
+  const deviceId = localStorage.getItem("spotify_device_id");
+
+  const body = { context_uri: currentAlbumUri };
+  let url = "https://api.spotify.com/v1/me/player/play";
+  if(deviceId){ url += "?device_id=" + encodeURIComponent(deviceId); }
+
+  const response = await fetch(url, {
+    method:"PUT",
+    headers:{
+      "Authorization":"Bearer " + token,
+      "Content-Type":"application/json"
+    },
+    body: JSON.stringify(body)
+  });
 
   if(response.ok || response.status===204){
     alert("Album wird gestartet.");
@@ -253,6 +260,45 @@ async function playAlbum(){
   }
 }
 
+
+async function showDeviceSelector(){
+  const token = localStorage.getItem("spotify_access_token");
+
+  const response = await fetch(
+    "https://api.spotify.com/v1/me/player/devices",
+    { headers:{ Authorization:"Bearer " + token } }
+  );
+
+  const data = await response.json();
+  const devices = data.devices || [];
+
+  if(devices.length === 0){
+    alert("Keine Spotify-Geräte gefunden.\nBitte Spotify auf einem Gerät öffnen und erneut versuchen.");
+    return;
+  }
+
+  const list = document.getElementById("deviceList");
+  list.innerHTML = "";
+
+  devices.forEach(d => {
+    const btn = document.createElement("button");
+    btn.style.display = "block";
+    btn.style.margin = "4px 0";
+    btn.style.width = "100%";
+    btn.style.textAlign = "left";
+    btn.textContent = d.name + " (" + d.type + ")";
+    btn.addEventListener("click", () => {
+      localStorage.setItem("spotify_device_id", d.id);
+      localStorage.setItem("spotify_device_name", d.name);
+      document.getElementById("selectedDevice").textContent =
+        "📱 Gerät: " + d.name;
+      document.getElementById("deviceSelector").style.display = "none";
+    });
+    list.appendChild(btn);
+  });
+
+  document.getElementById("deviceSelector").style.display = "block";
+}
 
 async function showFollowedArtists(){
   const token = localStorage.getItem("spotify_access_token");
@@ -359,40 +405,17 @@ async function surpriseMe(){
 }
 
 
-async function showDevices(){
-  const token = localStorage.getItem("spotify_access_token");
-
-  const response = await fetch(
-    "https://api.spotify.com/v1/me/player/devices",
-    {
-      headers:{
-        Authorization:"Bearer " + token
-      }
-    }
-  );
-
-  const data = await response.json();
-
-  if(!data.devices){
-    document.getElementById("deviceResult").textContent =
-      "Keine Geräte gefunden.";
-    return;
-  }
-
-  document.getElementById("deviceResult").textContent =
-    "Spotify-Geräte:\n\n" +
-    data.devices.map(d =>
-      d.name + " (" + d.type + ")" +
-      (d.is_active ? " [AKTIV]" : "")
-    ).join("\n");
-}
 
 
 document.getElementById("loginBtn").addEventListener("click", login);
 document.getElementById("searchBtn").addEventListener("click", loadAlbums);
-document.getElementById("deviceBtn").addEventListener("click", showDevices);
+document.getElementById("deviceBtn").addEventListener("click", showDeviceSelector);
 document.getElementById("followedBtn").addEventListener("click", showFollowedArtists);
 document.getElementById("surpriseBtn").addEventListener("click", surpriseMe);
+
+document.getElementById("artistInput").addEventListener("keydown", e => {
+  if(e.key === "Enter") loadAlbums();
+});
 
 (async () => {
   const status = document.getElementById("status");
@@ -429,6 +452,13 @@ document.getElementById("surpriseBtn").addEventListener("click", surpriseMe);
     }
   } catch(err){
     status.textContent = "Fehler: " + err.message;
+  }
+
+  // Gespeichertes Gerät anzeigen
+  const savedDevice = localStorage.getItem("spotify_device_name");
+  if(savedDevice){
+    document.getElementById("selectedDevice").textContent =
+      "📱 Gerät: " + savedDevice;
   }
 
   // Immer beim Seitenstart: Token-Ablauf sofort + alle 60s prüfen
