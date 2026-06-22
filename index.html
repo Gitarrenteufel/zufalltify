@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Spotify Random Album - V1.0b</title>
+<title>Spotify Random Album - V1.0c</title>
 <style>
 body{font-family:Arial,sans-serif;max-width:700px;margin:40px auto;padding:20px}
 button{padding:12px 18px;font-size:16px;cursor:pointer;margin:4px}
@@ -12,7 +12,7 @@ input{padding:10px;width:300px}
 </style>
 </head>
 <body>
-<h1>Spotify Random Album - V1.0b</h1>
+<h1>Spotify Random Album - V1.0c</h1>
 <p>Ziel: Albumliste laden</p>
 
 <button id="loginBtn">Mit Spotify anmelden</button>
@@ -28,7 +28,7 @@ input{padding:10px;width:300px}
 
 <script>
 const CLIENT_ID = "7f11ab0b763a4d95ba84882b55101ee1";
-const REDIRECT_URI = "https://gitarrenteufel.github.io/zufalltify/";
+const REDIRECT_URI = "https://stately-daffodil-880688.netlify.app/";
 const SCOPES = "user-read-private user-read-playback-state user-modify-playback-state user-follow-read";
 let currentAlbumUri = null;
 
@@ -307,16 +307,12 @@ async function surpriseMe(){
 
   for(let attempt=0; attempt<30; attempt++){
 
-    const artist =
-      allArtists[Math.floor(Math.random() * allArtists.length)];
+    const artist = allArtists[Math.floor(Math.random() * allArtists.length)];
 
     const albumsResponse = await fetch(
-      "https://api.spotify.com/v1/artists/" +
-      artist.id +
+      "https://api.spotify.com/v1/artists/" + artist.id +
       "/albums?include_groups=album&market=DE&limit=50",
-      {
-        headers:{ Authorization:"Bearer " + token }
-      }
+      { headers:{ Authorization:"Bearer " + token } }
     );
 
     const albumsData = await albumsResponse.json();
@@ -326,9 +322,7 @@ async function surpriseMe(){
       return !blacklist.some(term => name.includes(term));
     });
 
-    if(studioAlbums.length === 0){
-      continue;
-    }
+    if(studioAlbums.length === 0) continue;
 
     const randomAlbum =
       studioAlbums[Math.floor(Math.random() * studioAlbums.length)];
@@ -336,18 +330,17 @@ async function surpriseMe(){
     currentAlbumUri = randomAlbum.uri;
 
     document.getElementById("surpriseResult").textContent =
-      "🎲 Überrasch mich\n\n" +
-      "Künstler:\n" + artist.name +
-      "\n\nAlbum:\n" + randomAlbum.name +
-      "\n\n▶ Album wird gestartet...";
+      "🎲 Überrasch mich\n\nKünstler:\n" + artist.name +
+      "\n\nAlbum:\n" + randomAlbum.name;
 
-    await playAlbum();
+    try { await playAlbum(); } catch(e) {}
     return;
   }
 
   document.getElementById("surpriseResult").textContent =
     "Kein passendes Album gefunden.";
 }
+
 
 async function showDevices(){
   const token = localStorage.getItem("spotify_access_token");
