@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Spotify Random Album - V1.5</title>
+<title>Spotify Random Album - V1.6</title>
 <style>
 body{font-family:Arial,sans-serif;max-width:700px;margin:40px auto;padding:20px}
 button{padding:12px 18px;font-size:16px;cursor:pointer;margin:4px}
@@ -12,7 +12,7 @@ input{padding:10px;width:300px}
 </style>
 </head>
 <body>
-<h1>Spotify Random Album - V1.5</h1>
+<h1>Spotify Random Album - V1.6</h1>
 
 <button id="loginBtn">Mit Spotify anmelden</button>
 
@@ -454,37 +454,51 @@ document.getElementById("artistInput").addEventListener("keydown", e => {
     status.textContent = "Fehler: " + err.message;
   }
 
-  // Gespeichertes Gerät anzeigen und verfügbarkeit prüfen
+  // Gespeichertes Gerät anzeigen und Verfügbarkeit prüfen
   const savedDeviceId = localStorage.getItem("spotify_device_id");
   const savedDeviceName = localStorage.getItem("spotify_device_name");
   const token = localStorage.getItem("spotify_access_token");
 
-  if(savedDeviceName){
+  if(token){
     const el = document.getElementById("selectedDevice");
-    el.textContent = "📱 Gerät: " + savedDeviceName + " – wird geprüft…";
-    el.style.color = "#555";
+    try {
+      const res = await fetch("https://api.spotify.com/v1/me/player/devices", {
+        headers:{ Authorization:"Bearer " + token }
+      });
+      const data = await res.json();
+      const devices = data.devices || [];
 
-    if(token){
-      try {
-        const res = await fetch("https://api.spotify.com/v1/me/player/devices", {
-          headers:{ Authorization:"Bearer " + token }
-        });
-        const data = await res.json();
-        const devices = data.devices || [];
+      if(devices.length === 1){
+        // Automatisch auswählen
+        const d = devices[0];
+        localStorage.setItem("spotify_device_id", d.id);
+        localStorage.setItem("spotify_device_name", d.name);
+        el.textContent = "📱 Gerät: " + d.name + " ✅ (automatisch)";
+        el.style.color = "green";
+      } else if(devices.length > 1){
+        // Mehrere Geräte – gespeichertes prüfen
         const found = devices.find(d => d.id === savedDeviceId);
-
         if(found){
           el.textContent = "📱 Gerät: " + savedDeviceName + " ✅";
           el.style.color = "green";
         } else {
-          el.textContent = "📱 Gerät: " + savedDeviceName + " ⚠️ nicht erreichbar – Spotify auf dem Gerät öffnen";
+          el.textContent = "📱 Mehrere Geräte verfügbar – bitte Gerät wählen";
           el.style.color = "orange";
         }
-      } catch(e) {
+      } else if(savedDeviceName){
+        // Kein Gerät aktiv, gespeichertes anzeigen
+        el.textContent = "📱 Gerät: " + savedDeviceName + " ⚠️ nicht erreichbar – Spotify auf dem Gerät öffnen";
+        el.style.color = "orange";
+      }
+    } catch(e) {
+      if(savedDeviceName){
         el.textContent = "📱 Gerät: " + savedDeviceName + " (Prüfung fehlgeschlagen)";
         el.style.color = "#555";
       }
     }
+  } else if(savedDeviceName){
+    document.getElementById("selectedDevice").textContent =
+      "📱 Gerät: " + savedDeviceName;
   }
 
   // Immer beim Seitenstart: Token-Ablauf sofort + alle 60s prüfen
