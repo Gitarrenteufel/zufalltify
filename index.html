@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Spotify Random Album - V0.9</title>
+<title>Spotify Random Album - V1.0a</title>
 <style>
 body{font-family:Arial,sans-serif;max-width:700px;margin:40px auto;padding:20px}
 button{padding:12px 18px;font-size:16px;cursor:pointer;margin:4px}
@@ -12,7 +12,7 @@ input{padding:10px;width:300px}
 </style>
 </head>
 <body>
-<h1>Spotify Random Album - V0.9</h1>
+<h1>Spotify Random Album - V1.0a</h1>
 <p>Ziel: Albumliste laden</p>
 
 <button id="loginBtn">Mit Spotify anmelden</button>
@@ -22,9 +22,9 @@ input{padding:10px;width:300px}
 <hr>
 
 <input id="artistInput" placeholder="z.B. Iron Maiden">
-<button id="searchBtn">Künstler suchen</button><button id="deviceBtn">🎵 Geräte anzeigen</button><button id="followedBtn">❤️ Gefolgte Künstler</button>
+<button id="searchBtn">Künstler suchen</button><button id="deviceBtn">🎵 Geräte anzeigen</button><button id="followedBtn">❤️ Gefolgte Künstler</button><button id="surpriseBtn">🎲 Überrasch mich</button>
 
-<div id="artistResult"></div><div id="spotifyLink" style="margin-top:20px"></div><div id="playResult" style="margin-top:20px"></div><div id="deviceResult" style="margin-top:20px"></div><div id="followedResult" style="margin-top:20px;white-space:pre-wrap"></div>
+<div id="artistResult"></div><div id="spotifyLink" style="margin-top:20px"></div><div id="playResult" style="margin-top:20px"></div><div id="deviceResult" style="margin-top:20px"></div><div id="followedResult" style="margin-top:20px;white-space:pre-wrap"></div><div id="surpriseResult" style="margin-top:20px;white-space:pre-wrap"></div>
 
 <script>
 const CLIENT_ID = "7f11ab0b763a4d95ba84882b55101ee1";
@@ -288,6 +288,51 @@ async function showFollowedArtists(){
 }
 
 
+
+async function surpriseMe(){
+
+  const token = localStorage.getItem("spotify_access_token");
+
+  let allArtists = [];
+  let after = null;
+
+  while(true){
+
+    let url =
+      "https://api.spotify.com/v1/me/following?type=artist&limit=50";
+
+    if(after){
+      url += "&after=" + encodeURIComponent(after);
+    }
+
+    const response = await fetch(url,{
+      headers:{
+        Authorization:"Bearer " + token
+      }
+    });
+
+    const data = await response.json();
+
+    const artists = data?.artists?.items || [];
+
+    allArtists.push(...artists);
+
+    if(!data?.artists?.cursors?.after){
+      break;
+    }
+
+    after = data.artists.cursors.after;
+  }
+
+  const randomArtist =
+    allArtists[Math.floor(Math.random() * allArtists.length)];
+
+  document.getElementById("surpriseResult").textContent =
+    "🎲 Überrasch mich\n\nZufälliger Künstler:\n" +
+    randomArtist.name;
+}
+
+
 async function showDevices(){
   const token = localStorage.getItem("spotify_access_token");
 
@@ -321,6 +366,7 @@ document.getElementById("loginBtn").addEventListener("click", login);
 document.getElementById("searchBtn").addEventListener("click", loadAlbums);
 document.getElementById("deviceBtn").addEventListener("click", showDevices);
 document.getElementById("followedBtn").addEventListener("click", showFollowedArtists);
+document.getElementById("surpriseBtn").addEventListener("click", surpriseMe);
 
 (async () => {
   const status = document.getElementById("status");
