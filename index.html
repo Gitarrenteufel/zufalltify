@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Zufalltify v3</title>
+<title>Zufalltify v3.1</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1DB954">
 <meta name="mobile-web-app-capable" content="yes">
@@ -178,6 +178,53 @@
   .btn-surprise .spin { border-top-color: #000; border-color: rgba(0,0,0,0.15); }
   @keyframes spin { to { transform: rotate(360deg); } }
 
+  /* ── Favoriten ── */
+  .fav-add-row {
+    display: flex; gap: 8px; padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .fav-add-row input {
+    flex: 1; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text); font-family: inherit; font-size: 14px;
+    padding: 8px 12px; outline: none;
+  }
+  .fav-add-row input:focus { border-color: var(--green); }
+  .fav-add-row button {
+    background: var(--green); color: #000; border: none;
+    border-radius: 8px; font-family: inherit; font-size: 18px;
+    font-weight: 700; padding: 8px 14px; cursor: pointer;
+  }
+  .fav-add-row button:hover { background: var(--green-hi); }
+
+  .fav-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 11px 16px; border-bottom: 1px solid var(--border);
+    font-size: 14px; cursor: pointer; transition: background 0.15s;
+  }
+  .fav-item:last-child { border-bottom: none; }
+  .fav-item:hover { background: var(--surface2); }
+  .fav-item .fav-name { flex: 1; }
+  .fav-item .fav-remove {
+    background: none; border: none; color: var(--muted);
+    font-size: 16px; cursor: pointer; padding: 0 4px; line-height: 1;
+  }
+  .fav-item .fav-remove:hover { color: var(--danger); }
+
+  /* ── Album des Tages ── */
+  #albumOfDayCard {
+    background: var(--surface); border: 1px solid var(--green);
+    border-radius: var(--radius); padding: 14px 16px;
+    margin-bottom: 12px; display: none; cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  #albumOfDayCard:hover { border-color: var(--green-hi); }
+  #albumOfDayCard.visible { display: flex; align-items: center; gap: 12px; }
+  .aod-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--green); margin-bottom: 3px; font-weight: 600; }
+  .aod-title { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .aod-artist { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .aod-cover { width: 48px; height: 48px; border-radius: 6px; object-fit: cover; flex-shrink: 0; background: var(--surface2); }
+
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
@@ -219,11 +266,36 @@
       <div id="deviceList"></div>
     </div>
 
+    <!-- Album des Tages -->
+    <div id="albumOfDayCard" onclick="playAlbumOfDay()">
+      <img class="aod-cover" id="aodCover" src="" alt="">
+      <div style="flex:1;min-width:0">
+        <div class="aod-label">🌅 Album des Tages</div>
+        <div class="aod-title" id="aodTitle"></div>
+        <div class="aod-artist" id="aodArtist"></div>
+      </div>
+    </div>
+
     <button class="btn btn-surprise" id="surpriseBtn" onclick="surpriseMe()">🎲 Überrasch mich</button>
 
     <div class="search-row">
       <input type="text" id="artistInput" placeholder="Künstler eingeben…">
       <button class="btn btn-search" id="searchBtn" onclick="loadAlbums()">Suchen</button>
+    </div>
+
+    <!-- Favoriten -->
+    <div class="panel" style="margin-bottom:12px">
+      <div class="panel-header" onclick="togglePanel('favs')">
+        <span>⭐ Favoriten</span>
+        <span class="panel-toggle" id="favsToggle">▾</span>
+      </div>
+      <div class="panel-body" id="favsBody">
+        <div class="fav-add-row">
+          <input type="text" id="favInput" placeholder="Künstler hinzufügen…">
+          <button onclick="addFavorite()">+</button>
+        </div>
+        <div id="favList"></div>
+      </div>
     </div>
 
     <div id="albumCard">
@@ -263,7 +335,7 @@
 
     <div class="app-footer">
       <button class="logout-link" onclick="logout()">Abmelden</button>
-      <span style="font-size:11px;color:#666;margin-left:8px">v3</span>
+      <span style="font-size:11px;color:#666;margin-left:8px">v3.1</span>
     </div>
 
   </div>
@@ -434,6 +506,7 @@ function togglePanel(id) {
   if (open) {
     if (id === "history") renderHistory();
     if (id === "stats")   renderStats();
+    if (id === "favs")    renderFavorites();
   }
 }
 
@@ -822,9 +895,161 @@ async function playAnother() {
   }
 }
 
-// ── Event listeners ───────────────────────────────────────────────────────────
+// ── Favoriten ─────────────────────────────────────────────────────────────────
+
+function getFavorites() {
+  try { return JSON.parse(localStorage.getItem("zt_favorites") || "[]"); }
+  catch { return []; }
+}
+
+function saveFavorites(favs) {
+  localStorage.setItem("zt_favorites", JSON.stringify(favs));
+}
+
+function addFavorite() {
+  const input = document.getElementById("favInput");
+  const name = input.value.trim();
+  if (!name) return;
+  const favs = getFavorites();
+  if (favs.find(f => f.toLowerCase() === name.toLowerCase())) {
+    input.value = "";
+    return;
+  }
+  favs.push(name);
+  saveFavorites(favs);
+  input.value = "";
+  renderFavorites();
+}
+
+function removeFavorite(name) {
+  const favs = getFavorites().filter(f => f !== name);
+  saveFavorites(favs);
+  renderFavorites();
+}
+
+function renderFavorites() {
+  const favs = getFavorites();
+  const el = document.getElementById("favList");
+  if (!favs.length) {
+    el.innerHTML = '<div style="padding:12px 16px;font-size:13px;color:var(--muted)">Noch keine Favoriten.</div>';
+    return;
+  }
+  el.innerHTML = favs.map(name => `
+    <div class="fav-item" onclick="loadAlbumsByName('${name.replace(/'/g, "\\'")}')">
+      <span class="fav-name">${name}</span>
+      <button class="fav-remove" onclick="event.stopPropagation();removeFavorite('${name.replace(/'/g, "\\'")}')">×</button>
+    </div>
+  `).join("");
+}
+
+async function loadAlbumsByName(artistName) {
+  document.getElementById("artistInput").value = artistName;
+  await loadAlbums();
+}
+
+// ── Album des Tages ───────────────────────────────────────────────────────────
+
+function getTodayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+}
+
+function getAlbumOfDay() {
+  try { return JSON.parse(localStorage.getItem("zt_album_of_day") || "null"); }
+  catch { return null; }
+}
+
+async function pickAlbumOfDay() {
+  const token = getToken();
+  const favs = getFavorites();
+  if (!favs.length) return;
+
+  const todayKey = getTodayKey();
+  const existing = getAlbumOfDay();
+  if (existing && existing.date === todayKey) {
+    showAlbumOfDay(existing);
+    return;
+  }
+
+  // Zufälligen Favoriten wählen
+  for (let i = 0; i < 10; i++) {
+    const artistName = favs[Math.floor(Math.random() * favs.length)];
+    try {
+      const sr = await fetch(
+        "https://api.spotify.com/v1/search?q=" + encodeURIComponent("artist:" + artistName) + "&type=artist&limit=1&market=DE",
+        { headers:{ Authorization:"Bearer " + token } }
+      );
+      const sd = await sr.json();
+      const found = sd?.artists?.items?.[0];
+      if (!found) continue;
+
+      const allAlbums = await fetchAllAlbums(found.id);
+      const studioAlbums = filterAlbums(allAlbums);
+      if (!studioAlbums.length) continue;
+
+      const album = studioAlbums[Math.floor(Math.random() * studioAlbums.length)];
+      const entry = {
+        date:      todayKey,
+        uri:       album.uri,
+        name:      album.name,
+        artist:    found.name,
+        artistId:  found.id,
+        artistUrl: found.external_urls?.spotify || "",
+        albumUrl:  album.external_urls?.spotify || "",
+        cover:     album.images?.[1]?.url || album.images?.[0]?.url || "",
+        totalAlbums: studioAlbums.length
+      };
+      localStorage.setItem("zt_album_of_day", JSON.stringify(entry));
+      showAlbumOfDay(entry);
+      return;
+    } catch(e) { continue; }
+  }
+}
+
+function showAlbumOfDay(entry) {
+  const card = document.getElementById("albumOfDayCard");
+  document.getElementById("aodTitle").textContent = entry.name;
+  document.getElementById("aodArtist").textContent = entry.artist;
+  const img = document.getElementById("aodCover");
+  if (entry.cover) { img.src = entry.cover; img.style.display = "block"; }
+  else { img.style.display = "none"; }
+  card.classList.add("visible");
+}
+
+async function playAlbumOfDay() {
+  const entry = getAlbumOfDay();
+  if (!entry) return;
+  currentAlbumUri   = entry.uri;
+  currentArtistId   = entry.artistId;
+  currentArtistName = entry.artist;
+  currentArtistUrl  = entry.artistUrl;
+  currentMode       = "search";
+
+  // Album-Karte zeigen
+  document.getElementById("coverArtist").textContent = entry.artist;
+  document.getElementById("coverTitle").textContent  = entry.name;
+  document.getElementById("coverYear").textContent   = "";
+  document.getElementById("albumCount").textContent  = entry.totalAlbums + " Studioalben";
+  document.getElementById("albumLink").href = entry.albumUrl || "#";
+
+  const img = document.getElementById("albumCover");
+  const ph  = document.getElementById("coverPlaceholder");
+  if (entry.cover) { img.src = entry.cover; img.style.display = "block"; ph.style.display = "none"; }
+  else { img.style.display = "none"; ph.style.display = "flex"; }
+
+  document.getElementById("albumCard").classList.add("visible");
+  document.getElementById("anotherBtn").classList.add("visible");
+
+  await playAlbum();
+}
+
+// ── Favoriten Enter-Taste ─────────────────────────────────────────────────────
 document.getElementById("artistInput").addEventListener("keydown", e => {
   if (e.key === "Enter") loadAlbums();
+});
+
+document.getElementById("favInput").addEventListener("keydown", e => {
+  if (e.key === "Enter") addFavorite();
 });
 
 // ── Init ──────────────────────────────────────────────────────────────────────
@@ -862,6 +1087,7 @@ document.getElementById("artistInput").addEventListener("keydown", e => {
     }).catch(() => {});
 
     await checkDevice();
+    pickAlbumOfDay().catch(() => {});
   }
 
   await checkTokenExpiry();
