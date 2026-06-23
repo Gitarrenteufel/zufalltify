@@ -187,16 +187,6 @@
   .history-artist { font-size: 12px; color: var(--muted); margin-top: 1px; }
   .history-meta { font-size: 11px; color: var(--muted); text-align: right; flex-shrink: 0; line-height: 1.6; }
 
-  /* ── Statistiken ── */
-  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); }
-  .stat-box { background: var(--surface); padding: 14px 16px; }
-  .stat-value { font-size: 24px; font-weight: 600; color: var(--green); line-height: 1; }
-  .stat-label { font-size: 11px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
-  .stats-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); padding: 10px 16px 6px; }
-  .stats-list-item { display: flex; align-items: center; justify-content: space-between; padding: 9px 16px; border-bottom: 1px solid var(--border); font-size: 13px; }
-  .stats-list-item:last-child { border-bottom: none; }
-  .stats-list-item .scount { font-size: 12px; color: var(--green); font-weight: 600; flex-shrink: 0; margin-left: 8px; }
-
   /* ── Favoriten ── */
   .fav-header-row {
     display: flex; align-items: center; justify-content: space-between;
@@ -367,23 +357,10 @@
       <div class="fav-list" id="favList"></div>
     </div>
 
-    <!-- STATISTIKEN TAB -->
+    <!-- VERLAUF TAB -->
     <div class="tab-page" id="page-stats">
       <div style="padding-top:16px">
-        <div class="panel">
-          <div class="panel-header" onclick="togglePanel('history')">
-            <span>🕐 Verlauf</span>
-            <span class="panel-toggle" id="historyToggle">▾</span>
-          </div>
-          <div class="panel-body" id="historyBody"><div id="historyList"></div></div>
-        </div>
-        <div class="panel">
-          <div class="panel-header" onclick="togglePanel('stats')">
-            <span>📊 Statistiken</span>
-            <span class="panel-toggle" id="statsToggle">▾</span>
-          </div>
-          <div class="panel-body" id="statsBody"><div id="statsContent"></div></div>
-        </div>
+        <div id="historyList"></div>
       </div>
     </div>
 
@@ -437,8 +414,8 @@
       <span>Favoriten</span>
     </button>
     <button class="tab-btn" onclick="switchTab('stats', this)">
-      <span class="tab-icon">📊</span>
-      <span>Statistiken</span>
+      <span class="tab-icon">🕐</span>
+      <span>Verlauf</span>
     </button>
     <button class="tab-btn" onclick="switchTab('system', this)">
       <span class="tab-icon">⚙️</span>
@@ -454,7 +431,7 @@ const REDIRECT_URI = "zufalltify://callback";
 const WORKER_URL   = "https://zufalltify-token.summer-truth-edd2.workers.dev";
 const SCOPES       = "user-read-private user-read-playback-state user-modify-playback-state user-follow-read";
 const USER_NAME    = "Christian";
-const HISTORY_MAX  = 5;
+const HISTORY_MAX  = 50;
 
 let currentAlbumUri   = null;
 let currentArtistId   = null;
@@ -469,6 +446,7 @@ function switchTab(name, btn) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
   btn.classList.add('active');
+  if (name === 'stats') renderHistory();
 }
 
 // ── Blacklist ─────────────────────────────────────────────────────────────────
@@ -555,11 +533,11 @@ function renderHistory() {
   const history = getHistory();
   const el = document.getElementById("historyList");
   if (!history.length) {
-    el.innerHTML = '<div style="padding:14px 16px;font-size:13px;color:var(--muted)">Noch nichts gespielt.</div>';
+    el.innerHTML = '<div style="padding:20px 0;font-size:13px;color:var(--muted);text-align:center">Noch nichts gespielt.</div>';
     return;
   }
   el.innerHTML = history.map(h => `
-    <a class="history-item" ${h.albumUrl ? `href="${h.albumUrl}" target="_blank"` : ""} style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);font-size:13px;">
+    <a class="history-item" ${h.albumUrl ? `href="${h.albumUrl}" target="_blank"` : ""} style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;">
       ${h.cover ? `<img class="history-cover" src="${h.cover}" alt="">` : '<div class="history-cover"></div>'}
       <div class="history-info">
         <div class="history-album">${h.album}</div>
@@ -569,56 +547,12 @@ function renderHistory() {
     </a>`).join("");
 }
 
-// ── Statistiken ───────────────────────────────────────────────────────────────
-function getStats() {
-  try { return JSON.parse(localStorage.getItem("zt_stats") || '{"sessions":0,"artists":{},"albums":{}}'); }
-  catch { return { sessions: 0, artists: {}, albums: {} }; }
-}
-
-function recordPlay(albumName, artistName, albumUrl, artistUrl) {
-  const stats = getStats();
-  stats.sessions = (stats.sessions || 0) + 1;
-  stats.artists[artistName] = (stats.artists[artistName] || 0) + 1;
-  stats.albums[albumName]   = (stats.albums[albumName]   || 0) + 1;
-  if (!stats.artistUrls) stats.artistUrls = {};
-  if (!stats.albumUrls)  stats.albumUrls  = {};
-  if (artistUrl) stats.artistUrls[artistName] = artistUrl;
-  if (albumUrl)  stats.albumUrls[albumName]   = albumUrl;
-  localStorage.setItem("zt_stats", JSON.stringify(stats));
-}
-
-function renderStats() {
-  const stats = getStats();
-  const el = document.getElementById("statsContent");
-  const topArtists = Object.entries(stats.artists).sort((a,b) => b[1]-a[1]).slice(0,5);
-  const topAlbums  = Object.entries(stats.albums).sort((a,b) => b[1]-a[1]).slice(0,5);
-  const artistUrls = stats.artistUrls || {};
-  const albumUrls  = stats.albumUrls  || {};
-  const makeLink = (name, url) => url
-    ? `<a href="${url}" target="_blank" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:inherit;text-decoration:none;flex:1">${name}</a>`
-    : `<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${name}</span>`;
-  el.innerHTML = `
-    <div class="stats-grid">
-      <div class="stat-box"><div class="stat-value">${stats.sessions}</div><div class="stat-label">Sessions</div></div>
-      <div class="stat-box"><div class="stat-value">${Object.keys(stats.artists).length}</div><div class="stat-label">Künstler</div></div>
-    </div>
-    ${topArtists.length ? `<div class="stats-section-title">Häufigste Künstler</div>
-      ${topArtists.map(([n,c]) => `<div class="stats-list-item">${makeLink(n, artistUrls[n])}<span class="scount">${c}×</span></div>`).join("")}` : ""}
-    ${topAlbums.length ? `<div class="stats-section-title">Häufigste Alben</div>
-      ${topAlbums.map(([n,c]) => `<div class="stats-list-item">${makeLink(n, albumUrls[n])}<span class="scount">${c}×</span></div>`).join("")}` : ""}
-  `;
-}
-
 // ── Panel toggle ──────────────────────────────────────────────────────────────
 function togglePanel(id) {
   const body   = document.getElementById(id + "Body");
   const toggle = document.getElementById(id + "Toggle");
   const open   = body.classList.toggle("open");
   toggle.classList.toggle("open", open);
-  if (open) {
-    if (id === "history") renderHistory();
-    if (id === "stats")   renderStats();
-  }
 }
 
 // ── Letztes Album wiederherstellen ────────────────────────────────────────────
@@ -665,6 +599,7 @@ function addFavorite() {
 }
 
 function removeFavorite(name) {
+  if (!confirm(`„${name}" aus Favoriten entfernen?`)) return;
   saveFavorites(getFavorites().filter(f => f !== name));
   renderFavorites();
 }
@@ -704,30 +639,26 @@ function getAlbumOfDay() {
 
 async function pickAlbumOfDay() {
   const token = getToken();
-  const favs = getFavorites();
-  if (!favs.length) return;
 
   const todayKey = getTodayKey();
   const existing = getAlbumOfDay();
   if (existing && existing.date === todayKey) { showAlbumOfDay(existing); return; }
 
-  for (let i = 0; i < 10; i++) {
-    const artistName = favs[Math.floor(Math.random() * favs.length)];
+  // Aus gefolgten Künstlern wählen
+  if (!cachedArtists) cachedArtists = await fetchAllFollowedArtists();
+  const artists = cachedArtists;
+  if (!artists.length) return;
+
+  for (let i = 0; i < 30; i++) {
+    const artist = artists[Math.floor(Math.random() * artists.length)];
     try {
-      const sr = await fetch(
-        "https://api.spotify.com/v1/search?q=" + encodeURIComponent("artist:" + artistName) + "&type=artist&limit=1&market=DE",
-        { headers:{ Authorization:"Bearer " + token } }
-      );
-      const sd = await sr.json();
-      const found = sd?.artists?.items?.[0];
-      if (!found) continue;
-      const studioAlbums = filterAlbums(await fetchAllAlbums(found.id));
+      const studioAlbums = filterAlbums(await fetchAllAlbums(artist.id));
       if (!studioAlbums.length) continue;
       const album = studioAlbums[Math.floor(Math.random() * studioAlbums.length)];
       const entry = {
         date: todayKey, uri: album.uri, name: album.name,
-        artist: found.name, artistId: found.id,
-        artistUrl: found.external_urls?.spotify || "",
+        artist: artist.name, artistId: artist.id,
+        artistUrl: artist.external_urls?.spotify || "",
         albumUrl: album.external_urls?.spotify || "",
         cover: album.images?.[1]?.url || album.images?.[0]?.url || "",
         totalAlbums: studioAlbums.length
@@ -934,7 +865,6 @@ function showAlbumCard(album, artistName, totalAlbums, artistUrl) {
   document.getElementById("anotherBtn").classList.add("visible");
   const albumUrl = album.external_urls?.spotify || "";
   addToHistory(album, artistName, totalAlbums, artistUrl);
-  recordPlay(album.name, artistName, albumUrl, artistUrl);
   localStorage.setItem("zt_last_album", JSON.stringify({
     uri: album.uri, name: album.name, artist: artistName,
     year: album.release_date?.substring(0,4) || "",
