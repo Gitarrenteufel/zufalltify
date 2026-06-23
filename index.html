@@ -36,11 +36,7 @@
 
   .wrap { width: 100%; max-width: 420px; }
 
-  /* ── Header ── */
-  header {
-    text-align: center;
-    margin-bottom: 36px;
-  }
+  header { text-align: center; margin-bottom: 36px; }
   .wordmark {
     font-family: 'Playfair Display', serif;
     font-style: italic;
@@ -50,139 +46,84 @@
     text-transform: uppercase;
     margin-bottom: 6px;
   }
-  header h1 {
-    font-size: 28px;
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    line-height: 1.1;
-  }
+  header h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; }
 
-  /* ── Status bar ── */
   #status {
-    font-size: 13px;
-    color: var(--muted);
-    text-align: center;
-    min-height: 18px;
-    margin-bottom: 24px;
-    transition: color 0.2s;
+    font-size: 13px; color: var(--muted);
+    text-align: center; min-height: 18px;
+    margin-bottom: 24px; transition: color 0.2s;
   }
   #status.warn  { color: var(--warn); }
   #status.error { color: var(--danger); }
 
+  /* ── Info row (gefolgte Künstler Anzahl) ── */
+  #infoRow {
+    display: none;
+    font-size: 12px;
+    color: var(--muted);
+    text-align: right;
+    margin-bottom: 12px;
+    letter-spacing: 0.04em;
+  }
+
   /* ── Device pill ── */
   #devicePill {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    padding: 8px 14px;
-    font-size: 13px;
-    color: var(--muted);
-    margin-bottom: 20px;
-    cursor: pointer;
-    transition: border-color 0.2s;
-    user-select: none;
+    display: flex; align-items: center; gap: 8px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 999px; padding: 8px 14px;
+    font-size: 13px; color: var(--muted);
+    margin-bottom: 20px; cursor: pointer;
+    transition: border-color 0.2s; user-select: none;
   }
   #devicePill:hover { border-color: var(--green); }
-  #devicePill .dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--border);
-    flex-shrink: 0;
-    transition: background 0.3s;
-  }
-  #devicePill .dot.ok     { background: var(--green); }
-  #devicePill .dot.warn   { background: var(--warn); }
+  #devicePill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); flex-shrink: 0; transition: background 0.3s; }
+  #devicePill .dot.ok   { background: var(--green); }
+  #devicePill .dot.warn { background: var(--warn); }
   #devicePill #deviceLabel { flex: 1; }
   #devicePill .chevron { color: var(--border); font-size: 11px; }
 
-  /* ── Device selector dropdown ── */
   #deviceSelector {
-    display: none;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 12px;
-    margin-bottom: 20px;
+    display: none; background: var(--surface);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 12px; margin-bottom: 20px;
   }
-  #deviceSelector p {
-    font-size: 12px;
-    color: var(--muted);
-    margin-bottom: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    font-weight: 500;
-  }
+  #deviceSelector p { font-size: 12px; color: var(--muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 500; }
   .device-btn {
-    width: 100%;
-    text-align: left;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text);
-    font-family: inherit;
-    font-size: 14px;
-    padding: 10px 14px;
-    cursor: pointer;
-    margin-bottom: 6px;
+    width: 100%; text-align: left;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text);
+    font-family: inherit; font-size: 14px;
+    padding: 10px 14px; cursor: pointer; margin-bottom: 6px;
     transition: border-color 0.15s;
   }
   .device-btn:hover { border-color: var(--green); }
   .device-type { font-size: 11px; color: var(--muted); margin-left: 6px; }
 
   /* ── Search ── */
-  .search-row {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 12px;
-  }
+  .search-row { display: flex; gap: 8px; margin-bottom: 12px; }
   input[type="text"] {
-    flex: 1;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    color: var(--text);
-    font-family: inherit;
-    font-size: 15px;
-    padding: 13px 16px;
-    outline: none;
-    transition: border-color 0.2s;
+    flex: 1; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 10px;
+    color: var(--text); font-family: inherit; font-size: 15px;
+    padding: 13px 16px; outline: none; transition: border-color 0.2s;
   }
   input[type="text"]:focus { border-color: var(--green); }
   input[type="text"]::placeholder { color: var(--muted); }
 
   /* ── Buttons ── */
-  .btn {
-    border: none;
-    border-radius: 10px;
-    font-family: inherit;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.18s;
-    white-space: nowrap;
-  }
+  .btn { border: none; border-radius: 10px; font-family: inherit; font-weight: 600; cursor: pointer; transition: all 0.18s; white-space: nowrap; }
   .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
   .btn-search {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text);
-    font-size: 14px;
-    padding: 13px 16px;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text); font-size: 14px; padding: 13px 16px;
   }
   .btn-search:hover:not(:disabled) { border-color: var(--green); color: var(--green); }
 
   .btn-surprise {
-    width: 100%;
-    background: var(--green);
-    color: #000;
-    font-size: 16px;
-    padding: 17px;
-    border-radius: 12px;
-    margin-bottom: 20px;
-    letter-spacing: 0.01em;
+    width: 100%; background: var(--green); color: #000;
+    font-size: 16px; padding: 17px; border-radius: 12px;
+    margin-bottom: 20px; letter-spacing: 0.01em;
   }
   .btn-surprise:hover:not(:disabled) {
     background: var(--green-hi);
@@ -191,159 +132,67 @@
   }
   .btn-surprise:active { transform: translateY(0); }
 
-  .btn-play {
-    background: var(--green);
-    color: #000;
-    font-size: 14px;
-    padding: 11px 20px;
-    border-radius: 999px;
-  }
-  .btn-play:hover:not(:disabled) { background: var(--green-hi); }
-
-  .btn-ghost {
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--muted);
-    font-size: 13px;
-    padding: 9px 14px;
-  }
-  .btn-ghost:hover { border-color: var(--muted); color: var(--text); }
-
-  /* ── Secondary actions ── */
-  .secondary-row {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 28px;
-    flex-wrap: wrap;
-  }
-
   /* ── Album card ── */
   #albumCard {
-    display: none;
-    border-radius: var(--radius);
-    overflow: hidden;
-    background: var(--surface);
-    border: 1px solid var(--border);
+    display: none; border-radius: var(--radius); overflow: hidden;
+    background: var(--surface); border: 1px solid var(--border);
     margin-bottom: 20px;
-    position: relative;
   }
   #albumCard.visible { display: block; }
 
-  .cover-wrap {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 1;
-    background: var(--surface2);
-    overflow: hidden;
-  }
-  #albumCover {
-    width: 100%; height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-  .cover-placeholder {
-    width: 100%; height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 64px;
-    color: var(--border);
-  }
-  .cover-gradient {
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    height: 55%;
-    background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, transparent 100%);
-    pointer-events: none;
-  }
-  .cover-meta {
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    padding: 20px;
-  }
-  .cover-artist {
-    font-size: 12px;
-    font-weight: 500;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--green);
-    margin-bottom: 4px;
-  }
-  .cover-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 22px;
-    font-weight: 700;
-    line-height: 1.15;
-    color: #fff;
-    margin-bottom: 4px;
-  }
-  .cover-year {
-    font-size: 12px;
-    color: rgba(255,255,255,0.5);
-  }
+  .cover-wrap { position: relative; width: 100%; aspect-ratio: 1; background: var(--surface2); overflow: hidden; }
+  #albumCover { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .cover-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 64px; color: var(--border); }
+  .cover-gradient { position: absolute; bottom: 0; left: 0; right: 0; height: 55%; background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, transparent 100%); pointer-events: none; }
+  .cover-meta { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px; }
+  .cover-artist { font-size: 12px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--green); margin-bottom: 4px; }
+  .cover-title { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; line-height: 1.15; color: #fff; margin-bottom: 4px; }
+  .cover-year { font-size: 12px; color: rgba(255,255,255,0.5); }
 
   .card-footer {
-    padding: 14px 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
+    padding: 14px 16px; display: flex;
+    align-items: center; justify-content: space-between; gap: 10px;
   }
   .card-footer-info { font-size: 13px; color: var(--muted); }
   #albumLink { color: var(--green); text-decoration: none; font-size: 13px; font-weight: 500; }
   #albumLink:hover { text-decoration: underline; }
 
-  /* ── Followed list ── */
-  #followedPanel {
-    display: none;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 16px;
-    margin-bottom: 20px;
-    max-height: 260px;
-    overflow-y: auto;
+  /* ── Footer ── */
+  .app-footer {
+    margin-top: 8px;
+    text-align: center;
   }
-  #followedPanel.visible { display: block; }
-  #followedPanel h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 12px; }
-  #followedList { font-size: 14px; line-height: 1.9; color: var(--text); }
+  .logout-link {
+    font-size: 12px; color: var(--muted);
+    background: none; border: none;
+    cursor: pointer; font-family: inherit;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    padding: 4px;
+  }
+  .logout-link:hover { color: var(--text); }
 
   /* ── Login screen ── */
-  #loginScreen {
-    text-align: center;
-    padding: 40px 0;
-  }
+  #loginScreen { text-align: center; padding: 40px 0; }
   #loginScreen .icon { font-size: 48px; margin-bottom: 20px; }
   #loginScreen h2 { font-size: 22px; font-weight: 600; margin-bottom: 10px; }
   #loginScreen p { font-size: 14px; color: var(--muted); margin-bottom: 28px; line-height: 1.6; }
   .btn-login {
-    background: var(--green);
-    color: #000;
-    font-size: 15px;
-    font-weight: 700;
-    padding: 15px 32px;
-    border-radius: 999px;
-    border: none;
-    cursor: pointer;
-    font-family: inherit;
-    transition: background 0.2s;
+    background: var(--green); color: #000; font-size: 15px;
+    font-weight: 700; padding: 15px 32px; border-radius: 999px;
+    border: none; cursor: pointer; font-family: inherit; transition: background 0.2s;
   }
   .btn-login:hover { background: var(--green-hi); }
 
   /* ── Spinner ── */
   .spin {
-    display: inline-block;
-    width: 13px; height: 13px;
-    border: 2px solid rgba(0,0,0,0.2);
-    border-top-color: #000;
-    border-radius: 50%;
-    animation: spin 0.6s linear infinite;
-    vertical-align: middle;
-    margin-right: 5px;
+    display: inline-block; width: 13px; height: 13px;
+    border: 2px solid rgba(0,0,0,0.2); border-top-color: #000;
+    border-radius: 50%; animation: spin 0.6s linear infinite;
+    vertical-align: middle; margin-right: 5px;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* ── Scrollbar ── */
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
@@ -370,31 +219,28 @@
   <!-- APP -->
   <div id="appScreen" style="display:none">
 
-    <!-- Device pill -->
+    <div id="infoRow"></div>
+
     <div id="devicePill" onclick="toggleDeviceSelector()">
       <span class="dot" id="deviceDot"></span>
       <span id="deviceLabel">Kein Gerät gewählt</span>
       <span class="chevron">▾</span>
     </div>
 
-    <!-- Device selector -->
     <div id="deviceSelector">
       <p>Abspielgerät wählen</p>
       <div id="deviceList"></div>
     </div>
 
-    <!-- Surprise button -->
     <button class="btn btn-surprise" id="surpriseBtn" onclick="surpriseMe()">
       🎲 Überrasch mich
     </button>
 
-    <!-- Search row -->
     <div class="search-row">
       <input type="text" id="artistInput" placeholder="Künstler eingeben…">
       <button class="btn btn-search" id="searchBtn" onclick="loadAlbums()">Suchen</button>
     </div>
 
-    <!-- Album card -->
     <div id="albumCard">
       <div class="cover-wrap">
         <div class="cover-placeholder" id="coverPlaceholder">💿</div>
@@ -408,49 +254,46 @@
       </div>
       <div class="card-footer">
         <span class="card-footer-info" id="albumCount"></span>
-        <div style="display:flex;gap:8px;align-items:center">
-          <a id="albumLink" href="#" target="_blank">In Spotify öffnen</a>
-          <button class="btn btn-play" id="playBtn" onclick="playAlbum()">▶ Abspielen</button>
-        </div>
+        <a id="albumLink" href="#" target="_blank">In Spotify öffnen</a>
       </div>
     </div>
 
-    <!-- Secondary actions -->
-    <div class="secondary-row">
-      <button class="btn btn-ghost" onclick="toggleFollowed()">❤️ Gefolgte Künstler</button>
-      <button class="btn btn-ghost" onclick="logout()">Abmelden</button>
+    <div class="app-footer">
+      <button class="logout-link" onclick="logout()">Abmelden</button>
     </div>
 
-    <!-- Followed artists panel -->
-    <div id="followedPanel">
-      <h3>Gefolgte Künstler</h3>
-      <div id="followedList"></div>
-    </div>
+  </div>
 
-  </div><!-- /appScreen -->
-
-</div><!-- /wrap -->
+</div>
 
 <script>
-const CLIENT_ID   = "7f11ab0b763a4d95ba84882b55101ee1";
+const CLIENT_ID    = "7f11ab0b763a4d95ba84882b55101ee1";
 const REDIRECT_URI = "https://gitarrenteufel.github.io/zufalltify/";
 const SCOPES = "user-read-private user-read-playback-state user-modify-playback-state user-follow-read";
 
-let currentAlbumUri  = null;
-let currentAlbumData = null;
+let currentAlbumUri = null;
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
+// ── Blacklist ─────────────────────────────────────────────────────────────────
+// Entfernt: "tour" (z.B. Tour de France – Kraftwerk), "acoustic" (z.B. Acoustic – Manfred Mann)
+// Präzisiert: nur exakte Phrasen mit Wortgrenzen wo möglich
 const LIVE_BLACKLIST = [
-  "live", "en vivo", "en directo", "unplugged", "acoustic",
-  "concert", "tour", "bbc", "archives", "rock in rio",
-  "donington", "wembley", "madison square", "budokan",
-  "bootleg", "broadcast", "recorded live", "live at",
-  "live in", "live from", "live &", "& live"
+  "live at", "live in", "live from", "live &", "& live",
+  "recorded live", "in concert",
+  "en vivo", "en directo",
+  "bbc session", "bbc archive", "bbc recording",
+  "rock in rio", "donington", "wembley", "madison square", "budokan",
+  "bootleg", "broadcast"
 ];
 
+// Separate Einzelwort-Prüfung nur für sehr sichere Begriffe
+const LIVE_WORDS = ["live"];
+
 function isLiveAlbum(name) {
-  return LIVE_BLACKLIST.some(t => name.toLowerCase().includes(t));
+  const lower = name.toLowerCase();
+  if (LIVE_BLACKLIST.some(t => lower.includes(t))) return true;
+  // "live" nur als eigenständiges Wort (nicht in "olive", "deliver" etc.)
+  if (LIVE_WORDS.some(w => new RegExp('\\b' + w + '\\b').test(lower))) return true;
+  return false;
 }
 
 function normalizeAlbumName(name) {
@@ -512,9 +355,13 @@ async function login() {
 }
 
 function logout() {
-  localStorage.clear();
+  // Nur Token löschen – Gerätewahl bleibt erhalten
+  localStorage.removeItem("spotify_access_token");
+  localStorage.removeItem("spotify_token_expires_at");
+  localStorage.removeItem("pkce_verifier");
   document.getElementById("loginScreen").style.display = "block";
   document.getElementById("appScreen").style.display = "none";
+  document.getElementById("albumCard").classList.remove("visible");
   setStatus("");
 }
 
@@ -541,16 +388,85 @@ async function loadProfile(token) {
   return r.json();
 }
 
-function checkTokenExpiry() {
+// ── Silent Token Refresh (prompt=none via iframe) ─────────────────────────────
+
+function silentRefresh() {
+  return new Promise((resolve) => {
+    const url = new URL("https://accounts.spotify.com/authorize");
+    url.searchParams.set("client_id", CLIENT_ID);
+    url.searchParams.set("response_type", "code");
+    url.searchParams.set("redirect_uri", REDIRECT_URI);
+    url.searchParams.set("scope", SCOPES);
+    url.searchParams.set("prompt", "none");
+    // Temporary PKCE for silent refresh
+    const verifier = [...crypto.getRandomValues(new Uint8Array(64))]
+      .map(b => b.toString(16).padStart(2,"0")).join("");
+    localStorage.setItem("pkce_verifier", verifier);
+
+    sha256(verifier).then(hash => {
+      const challenge = base64url(hash);
+      url.searchParams.set("code_challenge_method", "S256");
+      url.searchParams.set("code_challenge", challenge);
+
+      const iframe = document.createElement("iframe");
+      iframe.style.display = "none";
+      iframe.src = url.toString();
+      document.body.appendChild(iframe);
+
+      const timer = setTimeout(() => {
+        document.body.removeChild(iframe);
+        resolve(false);
+      }, 5000);
+
+      window.addEventListener("message", function handler(e) {
+        if (e.data?.type === "spotify_code") {
+          clearTimeout(timer);
+          document.body.removeChild(iframe);
+          window.removeEventListener("message", handler);
+          exchangeCode(e.data.code).then(tokenData => {
+            if (tokenData.access_token) {
+              localStorage.setItem("spotify_access_token", tokenData.access_token);
+              localStorage.setItem("spotify_token_expires_at",
+                Date.now() + (tokenData.expires_in || 3600) * 1000);
+              resolve(true);
+            } else {
+              resolve(false);
+            }
+          });
+        }
+      });
+    });
+  });
+}
+
+async function checkTokenExpiry() {
   const exp = localStorage.getItem("spotify_token_expires_at");
   if (!exp) return;
   const rem = parseInt(exp) - Date.now();
+
   if (rem < 0) {
     setStatus("⚠️ Session abgelaufen – bitte erneut anmelden.", "error");
   } else if (rem < 5 * 60 * 1000) {
-    setStatus(`⚠️ Session läuft in ${Math.ceil(rem/60000)} Min. ab.`, "warn");
+    // Stille Erneuerung versuchen
+    setStatus("Session wird erneuert…", "warn");
+    const ok = await silentRefresh();
+    if (ok) {
+      setStatus(""); // Erfolgreich – kein Hinweis nötig
+    } else {
+      setStatus(`⚠️ Session läuft in ${Math.ceil(rem/60000)} Min. ab – bitte erneut anmelden.`, "warn");
+    }
   }
 }
+
+// ── Redirect-Code aus iframe abfangen ────────────────────────────────────────
+// Falls die Seite als iframe nach silent refresh geladen wird, Code an Parent schicken
+(function() {
+  const params = new URLSearchParams(location.search);
+  const code = params.get("code");
+  if (code && window.parent !== window) {
+    window.parent.postMessage({ type: "spotify_code", code }, "*");
+  }
+})();
 
 // ── Device ───────────────────────────────────────────────────────────────────
 
@@ -570,7 +486,6 @@ async function loadDeviceSelector() {
   });
   const data = await r.json();
   const devices = data.devices || [];
-
   const list = document.getElementById("deviceList");
   list.innerHTML = "";
 
@@ -632,16 +547,13 @@ async function checkDevice() {
 // ── Album card ───────────────────────────────────────────────────────────────
 
 function showAlbumCard(album, artistName, totalAlbums) {
-  currentAlbumUri  = album.uri;
-  currentAlbumData = album;
+  currentAlbumUri = album.uri;
 
   document.getElementById("coverArtist").textContent = artistName;
   document.getElementById("coverTitle").textContent  = album.name;
   document.getElementById("coverYear").textContent   = album.release_date?.substring(0,4) || "";
   document.getElementById("albumCount").textContent  = totalAlbums + " Studioalben";
-
-  const link = document.getElementById("albumLink");
-  link.href = album.external_urls?.spotify || "#";
+  document.getElementById("albumLink").href = album.external_urls?.spotify || "#";
 
   const img = document.getElementById("albumCover");
   const ph  = document.getElementById("coverPlaceholder");
@@ -675,7 +587,7 @@ async function playAlbum() {
   });
 
   if (r.ok || r.status === 204) {
-    setStatus("▶ Wiedergabe gestartet", "");
+    setStatus("▶ Wiedergabe gestartet");
     setTimeout(() => setStatus(""), 3000);
   } else {
     const txt = await r.text();
@@ -735,9 +647,7 @@ async function loadAlbums() {
     if (!found) { setStatus("Kein Künstler gefunden.", "error"); return; }
 
     setStatus(found.name + " – Alben werden geladen…");
-    const allAlbums   = await fetchAllAlbums(found.id);
-    const studioAlbums = filterAlbums(allAlbums);
-
+    const studioAlbums = filterAlbums(await fetchAllAlbums(found.id));
     if (!studioAlbums.length) { setStatus("Keine Studioalben gefunden.", "error"); return; }
 
     const random = studioAlbums[Math.floor(Math.random() * studioAlbums.length)];
@@ -767,8 +677,7 @@ async function surpriseMe() {
     for (let i = 0; i < 30; i++) {
       const artist = artists[Math.floor(Math.random() * artists.length)];
       setStatus(artist.name + " – Alben laden…");
-      const allAlbums    = await fetchAllAlbums(artist.id);
-      const studioAlbums = filterAlbums(allAlbums);
+      const studioAlbums = filterAlbums(await fetchAllAlbums(artist.id));
       if (!studioAlbums.length) continue;
 
       const random = studioAlbums[Math.floor(Math.random() * studioAlbums.length)];
@@ -786,31 +695,6 @@ async function surpriseMe() {
   }
 }
 
-// ── Followed panel ────────────────────────────────────────────────────────────
-
-let followedVisible = false;
-async function toggleFollowed() {
-  const panel = document.getElementById("followedPanel");
-  followedVisible = !followedVisible;
-
-  if (!followedVisible) {
-    panel.classList.remove("visible");
-    return;
-  }
-
-  panel.classList.add("visible");
-  document.getElementById("followedList").textContent = "Wird geladen…";
-
-  try {
-    const artists = await fetchAllFollowedArtists();
-    document.getElementById("followedList").textContent =
-      artists.map(a => a.name).join("\n") +
-      "\n\n(" + artists.length + " Künstler)";
-  } catch(e) {
-    document.getElementById("followedList").textContent = "Fehler beim Laden.";
-  }
-}
-
 // ── Event listeners ───────────────────────────────────────────────────────────
 
 document.getElementById("artistInput").addEventListener("keydown", e => {
@@ -820,22 +704,22 @@ document.getElementById("artistInput").addEventListener("keydown", e => {
 // ── Init ──────────────────────────────────────────────────────────────────────
 
 (async () => {
+  // Iframe-Redirect abfangen (silent refresh) – nicht als normale Seite initialisieren
+  if (window.parent !== window && new URLSearchParams(location.search).get("code")) return;
+
   const params = new URLSearchParams(location.search);
   const code   = params.get("code");
 
   if (code) {
     setStatus("Anmeldung läuft…");
     const tokenData = await exchangeCode(code);
-
     if (tokenData.error) {
       setStatus("Token-Fehler: " + JSON.stringify(tokenData), "error");
       return;
     }
-
     localStorage.setItem("spotify_access_token", tokenData.access_token);
     localStorage.setItem("spotify_token_expires_at",
       Date.now() + (tokenData.expires_in || 3600) * 1000);
-
     const profile = await loadProfile(tokenData.access_token);
     setStatus("Angemeldet als " + (profile.display_name || profile.id));
     setTimeout(() => setStatus(""), 3000);
@@ -846,11 +730,19 @@ document.getElementById("artistInput").addEventListener("keydown", e => {
   if (token) {
     document.getElementById("loginScreen").style.display = "none";
     document.getElementById("appScreen").style.display   = "block";
+
+    // Gefolgte Künstler Anzahl laden und anzeigen
+    fetchAllFollowedArtists().then(artists => {
+      const row = document.getElementById("infoRow");
+      row.textContent = "❤️ " + artists.length + " gefolgte Künstler";
+      row.style.display = "block";
+    }).catch(() => {});
+
     await checkDevice();
   }
 
-  checkTokenExpiry();
-  setInterval(checkTokenExpiry, 60000);
+  await checkTokenExpiry();
+  setInterval(checkTokenExpiry, 60 * 1000);
 })();
 </script>
 </body>
