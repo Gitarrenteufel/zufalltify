@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Zufalltify v3.2</title>
+<title>Zufalltify v3.2c</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1DB954">
 <meta name="mobile-web-app-capable" content="yes">
@@ -220,6 +220,24 @@
   .fav-name { flex: 1; }
   .fav-remove { background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer; padding: 0 4px; line-height: 1; }
   .fav-remove:hover { color: var(--danger); }
+
+  /* ── Modal ── */
+  #modal {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6); z-index: 200;
+    align-items: center; justify-content: center; padding: 24px;
+  }
+  #modal.visible { display: flex; }
+  .modal-box {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 24px; width: 100%; max-width: 320px;
+  }
+  .modal-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+  .modal-text  { font-size: 14px; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
+  .modal-btns  { display: flex; gap: 10px; }
+  .modal-btns button { flex: 1; padding: 12px; border-radius: 10px; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; border: none; }
+  .modal-cancel  { background: var(--surface2); color: var(--text); }
+  .modal-confirm { background: var(--danger); color: #fff; }
   .fav-empty { padding: 20px 16px; font-size: 13px; color: var(--muted); text-align: center; }
 
   /* ── System ── */
@@ -397,7 +415,7 @@
 
       <div class="system-footer">
         <button class="logout-link" onclick="logout()">Abmelden</button>
-        <span style="font-size:11px;color:#555;margin-left:8px">v3.2</span>
+        <span style="font-size:11px;color:#555;margin-left:8px">v3.2c</span>
       </div>
     </div>
 
@@ -423,9 +441,19 @@
     </button>
   </nav>
 
-</div>
+  <!-- Modal -->
+  <div id="modal">
+    <div class="modal-box">
+      <div class="modal-title">Favorit entfernen</div>
+      <div class="modal-text" id="modalText"></div>
+      <div class="modal-btns">
+        <button class="modal-cancel" onclick="closeModal()">Abbrechen</button>
+        <button class="modal-confirm" id="modalConfirm">Entfernen</button>
+      </div>
+    </div>
+  </div>
 
-<script>
+</div>
 const CLIENT_ID    = "7f11ab0b763a4d95ba84882b55101ee1";
 const REDIRECT_URI = "zufalltify://callback";
 const WORKER_URL   = "https://zufalltify-token.summer-truth-edd2.workers.dev";
@@ -517,6 +545,10 @@ function getHistory() {
 
 function addToHistory(album, artistName, totalAlbums, artistUrl) {
   const history = getHistory();
+
+  // Nur eintragen wenn letzter Eintrag älter als 10 Sekunden
+  if (history.length > 0 && Date.now() - history[0].ts < 10000) return;
+
   const entry = {
     album: album.name, artist: artistName,
     year: album.release_date?.substring(0,4) || "",
@@ -598,10 +630,22 @@ function addFavorite() {
   renderFavorites();
 }
 
+function showModal(name) {
+  document.getElementById("modalText").textContent = `„${name}" aus den Favoriten entfernen?`;
+  document.getElementById("modalConfirm").onclick = () => {
+    saveFavorites(getFavorites().filter(f => f !== name));
+    renderFavorites();
+    closeModal();
+  };
+  document.getElementById("modal").classList.add("visible");
+}
+
+function closeModal() {
+  document.getElementById("modal").classList.remove("visible");
+}
+
 function removeFavorite(name) {
-  if (!confirm(`„${name}" aus Favoriten entfernen?`)) return;
-  saveFavorites(getFavorites().filter(f => f !== name));
-  renderFavorites();
+  showModal(name);
 }
 
 function renderFavorites() {
