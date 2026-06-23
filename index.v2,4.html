@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zufalltify v2.4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #0d0d0d;
+    --surface:  #1a1a1a;
+    --surface2: #222222;
+    --border:   #2a2a2a;
+    --green:    #1DB954;
+    --green-hi: #1ed760;
+    --text:     #f0f0f0;
+    --muted:    #888;
+    --warn:     #e8a838;
+    --danger:   #e05c5c;
+    --radius:   14px;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 20px 48px;
+  }
+
+  .wrap { width: 100%; max-width: 420px; }
+
+  header { text-align: center; margin-bottom: 6px; }
+  .wordmark {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 13px;
+    letter-spacing: 0.18em;
+    color: var(--green);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  header h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; }
+
+  #greeting { text-align: center; font-size: 13px; color: var(--muted); margin-bottom: 28px; margin-top: 6px; }
+
+  #status { font-size: 13px; color: var(--muted); text-align: center; min-height: 18px; margin-bottom: 16px; transition: color 0.2s; }
+  #status.warn  { color: var(--warn); }
+  #status.error { color: var(--danger); }
+
+  #sessionBanner {
+    display: none;
+    background: rgba(224,92,92,0.12);
+    border: 1px solid var(--danger);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  #sessionBanner p { font-size: 13px; color: var(--danger); margin-bottom: 10px; }
+  #sessionBanner button {
+    background: var(--danger); color: #fff; border: none;
+    border-radius: 8px; font-family: inherit; font-size: 13px;
+    font-weight: 600; padding: 8px 20px; cursor: pointer;
+  }
+  #sessionBanner button:hover { opacity: 0.85; }
+
+  #infoRow { display: none; font-size: 12px; color: var(--muted); text-align: right; margin-bottom: 12px; letter-spacing: 0.04em; }
+
+  #devicePill {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 999px; padding: 8px 14px;
+    font-size: 13px; color: var(--muted);
+    margin-bottom: 20px; cursor: pointer;
+    transition: border-color 0.2s; user-select: none;
+  }
+  #devicePill:hover { border-color: var(--green); }
+  #devicePill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); flex-shrink: 0; transition: background 0.3s; }
+  #devicePill .dot.ok   { background: var(--green); }
+  #devicePill .dot.warn { background: var(--warn); }
+  #devicePill #deviceLabel { flex: 1; }
+  #devicePill .chevron { color: var(--border); font-size: 11px; }
+
+  #deviceSelector { display: none; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; margin-bottom: 20px; }
+  #deviceSelector p { font-size: 12px; color: var(--muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 500; }
+  .device-btn { width: 100%; text-align: left; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: inherit; font-size: 14px; padding: 10px 14px; cursor: pointer; margin-bottom: 6px; transition: border-color 0.15s; }
+  .device-btn:hover { border-color: var(--green); }
+  .device-type { font-size: 11px; color: var(--muted); margin-left: 6px; }
+
+  .search-row { display: flex; gap: 8px; margin-bottom: 12px; }
+  input[type="text"] { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: inherit; font-size: 15px; padding: 13px 16px; outline: none; transition: border-color 0.2s; }
+  input[type="text"]:focus { border-color: var(--green); }
+  input[type="text"]::placeholder { color: var(--muted); }
+
+  .btn { border: none; border-radius: 10px; font-family: inherit; font-weight: 600; cursor: pointer; transition: all 0.18s; white-space: nowrap; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-search { background: var(--surface); border: 1px solid var(--border); color: var(--text); font-size: 14px; padding: 13px 16px; }
+  .btn-search:hover:not(:disabled) { border-color: var(--green); color: var(--green); }
+
+  .btn-surprise { width: 100%; background: var(--green); color: #000; font-size: 16px; padding: 17px; border-radius: 12px; margin-bottom: 20px; letter-spacing: 0.01em; }
+  .btn-surprise:hover:not(:disabled) { background: var(--green-hi); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(29,185,84,0.3); }
+  .btn-surprise:active { transform: translateY(0); }
+
+  #albumCard { display: none; border-radius: var(--radius); overflow: hidden; background: var(--surface); border: 1px solid var(--border); margin-bottom: 12px; }
+  #albumCard.visible { display: block; }
+
+  .cover-wrap { position: relative; width: 100%; aspect-ratio: 1; background: var(--surface2); overflow: hidden; }
+  #albumCover { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .cover-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 64px; color: var(--border); }
+  .cover-gradient { position: absolute; bottom: 0; left: 0; right: 0; height: 55%; background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, transparent 100%); pointer-events: none; }
+  .cover-meta { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px; }
+  .cover-artist { font-size: 12px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--green); margin-bottom: 4px; }
+  .cover-title { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; line-height: 1.15; color: #fff; margin-bottom: 4px; }
+  .cover-year { font-size: 12px; color: rgba(255,255,255,0.5); }
+
+  .card-footer { padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .card-footer-info { font-size: 13px; color: var(--muted); }
+  #albumLink { color: var(--green); text-decoration: none; font-size: 13px; font-weight: 500; }
+  #albumLink:hover { text-decoration: underline; }
+
+  #anotherBtn { display: none; width: 100%; background: var(--surface); border: 1px solid var(--border); color: var(--text); font-size: 14px; font-weight: 500; padding: 12px; border-radius: 10px; margin-bottom: 20px; font-family: inherit; cursor: pointer; transition: border-color 0.18s, color 0.18s; }
+  #anotherBtn:hover:not(:disabled) { border-color: var(--green); color: var(--green); }
+  #anotherBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+  #anotherBtn.visible { display: block; }
+
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 12px; overflow: hidden; }
+  .panel-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: pointer; user-select: none; font-size: 13px; font-weight: 500; color: var(--muted); transition: color 0.15s; }
+  .panel-header:hover { color: var(--text); }
+  .panel-toggle { font-size: 10px; transition: transform 0.2s; }
+  .panel-toggle.open { transform: rotate(180deg); }
+  .panel-body { display: none; border-top: 1px solid var(--border); }
+  .panel-body.open { display: block; }
+
+  .history-item { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .history-item:last-child { border-bottom: none; }
+  .history-cover { width: 40px; height: 40px; border-radius: 4px; object-fit: cover; flex-shrink: 0; background: var(--surface2); }
+  .history-info { flex: 1; min-width: 0; }
+  .history-album { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .history-artist { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .history-meta { font-size: 11px; color: var(--muted); text-align: right; flex-shrink: 0; line-height: 1.6; }
+
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); }
+  .stat-box { background: var(--surface); padding: 14px 16px; }
+  .stat-value { font-size: 24px; font-weight: 600; color: var(--green); line-height: 1; }
+  .stat-label { font-size: 11px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .stats-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); padding: 10px 16px 6px; }
+  .stats-list-item { display: flex; align-items: center; justify-content: space-between; padding: 9px 16px; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .stats-list-item:last-child { border-bottom: none; }
+  .stats-list-item .scount { font-size: 12px; color: var(--green); font-weight: 600; flex-shrink: 0; margin-left: 8px; }
+
+  .app-footer { margin-top: 16px; text-align: center; }
+  .logout-link { font-size: 12px; color: var(--muted); background: none; border: none; cursor: pointer; font-family: inherit; text-decoration: underline; text-underline-offset: 3px; padding: 4px; }
+  .logout-link:hover { color: var(--text); }
+
+  #loginScreen { text-align: center; padding: 40px 0; }
+  #loginScreen .icon { font-size: 48px; margin-bottom: 20px; }
+  #loginScreen h2 { font-size: 22px; font-weight: 600; margin-bottom: 10px; }
+  #loginScreen p { font-size: 14px; color: var(--muted); margin-bottom: 28px; line-height: 1.6; }
+  .btn-login { background: var(--green); color: #000; font-size: 15px; font-weight: 700; padding: 15px 32px; border-radius: 999px; border: none; cursor: pointer; font-family: inherit; transition: background 0.2s; }
+  .btn-login:hover { background: var(--green-hi); }
+
+  .spin { display: inline-block; width: 13px; height: 13px; border: 2px solid rgba(0,0,0,0.15); border-top-color: currentColor; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 5px; }
+  .btn-surprise .spin { border-top-color: #000; border-color: rgba(0,0,0,0.15); }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="wordmark">entdecke zufällig</div>
+    <h1>Zufalltify</h1>
+  </header>
+  <div id="greeting"></div>
+  <div id="status"></div>
+
+  <div id="sessionBanner">
+    <p>⚠️ Session abgelaufen</p>
+    <button onclick="login()">Erneut anmelden</button>
+  </div>
+
+  <div id="loginScreen">
+    <div class="icon">🎵</div>
+    <h2>Musik nach Zufall</h2>
+    <p>Verbinde dein Spotify-Konto<br>und entdecke zufällige Alben.</p>
+    <button class="btn-login" onclick="login()">Mit Spotify anmelden</button>
+  </div>
+
+  <div id="appScreen" style="display:none">
+
+    <div id="infoRow"></div>
+
+    <div id="devicePill" onclick="toggleDeviceSelector()">
+      <span class="dot" id="deviceDot"></span>
+      <span id="deviceLabel">Kein Gerät gewählt</span>
+      <span class="chevron">▾</span>
+    </div>
+    <div id="deviceSelector">
+      <p>Abspielgerät wählen</p>
+      <div id="deviceList"></div>
+    </div>
+
+    <button class="btn btn-surprise" id="surpriseBtn" onclick="surpriseMe()">🎲 Überrasch mich</button>
+
+    <div class="search-row">
+      <input type="text" id="artistInput" placeholder="Künstler eingeben…">
+      <button class="btn btn-search" id="searchBtn" onclick="loadAlbums()">Suchen</button>
+    </div>
+
+    <div id="albumCard">
+      <div class="cover-wrap">
+        <div class="cover-placeholder" id="coverPlaceholder">💿</div>
+        <img id="albumCover" style="display:none" alt="Album Cover">
+        <div class="cover-gradient"></div>
+        <div class="cover-meta">
+          <div class="cover-artist" id="coverArtist"></div>
+          <div class="cover-title" id="coverTitle"></div>
+          <div class="cover-year" id="coverYear"></div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="card-footer-info" id="albumCount"></span>
+        <a id="albumLink" href="#" target="_blank">In Spotify öffnen</a>
+      </div>
+    </div>
+
+    <button id="anotherBtn" onclick="playAnother()">🔀 Anderes Album</button>
+
+    <div class="panel">
+      <div class="panel-header" onclick="togglePanel('history')">
+        <span>🕐 Verlauf</span>
+        <span class="panel-toggle" id="historyToggle">▾</span>
+      </div>
+      <div class="panel-body" id="historyBody"><div id="historyList"></div></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header" onclick="togglePanel('stats')">
+        <span>📊 Statistiken</span>
+        <span class="panel-toggle" id="statsToggle">▾</span>
+      </div>
+      <div class="panel-body" id="statsBody"><div id="statsContent"></div></div>
+    </div>
+
+    <div class="app-footer">
+      <button class="logout-link" onclick="logout()">Abmelden</button>
+      <span style="font-size:11px;color:#555;margin-left:8px">v2.4</span>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const CLIENT_ID    = "7f11ab0b763a4d95ba84882b55101ee1";
+const REDIRECT_URI = "https://gitarrenteufel.github.io/zufalltify/";
+const WORKER_URL   = "https://zufalltify-token.summer-truth-edd2.workers.dev";
+const SCOPES       = "user-read-private user-read-playback-state user-modify-playback-state user-follow-read";
+const USER_NAME    = "Christian";
+const HISTORY_MAX  = 5;
+
+let currentAlbumUri   = null;
+let currentArtistId   = null;
+let currentArtistName = null;
+let currentMode       = null;
+let cachedArtists     = null;
+
+// ── Blacklist ─────────────────────────────────────────────────────────────────
+const LIVE_BLACKLIST = [
+  "live at", "live in", "live from", "live &", "& live",
+  "recorded live", "in concert", "en vivo", "en directo",
+  "bbc session", "bbc archive", "bbc recording",
+  "rock in rio", "donington", "wembley", "madison square", "budokan",
+  "bootleg", "broadcast"
+];
+
+function isLiveAlbum(name) {
+  const lower = name.toLowerCase();
+  if (LIVE_BLACKLIST.some(t => lower.includes(t))) return true;
+  if (/\blive\b/.test(lower)) return true;
+  return false;
+}
+
+function normalizeAlbumName(name) {
+  return name.toLowerCase()
+    .replace(/\(.*?\)/g, '').replace(/\[.*?\]/g, '')
+    .replace(/\bremaster(ed)?\b/g, '').replace(/\bdeluxe\b/g, '')
+    .replace(/\bsuper\b/g, '').replace(/\bexpanded\b/g, '')
+    .replace(/\bcollector'?s?\b/g, '').replace(/\bedition\b/g, '')
+    .replace(/\banniversary\b/g, '')
+    .replace(/\b\d{4}\s*(mix|remaster|version|edition)\b/g, '')
+    .replace(/\bmix\b/g, '').replace(/\bversion\b/g, '')
+    .replace(/\s+/g, ' ').trim();
+}
+
+function filterAlbums(items) {
+  const seen = new Set();
+  return items.filter(a => {
+    if (isLiveAlbum(a.name)) return false;
+    const k = normalizeAlbumName(a.name);
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+}
+
+function getToken() { return localStorage.getItem("spotify_access_token"); }
+
+// ── Begrüßung ─────────────────────────────────────────────────────────────────
+function showGreeting() {
+  const h = new Date().getHours();
+  const s = h < 5 ? "Gute Nacht" : h < 11 ? "Guten Morgen" : h < 18 ? "Guten Tag" : "Guten Abend";
+  const d = new Date().toLocaleDateString("de-DE", { weekday:"long", day:"numeric", month:"long" });
+  document.getElementById("greeting").textContent = `${s}, ${USER_NAME} · ${d}`;
+}
+
+// ── Status ────────────────────────────────────────────────────────────────────
+function setStatus(msg, type = "") {
+  const el = document.getElementById("status");
+  el.textContent = msg;
+  el.className = type;
+}
+
+function showSessionBanner(visible) {
+  document.getElementById("sessionBanner").style.display = visible ? "block" : "none";
+}
+
+// ── Verlauf ───────────────────────────────────────────────────────────────────
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem("zt_history") || "[]"); }
+  catch { return []; }
+}
+
+function addToHistory(album, artistName, totalAlbums) {
+  const history = getHistory();
+  const entry = {
+    album: album.name, artist: artistName,
+    year: album.release_date?.substring(0,4) || "",
+    cover: album.images?.[1]?.url || album.images?.[0]?.url || "",
+    totalAlbums, ts: Date.now()
+  };
+  const filtered = history.filter(h => h.album !== entry.album || h.artist !== entry.artist);
+  filtered.unshift(entry);
+  localStorage.setItem("zt_history", JSON.stringify(filtered.slice(0, HISTORY_MAX)));
+}
+
+function renderHistory() {
+  const history = getHistory();
+  const el = document.getElementById("historyList");
+  if (!history.length) {
+    el.innerHTML = '<div style="padding:14px 16px;font-size:13px;color:var(--muted)">Noch nichts gespielt.</div>';
+    return;
+  }
+  el.innerHTML = history.map(h => `
+    <div class="history-item">
+      ${h.cover ? `<img class="history-cover" src="${h.cover}" alt="">` : '<div class="history-cover"></div>'}
+      <div class="history-info">
+        <div class="history-album">${h.album}</div>
+        <div class="history-artist">${h.artist}</div>
+      </div>
+      <div class="history-meta">${h.year}<br>${h.totalAlbums} Alben</div>
+    </div>`).join("");
+}
+
+// ── Statistiken ───────────────────────────────────────────────────────────────
+function getStats() {
+  try { return JSON.parse(localStorage.getItem("zt_stats") || '{"sessions":0,"artists":{},"albums":{}}'); }
+  catch { return { sessions: 0, artists: {}, albums: {} }; }
+}
+
+function recordPlay(albumName, artistName) {
+  const stats = getStats();
+  stats.sessions = (stats.sessions || 0) + 1;
+  stats.artists[artistName] = (stats.artists[artistName] || 0) + 1;
+  stats.albums[albumName]   = (stats.albums[albumName]   || 0) + 1;
+  localStorage.setItem("zt_stats", JSON.stringify(stats));
+}
+
+function renderStats() {
+  const stats = getStats();
+  const el = document.getElementById("statsContent");
+  const topArtists = Object.entries(stats.artists).sort((a,b) => b[1]-a[1]).slice(0,5);
+  const topAlbums  = Object.entries(stats.albums).sort((a,b) => b[1]-a[1]).slice(0,5);
+  el.innerHTML = `
+    <div class="stats-grid">
+      <div class="stat-box"><div class="stat-value">${stats.sessions}</div><div class="stat-label">Sessions</div></div>
+      <div class="stat-box"><div class="stat-value">${Object.keys(stats.artists).length}</div><div class="stat-label">Künstler</div></div>
+    </div>
+    ${topArtists.length ? `<div class="stats-section-title">Häufigste Künstler</div>
+      ${topArtists.map(([n,c]) => `<div class="stats-list-item"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${n}</span><span class="scount">${c}×</span></div>`).join("")}` : ""}
+    ${topAlbums.length ? `<div class="stats-section-title">Häufigste Alben</div>
+      ${topAlbums.map(([n,c]) => `<div class="stats-list-item"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${n}</span><span class="scount">${c}×</span></div>`).join("")}` : ""}
+  `;
+}
+
+// ── Panel toggle ──────────────────────────────────────────────────────────────
+function togglePanel(id) {
+  const body   = document.getElementById(id + "Body");
+  const toggle = document.getElementById(id + "Toggle");
+  const open   = body.classList.toggle("open");
+  toggle.classList.toggle("open", open);
+  if (open) {
+    if (id === "history") renderHistory();
+    if (id === "stats")   renderStats();
+  }
+}
+
+// ── Auth ─────────────────────────────────────────────────────────────────────
+async function login() {
+  const url = new URL("https://accounts.spotify.com/authorize");
+  url.searchParams.set("client_id", CLIENT_ID);
+  url.searchParams.set("response_type", "code");
+  url.searchParams.set("redirect_uri", REDIRECT_URI);
+  url.searchParams.set("scope", SCOPES);
+  location.href = url.toString();
+}
+
+function logout() {
+  localStorage.removeItem("spotify_access_token");
+  localStorage.removeItem("spotify_token_expires_at");
+  localStorage.removeItem("spotify_refresh_token");
+  document.getElementById("loginScreen").style.display = "block";
+  document.getElementById("appScreen").style.display = "none";
+  document.getElementById("albumCard").classList.remove("visible");
+  document.getElementById("anotherBtn").classList.remove("visible");
+  showSessionBanner(false);
+  setStatus("");
+}
+
+async function exchangeCode(code) {
+  const r = await fetch(WORKER_URL + "/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ code })
+  });
+  return r.json();
+}
+
+async function refreshToken() {
+  const refresh_token = localStorage.getItem("spotify_refresh_token");
+  if (!refresh_token) return false;
+  try {
+    const r = await fetch(WORKER_URL + "/refresh", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh_token })
+    });
+    const data = await r.json();
+    if (data.access_token) {
+      localStorage.setItem("spotify_access_token", data.access_token);
+      localStorage.setItem("spotify_token_expires_at",
+        Date.now() + (data.expires_in || 3600) * 1000);
+      // Spotify gibt manchmal einen neuen refresh_token zurück
+      if (data.refresh_token) {
+        localStorage.setItem("spotify_refresh_token", data.refresh_token);
+      }
+      return true;
+    }
+    return false;
+  } catch { return false; }
+}
+
+async function checkTokenExpiry() {
+  const exp = localStorage.getItem("spotify_token_expires_at");
+  if (!exp) return;
+  const rem = parseInt(exp) - Date.now();
+
+  if (rem < 0) {
+    setStatus("Token erneuern…", "warn");
+    const ok = await refreshToken();
+    if (ok) { setStatus(""); showSessionBanner(false); }
+    else    { showSessionBanner(true); setStatus(""); }
+  } else if (rem < 5 * 60 * 1000) {
+    // Präventiv erneuern
+    const ok = await refreshToken();
+    if (!ok) setStatus("⚠️ Token-Erneuerung fehlgeschlagen", "warn");
+    else setStatus("");
+  }
+}
+
+async function loadProfile(token) {
+  const r = await fetch("https://api.spotify.com/v1/me", {
+    headers:{ Authorization:"Bearer " + token }
+  });
+  return r.json();
+}
+
+// ── Device ───────────────────────────────────────────────────────────────────
+function toggleDeviceSelector() {
+  const sel = document.getElementById("deviceSelector");
+  if (sel.style.display === "block") sel.style.display = "none";
+  else loadDeviceSelector();
+}
+
+async function loadDeviceSelector() {
+  const token = getToken();
+  const r = await fetch("https://api.spotify.com/v1/me/player/devices", {
+    headers:{ Authorization:"Bearer " + token }
+  });
+  const data = await r.json();
+  const devices = data.devices || [];
+  const list = document.getElementById("deviceList");
+  list.innerHTML = "";
+  if (!devices.length) {
+    list.innerHTML = '<p style="color:var(--warn);font-size:13px">Keine Geräte gefunden – Spotify öffnen und erneut versuchen.</p>';
+  } else {
+    devices.forEach(d => {
+      const btn = document.createElement("button");
+      btn.className = "device-btn";
+      btn.innerHTML = d.name + '<span class="device-type">(' + d.type + ')</span>';
+      btn.onclick = () => {
+        localStorage.setItem("spotify_device_id", d.id);
+        localStorage.setItem("spotify_device_name", d.name);
+        updateDevicePill(d.name, true);
+        document.getElementById("deviceSelector").style.display = "none";
+      };
+      list.appendChild(btn);
+    });
+  }
+  document.getElementById("deviceSelector").style.display = "block";
+}
+
+function updateDevicePill(name, ok) {
+  document.getElementById("deviceLabel").textContent = name || "Kein Gerät gewählt";
+  const dot = document.getElementById("deviceDot");
+  dot.className = "dot" + (ok === true ? " ok" : ok === false ? " warn" : "");
+}
+
+async function checkDevice() {
+  const token = getToken();
+  if (!token) return;
+  const savedId   = localStorage.getItem("spotify_device_id");
+  const savedName = localStorage.getItem("spotify_device_name");
+  try {
+    const r = await fetch("https://api.spotify.com/v1/me/player/devices", {
+      headers:{ Authorization:"Bearer " + token }
+    });
+    const data = await r.json();
+    const devices = data.devices || [];
+    if (devices.length === 1) {
+      const d = devices[0];
+      localStorage.setItem("spotify_device_id", d.id);
+      localStorage.setItem("spotify_device_name", d.name);
+      updateDevicePill(d.name + " (automatisch)", true);
+    } else if (devices.length > 1) {
+      const found = devices.find(d => d.id === savedId);
+      if (found) updateDevicePill(savedName, true);
+      else updateDevicePill("Gerät wählen ▾", false);
+    } else if (savedName) {
+      updateDevicePill(savedName + " – nicht erreichbar", false);
+    }
+  } catch(e) {
+    if (savedName) updateDevicePill(savedName, null);
+  }
+}
+
+// ── Shuffle + Repeat deaktivieren ─────────────────────────────────────────────
+async function disableShuffleAndRepeat() {
+  const token    = getToken();
+  const deviceId = localStorage.getItem("spotify_device_id");
+  const suffix   = deviceId ? "&device_id=" + encodeURIComponent(deviceId) : "";
+  try {
+    await Promise.all([
+      fetch("https://api.spotify.com/v1/me/player/shuffle?state=false" + suffix, {
+        method: "PUT", headers:{ Authorization:"Bearer " + token }
+      }),
+      fetch("https://api.spotify.com/v1/me/player/repeat?state=off" + suffix, {
+        method: "PUT", headers:{ Authorization:"Bearer " + token }
+      })
+    ]);
+  } catch(e) { /* nicht kritisch */ }
+}
+
+// ── Album card ───────────────────────────────────────────────────────────────
+function showAlbumCard(album, artistName, totalAlbums) {
+  currentAlbumUri = album.uri;
+  document.getElementById("coverArtist").textContent = artistName;
+  document.getElementById("coverTitle").textContent  = album.name;
+  document.getElementById("coverYear").textContent   = album.release_date?.substring(0,4) || "";
+  document.getElementById("albumCount").textContent  = totalAlbums + " Studioalben";
+  document.getElementById("albumLink").href = album.external_urls?.spotify || "#";
+
+  const img   = document.getElementById("albumCover");
+  const ph    = document.getElementById("coverPlaceholder");
+  const cover = album.images?.[0]?.url;
+  if (cover) { img.src = cover; img.style.display = "block"; ph.style.display = "none"; }
+  else { img.style.display = "none"; ph.style.display = "flex"; }
+
+  document.getElementById("albumCard").classList.add("visible");
+  document.getElementById("anotherBtn").classList.add("visible");
+  addToHistory(album, artistName, totalAlbums);
+  recordPlay(album.name, artistName);
+}
+
+// ── Play ─────────────────────────────────────────────────────────────────────
+async function playAlbum() {
+  const token    = getToken();
+  const deviceId = localStorage.getItem("spotify_device_id");
+  if (!currentAlbumUri) return;
+
+  await disableShuffleAndRepeat();
+
+  let url = "https://api.spotify.com/v1/me/player/play";
+  if (deviceId) url += "?device_id=" + encodeURIComponent(deviceId);
+
+  const r = await fetch(url, {
+    method: "PUT",
+    headers:{ "Authorization":"Bearer " + token, "Content-Type":"application/json" },
+    body: JSON.stringify({ context_uri: currentAlbumUri })
+  });
+
+  if (r.ok || r.status === 204) {
+    setStatus("▶ Wiedergabe gestartet");
+    setTimeout(() => setStatus(""), 3000);
+  } else {
+    const txt = await r.text();
+    setStatus("Fehler: " + txt, "error");
+  }
+}
+
+// ── API helpers ───────────────────────────────────────────────────────────────
+async function fetchAllAlbums(artistId) {
+  const token = getToken();
+  let all = [];
+  let url = `https://api.spotify.com/v1/artists/${artistId}/albums?include_groups=album&market=DE&limit=50`;
+  while (url) {
+    const r = await fetch(url, { headers:{ Authorization:"Bearer " + token } });
+    const d = await r.json();
+    all.push(...(d.items || []));
+    url = d.next || null;
+  }
+  return all;
+}
+
+async function fetchAllFollowedArtists() {
+  const token = getToken();
+  let all = [], after = null;
+  while (true) {
+    let url = "https://api.spotify.com/v1/me/following?type=artist&limit=50";
+    if (after) url += "&after=" + encodeURIComponent(after);
+    const r = await fetch(url, { headers:{ Authorization:"Bearer " + token } });
+    const d = await r.json();
+    all.push(...(d?.artists?.items || []));
+    if (!d?.artists?.cursors?.after) break;
+    after = d.artists.cursors.after;
+  }
+  return all;
+}
+
+// ── loadAlbums ────────────────────────────────────────────────────────────────
+async function loadAlbums() {
+  const token  = getToken();
+  const artist = document.getElementById("artistInput").value.trim();
+  if (!artist) return;
+
+  const btn = document.getElementById("searchBtn");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>';
+  setStatus("Suche…");
+
+  try {
+    const sr = await fetch(
+      "https://api.spotify.com/v1/search?q=" + encodeURIComponent("artist:" + artist) + "&type=artist&limit=1&market=DE",
+      { headers:{ Authorization:"Bearer " + token } }
+    );
+    const sd = await sr.json();
+    const found = sd?.artists?.items?.[0];
+    if (!found) { setStatus("Kein Künstler gefunden.", "error"); return; }
+
+    setStatus(found.name + " – Alben werden geladen…");
+    const studioAlbums = filterAlbums(await fetchAllAlbums(found.id));
+    if (!studioAlbums.length) { setStatus("Keine Studioalben gefunden.", "error"); return; }
+
+    currentArtistId   = found.id;
+    currentArtistName = found.name;
+    currentMode       = "search";
+
+    const random = studioAlbums[Math.floor(Math.random() * studioAlbums.length)];
+    showAlbumCard(random, found.name, studioAlbums.length);
+    setStatus("");
+    await playAlbum();
+  } catch(e) {
+    setStatus("Fehler: " + e.message, "error");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Suchen";
+  }
+}
+
+// ── surpriseMe ────────────────────────────────────────────────────────────────
+async function surpriseMe() {
+  const btn = document.getElementById("surpriseBtn");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>Einen Moment…';
+  setStatus("Gefolgte Künstler werden geladen…");
+
+  try {
+    if (!cachedArtists) cachedArtists = await fetchAllFollowedArtists();
+    const artists = cachedArtists;
+    if (!artists.length) { setStatus("Keine gefolgten Künstler gefunden.", "error"); return; }
+
+    for (let i = 0; i < 30; i++) {
+      const artist = artists[Math.floor(Math.random() * artists.length)];
+      setStatus(artist.name + " – Alben laden…");
+      const studioAlbums = filterAlbums(await fetchAllAlbums(artist.id));
+      if (!studioAlbums.length) continue;
+
+      currentArtistId   = artist.id;
+      currentArtistName = artist.name;
+      currentMode       = "surprise";
+
+      const random = studioAlbums[Math.floor(Math.random() * studioAlbums.length)];
+      showAlbumCard(random, artist.name, studioAlbums.length);
+      setStatus("");
+      await playAlbum();
+      return;
+    }
+    setStatus("Kein passendes Album gefunden.", "error");
+  } catch(e) {
+    setStatus("Fehler: " + e.message, "error");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = "🎲 Überrasch mich";
+  }
+}
+
+// ── Anderes Album ─────────────────────────────────────────────────────────────
+async function playAnother() {
+  const btn = document.getElementById("anotherBtn");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>Einen Moment…';
+
+  try {
+    if (currentMode === "search" && currentArtistId) {
+      setStatus(currentArtistName + " – anderes Album…");
+      const studioAlbums = filterAlbums(await fetchAllAlbums(currentArtistId));
+      if (!studioAlbums.length) { setStatus("Keine Studioalben gefunden.", "error"); return; }
+      const random = studioAlbums[Math.floor(Math.random() * studioAlbums.length)];
+      showAlbumCard(random, currentArtistName, studioAlbums.length);
+      setStatus("");
+      await playAlbum();
+    } else {
+      await surpriseMe();
+    }
+  } catch(e) {
+    setStatus("Fehler: " + e.message, "error");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = "🔀 Anderes Album";
+  }
+}
+
+// ── Event listeners ───────────────────────────────────────────────────────────
+document.getElementById("artistInput").addEventListener("keydown", e => {
+  if (e.key === "Enter") loadAlbums();
+});
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+(async () => {
+  showGreeting();
+
+  const params = new URLSearchParams(location.search);
+  const code   = params.get("code");
+
+  if (code) {
+    setStatus("Anmeldung läuft…");
+    const tokenData = await exchangeCode(code);
+    if (tokenData.error) { setStatus("Fehler: " + tokenData.error_description, "error"); return; }
+    localStorage.setItem("spotify_access_token",    tokenData.access_token);
+    localStorage.setItem("spotify_refresh_token",   tokenData.refresh_token);
+    localStorage.setItem("spotify_token_expires_at", Date.now() + (tokenData.expires_in || 3600) * 1000);
+    const profile = await loadProfile(tokenData.access_token);
+    setStatus("Angemeldet als " + (profile.display_name || profile.id));
+    setTimeout(() => setStatus(""), 3000);
+    history.replaceState({}, "", "/");
+  }
+
+  const token = getToken();
+  if (token) {
+    document.getElementById("loginScreen").style.display = "none";
+    document.getElementById("appScreen").style.display   = "block";
+
+    fetchAllFollowedArtists().then(artists => {
+      cachedArtists = artists;
+      const row = document.getElementById("infoRow");
+      row.textContent = "❤️ " + artists.length + " gefolgte Künstler";
+      row.style.display = "block";
+    }).catch(() => {});
+
+    await checkDevice();
+  }
+
+  await checkTokenExpiry();
+  setInterval(checkTokenExpiry, 60 * 1000);
+})();
+</script>
+</body>
+</html>
