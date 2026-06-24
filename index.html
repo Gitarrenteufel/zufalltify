@@ -535,12 +535,6 @@ function getHistory() {
 
 function addToHistory(album, artistName, totalAlbums, artistUrl) {
   const history = getHistory();
-
-  // Nur eintragen wenn letzter Play älter als 10 Sekunden
-  const lastPlay = parseInt(localStorage.getItem("zt_last_play_ts") || "0");
-  if (Date.now() - lastPlay < 10000) return;
-  localStorage.setItem("zt_last_play_ts", Date.now());
-
   const entry = {
     album: album.name, artist: artistName,
     year: album.release_date?.substring(0,4) || "",
