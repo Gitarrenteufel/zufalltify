@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Zufalltify v3.3</title>
+<title>Zufalltify v3.4</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1DB954">
 <meta name="mobile-web-app-capable" content="yes">
@@ -275,6 +275,18 @@
   .device-type { font-size: 11px; color: var(--muted); margin-left: 6px; }
 
   .system-footer { text-align: center; padding: 8px 0 4px; }
+
+  /* ── Filter ── */
+  .filter-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 13px 16px; border-bottom: 1px solid var(--border);
+    cursor: pointer; font-size: 14px;
+  }
+  .filter-item:hover { background: var(--surface2); }
+  .filter-label { flex: 1; }
+  .filter-item input[type="checkbox"] {
+    width: 18px; height: 18px; accent-color: var(--green); cursor: pointer;
+  }
   .logout-link { font-size: 13px; color: var(--muted); background: none; border: none; cursor: pointer; font-family: inherit; text-decoration: underline; text-underline-offset: 3px; padding: 4px; }
   .logout-link:hover { color: var(--text); }
 
@@ -397,6 +409,28 @@
       </div>
 
       <div class="system-section">
+        <h2>Filtereinstellungen</h2>
+        <div class="system-row">
+          <label class="filter-item">
+            <span class="filter-label">Alben</span>
+            <input type="checkbox" id="filterAlbum" checked onchange="saveFilters()">
+          </label>
+          <label class="filter-item">
+            <span class="filter-label">Singles und EPs</span>
+            <input type="checkbox" id="filterSingle" onchange="saveFilters()">
+          </label>
+          <label class="filter-item">
+            <span class="filter-label">Compilations</span>
+            <input type="checkbox" id="filterCompilation" onchange="saveFilters()">
+          </label>
+          <label class="filter-item" style="border-bottom:none">
+            <span class="filter-label">Mit dabei in</span>
+            <input type="checkbox" id="filterAppearsOn" onchange="saveFilters()">
+          </label>
+        </div>
+      </div>
+
+      <div class="system-section">
         <h2>Konto</h2>
         <div class="system-row">
           <div class="system-item">
@@ -412,7 +446,7 @@
 
       <div class="system-footer">
         <button class="logout-link" onclick="logout()">Abmelden</button>
-        <span style="font-size:11px;color:var(--muted);margin-left:8px">v3.3</span>
+        <span style="font-size:11px;color:var(--muted);margin-left:8px">v3.4</span>
       </div>
     </div>
 
@@ -476,21 +510,6 @@ function switchTab(name, btn) {
 }
 
 // ── Blacklist ─────────────────────────────────────────────────────────────────
-const LIVE_BLACKLIST = [
-  "live at", "live in", "live from", "live &", "& live",
-  "recorded live", "in concert", "en vivo", "en directo",
-  "bbc session", "bbc archive", "bbc recording",
-  "rock in rio", "donington", "wembley", "madison square", "budokan",
-  "bootleg", "broadcast"
-];
-
-function isLiveAlbum(name) {
-  const lower = name.toLowerCase();
-  if (LIVE_BLACKLIST.some(t => lower.includes(t))) return true;
-  if (/\blive\b/.test(lower)) return true;
-  return false;
-}
-
 function normalizeAlbumName(name) {
   return name.toLowerCase()
     .replace(/\(.*?\)/g, '').replace(/\[.*?\]/g, '')
@@ -506,7 +525,6 @@ function normalizeAlbumName(name) {
 function filterAlbums(items) {
   const seen = new Set();
   return items.filter(a => {
-    if (isLiveAlbum(a.name)) return false;
     const k = normalizeAlbumName(a.name);
     if (seen.has(k)) return false;
     seen.add(k);
@@ -540,7 +558,7 @@ function addToHistory(album, artistName, totalAlbums, artistUrl) {
     year: album.release_date?.substring(0,4) || "",
     cover: album.images?.[1]?.url || album.images?.[0]?.url || "",
     albumUrl: album.external_urls?.spotify || "",
-    totalAlbums, ts: Date.now()
+    ts: Date.now()
   };
   const filtered = history.filter(h => h.album !== entry.album || h.artist !== entry.artist);
   filtered.unshift(entry);
@@ -561,7 +579,7 @@ function renderHistory() {
         <div class="history-album">${h.album}</div>
         <div class="history-artist">${h.artist}</div>
       </div>
-      <div class="history-meta">${h.year}<br>${h.totalAlbums} Alben</div>
+      <div class="history-meta">${h.year}</div>
     </a>`).join("");
 }
 
@@ -899,7 +917,6 @@ function showAlbumCard(album, artistName, totalAlbums, artistUrl) {
   document.getElementById("albumCard").classList.add("visible");
   document.getElementById("anotherBtn").classList.add("visible");
   const albumUrl = album.external_urls?.spotify || "";
-  addToHistory(album, artistName, totalAlbums, artistUrl);
   localStorage.setItem("zt_last_album", JSON.stringify({
     uri: album.uri, name: album.name, artist: artistName,
     year: album.release_date?.substring(0,4) || "",
@@ -925,10 +942,49 @@ async function playAlbum() {
 }
 
 // ── API helpers ───────────────────────────────────────────────────────────────
+// ── Filter ────────────────────────────────────────────────────────────────────
+function getFilters() {
+  try { return JSON.parse(localStorage.getItem("zt_filters") || '{"album":true,"single":false,"compilation":false,"appears_on":false}'); }
+  catch { return { album: true, single: false, compilation: false, appears_on: false }; }
+}
+
+function saveFilters() {
+  const filters = {
+    album:       document.getElementById("filterAlbum").checked,
+    single:      document.getElementById("filterSingle").checked,
+    compilation: document.getElementById("filterCompilation").checked,
+    appears_on:  document.getElementById("filterAppearsOn").checked,
+  };
+  // Mindestens eine Option muss aktiv sein
+  if (!Object.values(filters).some(Boolean)) {
+    document.getElementById("filterAlbum").checked = true;
+    filters.album = true;
+  }
+  localStorage.setItem("zt_filters", JSON.stringify(filters));
+}
+
+function loadFilters() {
+  const f = getFilters();
+  document.getElementById("filterAlbum").checked       = f.album;
+  document.getElementById("filterSingle").checked      = f.single;
+  document.getElementById("filterCompilation").checked = f.compilation;
+  document.getElementById("filterAppearsOn").checked   = f.appears_on;
+}
+
+function getIncludeGroups() {
+  const f = getFilters();
+  const groups = [];
+  if (f.album)       groups.push("album");
+  if (f.single)      groups.push("single");
+  if (f.compilation) groups.push("compilation");
+  if (f.appears_on)  groups.push("appears_on");
+  return groups.length ? groups.join(",") : "album";
+}
+
 async function fetchAllAlbums(artistId) {
   const token = getToken();
   let all = [];
-  let url = `https://api.spotify.com/v1/artists/${artistId}/albums?include_groups=album&market=DE&limit=50`;
+  let url = `https://api.spotify.com/v1/artists/${artistId}/albums?include_groups=${getIncludeGroups()}&market=DE&limit=50`;
   while (url) {
     const r = await fetch(url, { headers:{ Authorization:"Bearer " + token } });
     const d = await r.json();
@@ -978,6 +1034,7 @@ async function loadAlbums() {
     currentArtistUrl  = found.external_urls?.spotify || "";
     currentMode       = "search";
     const random = studioAlbums[Math.floor(Math.random() * studioAlbums.length)];
+    addToHistory(random, found.name, studioAlbums.length, currentArtistUrl);
     showAlbumCard(random, found.name, studioAlbums.length, currentArtistUrl);
     setStatus("");
     await playAlbum();
@@ -1005,6 +1062,8 @@ async function surpriseMe() {
       currentArtistUrl  = artist.external_urls?.spotify || "";
       currentMode       = "surprise";
       const random = studioAlbums[Math.floor(Math.random() * studioAlbums.length)];
+      // Sofort in Verlauf – vor UI-Update und playAlbum
+      addToHistory(random, artist.name, studioAlbums.length, currentArtistUrl);
       showAlbumCard(random, artist.name, studioAlbums.length, currentArtistUrl);
       setStatus("");
       await playAlbum();
@@ -1026,6 +1085,7 @@ async function playAnother() {
       const studioAlbums = filterAlbums(await fetchAllAlbums(currentArtistId));
       if (!studioAlbums.length) { setStatus("Keine Studioalben gefunden.", "error"); return; }
       const random = studioAlbums[Math.floor(Math.random() * studioAlbums.length)];
+      addToHistory(random, currentArtistName, studioAlbums.length, currentArtistUrl);
       showAlbumCard(random, currentArtistName, studioAlbums.length, currentArtistUrl);
       setStatus("");
       await playAlbum();
@@ -1092,6 +1152,7 @@ document.getElementById("appScreen").addEventListener("touchend", e => {
 
     restoreLastAlbum();
     renderFavorites();
+    loadFilters();
 
     fetchAllFollowedArtists().then(artists => {
       cachedArtists = artists;
