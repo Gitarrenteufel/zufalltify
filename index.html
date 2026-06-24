@@ -361,7 +361,6 @@
           <div class="cover-title" id="coverTitle"></div>
           <div class="cover-year" id="coverYear"></div>
           <div class="card-footer">
-            <span class="card-footer-info" id="albumCount"></span>
             <a id="albumLink" href="#" target="_blank">In Spotify öffnen</a>
           </div>
         </div>
@@ -601,7 +600,6 @@ function restoreLastAlbum() {
     document.getElementById("coverArtist").textContent = a.artist;
     document.getElementById("coverTitle").textContent  = a.name;
     document.getElementById("coverYear").textContent   = a.year;
-    document.getElementById("albumCount").textContent  = a.totalAlbums + " Studioalben";
     document.getElementById("albumLink").href = a.albumUrl || "#";
     const img = document.getElementById("albumCover");
     const ph  = document.getElementById("coverPlaceholder");
@@ -744,7 +742,6 @@ async function playAlbumOfDay() {
   document.getElementById("coverArtist").textContent = entry.artist;
   document.getElementById("coverTitle").textContent  = entry.name;
   document.getElementById("coverYear").textContent   = "";
-  document.getElementById("albumCount").textContent  = entry.totalAlbums + " Studioalben";
   document.getElementById("albumLink").href = entry.albumUrl || "#";
   const img = document.getElementById("albumCover");
   const ph  = document.getElementById("coverPlaceholder");
@@ -907,7 +904,6 @@ function showAlbumCard(album, artistName, totalAlbums, artistUrl) {
   document.getElementById("coverArtist").textContent = artistName;
   document.getElementById("coverTitle").textContent  = album.name;
   document.getElementById("coverYear").textContent   = album.release_date?.substring(0,4) || "";
-  document.getElementById("albumCount").textContent  = totalAlbums + " Studioalben";
   document.getElementById("albumLink").href = album.external_urls?.spotify || "#";
   const img = document.getElementById("albumCover");
   const ph  = document.getElementById("coverPlaceholder");
@@ -1017,7 +1013,7 @@ async function loadAlbums() {
   const btn = document.getElementById("searchBtn");
   btn.disabled = true;
   btn.innerHTML = '<span class="spin"></span>';
-  setStatus("Suche…");
+  setStatus("");
   try {
     const sr = await fetch(
       "https://api.spotify.com/v1/search?q=" + encodeURIComponent("artist:" + artist) + "&type=artist&limit=1&market=DE",
@@ -1026,7 +1022,6 @@ async function loadAlbums() {
     const sd = await sr.json();
     const found = sd?.artists?.items?.[0];
     if (!found) { setStatus("Kein Künstler gefunden.", "error"); return; }
-    setStatus(found.name + " – Alben werden geladen…");
     const studioAlbums = filterAlbums(await fetchAllAlbums(found.id));
     if (!studioAlbums.length) { setStatus("Keine Studioalben gefunden.", "error"); return; }
     currentArtistId   = found.id;
@@ -1047,14 +1042,13 @@ async function surpriseMe() {
   const btn = document.getElementById("surpriseBtn");
   btn.disabled = true;
   btn.innerHTML = '<span class="spin"></span>Einen Moment…';
-  setStatus("Gefolgte Künstler werden geladen…");
+  setStatus("");
   try {
     if (!cachedArtists) cachedArtists = await fetchAllFollowedArtists();
     const artists = cachedArtists;
     if (!artists.length) { setStatus("Keine gefolgten Künstler gefunden.", "error"); return; }
     for (let i = 0; i < 30; i++) {
       const artist = artists[Math.floor(Math.random() * artists.length)];
-      setStatus(artist.name + " – Alben laden…");
       const studioAlbums = filterAlbums(await fetchAllAlbums(artist.id));
       if (!studioAlbums.length) continue;
       currentArtistId   = artist.id;
@@ -1081,7 +1075,6 @@ async function playAnother() {
   btn.innerHTML = '<span class="spin"></span>Einen Moment…';
   try {
     if (currentMode === "search" && currentArtistId) {
-      setStatus(currentArtistName + " – anderes Album…");
       const studioAlbums = filterAlbums(await fetchAllAlbums(currentArtistId));
       if (!studioAlbums.length) { setStatus("Keine Studioalben gefunden.", "error"); return; }
       const random = studioAlbums[Math.floor(Math.random() * studioAlbums.length)];
