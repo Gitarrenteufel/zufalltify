@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Zufalltify v4.1</title>
+<title>Zufalltify v4.2</title>
 <link rel="manifest" href="manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -541,7 +541,7 @@
 
       <div class="system-footer">
         <button class="logout-link" onclick="logout()">Abmelden</button>
-        <span style="font-size:11px;color:var(--muted);margin-left:8px">v4.1</span>
+        <span style="font-size:11px;color:var(--muted);margin-left:8px">v4.2</span>
       </div>
     </div>
 
@@ -578,7 +578,7 @@
       <i class="ti ti-settings"></i><span>System</span>
     </div>
     <div style="border-top:1px solid #2a2a2a;margin-top:auto;padding:14px 20px calc(14px + var(--safe-bottom)) 20px;display:flex;align-items:center;justify-content:center;">
-      <span style="font-size:12px;color:#444">Zufalltify v4.1</span>
+      <span style="font-size:12px;color:#444">Zufalltify v4.2</span>
     </div>
   </div>
 
@@ -878,7 +878,12 @@ function isExcluded(artist) {
 
 function getArtistPoolForMode(artists) {
   if (appMode === "hoerspiel") {
-    return artists.filter(a => HOERSPIEL_IDS.has(a.id) && !HOERBUCH_IDS.has(a.id));
+    // Hörspiel-Pool kommt aus den Hörspiel-Favoriten, nicht aus gefolgten Künstlern
+    return getFavorites().map(f => ({
+      id: getFavId(f),
+      name: getFavName(f),
+      external_urls: { spotify: `https://open.spotify.com/artist/${getFavId(f)}` }
+    })).filter(a => a.id && !HOERBUCH_IDS.has(a.id));
   }
   // Musik: gefollte Künstler minus Hörspiele minus Hörbücher
   return artists.filter(a => !HOERSPIEL_IDS.has(a.id) && !HOERBUCH_IDS.has(a.id));
