@@ -566,7 +566,9 @@
 </div>
 <script>
 const CLIENT_ID    = "7f11ab0b763a4d95ba84882b55101ee1";
-const IS_WEBVIEW = /wv|WebView/.test(navigator.userAgent) || (window.Android !== undefined);
+const IS_WEBVIEW = window.location.protocol === 'zufalltify:' || 
+  (typeof Android !== 'undefined') ||
+  (/Android/.test(navigator.userAgent) && /wv/.test(navigator.userAgent));
 const REDIRECT_URI = IS_WEBVIEW
   ? "zufalltify://callback"
   : "https://gitarrenteufel.github.io/zufalltify/";
