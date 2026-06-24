@@ -466,6 +466,11 @@
         </div>
       </div>
 
+      <div class="system-footer">
+        <button class="logout-link" onclick="logout()">Abmelden</button>
+        <span style="font-size:11px;color:var(--muted);margin-left:8px">v3.8</span>
+      </div>
+
     </div>
 
     <!-- VERLAUF TAB -->
@@ -514,9 +519,8 @@
     <div class="drawer-item" onclick="openDrawerTab('news')"><span class="di-icon">🆕</span><span>Neuheiten</span></div>
     <div style="border-top:1px solid #2a2a2a;margin:4px 0"></div>
     <div class="drawer-item" onclick="openDrawerTab('system')"><span class="di-icon">⚙️</span><span>System</span></div>
-    <div style="border-top:1px solid #2a2a2a;margin-top:auto;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;">
-      <button class="logout-link" onclick="logout();closeDrawer()">Abmelden</button>
-      <span style="font-size:11px;color:var(--muted)">v3.8</span>
+    <div style="border-top:1px solid #2a2a2a;margin-top:auto;padding:14px 20px calc(14px + var(--safe-bottom)) 20px;display:flex;align-items:center;justify-content:center;">
+      <span style="font-size:12px;color:#444">Zufalltify</span>
     </div>
   </div>
 
