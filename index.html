@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Zufalltify v3.7</title>
+<title>Zufalltify v3.8</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1DB954">
 <meta name="mobile-web-app-capable" content="yes">
@@ -50,11 +50,22 @@
 
   /* ── Header ── */
   header {
-    text-align: center;
+    display: flex; align-items: center; justify-content: space-between;
     padding: 44px 20px 0;
   }
   header h1 { font-size: 26px; font-weight: 600; letter-spacing: -0.02em; }
   /* ── Status ── */
+  /* ── Drawer ── */
+  #drawer { display: none; }
+  #drawer.open { display: flex !important; }
+  .drawer-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 15px 20px; font-size: 15px; cursor: pointer;
+    transition: background 0.15s; color: var(--text);
+  }
+  .drawer-item:hover { background: var(--surface2); }
+  .di-icon { font-size: 18px; width: 24px; text-align: center; flex-shrink: 0; }
+
   /* ── Error card ── */
   #errorCard {
     display: none; margin: 0 20px 12px;
@@ -320,6 +331,7 @@
 
   <header>
     <h1>Zufalltify</h1>
+    <button id="hamburgerBtn" onclick="openDrawer()" style="display:none;background:none;border:none;cursor:pointer;padding:4px;color:var(--text);font-size:22px;line-height:1;">☰</button>
   </header>
   <div id="errorCard">
     <div class="error-icon">⚠️</div>
@@ -376,6 +388,7 @@
           <div class="cover-year" id="coverYear"></div>
           <div class="card-footer">
             <a id="albumLink" href="#" target="_blank">In Spotify öffnen</a>
+            <button id="bookmarkBtn" onclick="bookmarkCurrent()" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:0;" title="Vormerken">🔖</button>
           </div>
         </div>
       </div>
@@ -390,6 +403,7 @@
         <h2>Favoriten</h2>
         <span class="fav-count" id="favCount"></span>
       </div>
+      <button class="btn btn-surprise" id="surpriseFavsBtn" onclick="surpriseFavs()" style="margin-bottom:12px;">🎲 Favoriten würfeln</button>
       <div class="fav-add-row">
         <input type="text" id="favInput" placeholder="Künstler hinzufügen…">
         <button onclick="addFavorite()">+</button>
@@ -398,11 +412,6 @@
     </div>
 
     <!-- VERLAUF TAB -->
-    <div class="tab-page" id="page-stats">
-      <div style="padding-top:16px">
-        <div id="historyList"></div>
-      </div>
-    </div>
 
     <!-- SYSTEM TAB -->
     <div class="tab-page" id="page-system">
@@ -457,15 +466,32 @@
         </div>
       </div>
 
-      <div class="system-footer">
-        <button class="logout-link" onclick="logout()">Abmelden</button>
-        <span style="font-size:11px;color:var(--muted);margin-left:8px">v3.7</span>
+    </div>
+
+    <!-- VERLAUF TAB -->
+    <div class="tab-page" id="page-stats">
+      <div style="padding-top:16px">
+        <div id="historyList"></div>
+      </div>
+    </div>
+
+    <!-- VORGEMERKTE ALBEN TAB -->
+    <div class="tab-page" id="page-bookmarks">
+      <div style="padding-top:16px">
+        <div id="bookmarkList"></div>
+      </div>
+    </div>
+
+    <!-- NEUHEITEN TAB -->
+    <div class="tab-page" id="page-news">
+      <div style="padding-top:16px">
+        <div id="newsList"></div>
       </div>
     </div>
 
   </div>
 
-  <!-- TAB BAR -->
+  <!-- TAB BAR – nur Home + Favoriten -->
   <nav class="tab-bar" id="tabBar" style="display:none">
     <button class="tab-btn active" onclick="switchTab('home', this)">
       <span class="tab-icon">🏠</span>
@@ -475,15 +501,24 @@
       <span class="tab-icon">⭐</span>
       <span>Favoriten</span>
     </button>
-    <button class="tab-btn" onclick="switchTab('stats', this)">
-      <span class="tab-icon">🕐</span>
-      <span>Verlauf</span>
-    </button>
-    <button class="tab-btn" onclick="switchTab('system', this)">
-      <span class="tab-icon">⚙️</span>
-      <span>System</span>
-    </button>
   </nav>
+
+  <!-- Hamburger Drawer Overlay -->
+  <div id="drawerOverlay" onclick="closeDrawer()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100"></div>
+
+  <!-- Drawer -->
+  <div id="drawer" style="display:none;position:fixed;top:0;right:0;bottom:0;width:260px;max-width:85vw;background:#1a1a1a;border-left:1px solid #2a2a2a;z-index:101;flex-direction:column;">
+    <div style="padding:16px 20px 12px;font-size:11px;color:#888;text-transform:uppercase;letter-spacing:0.1em;border-bottom:1px solid #2a2a2a;">☰ Menü</div>
+    <div class="drawer-item" onclick="openDrawerTab('stats')"><span class="di-icon">🕐</span><span>Verlauf</span></div>
+    <div class="drawer-item" onclick="openDrawerTab('bookmarks')"><span class="di-icon">🔖</span><span>Vorgemerkte Alben</span></div>
+    <div class="drawer-item" onclick="openDrawerTab('news')"><span class="di-icon">🆕</span><span>Neuheiten</span></div>
+    <div style="border-top:1px solid #2a2a2a;margin:4px 0"></div>
+    <div class="drawer-item" onclick="openDrawerTab('system')"><span class="di-icon">⚙️</span><span>System</span></div>
+    <div style="border-top:1px solid #2a2a2a;margin-top:auto;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;">
+      <button class="logout-link" onclick="logout();closeDrawer()">Abmelden</button>
+      <span style="font-size:11px;color:var(--muted)">v3.8</span>
+    </div>
+  </div>
 
   <!-- Modal -->
   <div id="modal">
@@ -507,6 +542,7 @@ const HISTORY_MAX  = 50;
 const FAV_MAX      = 50;
 
 let currentAlbumUri   = null;
+let currentAlbumData  = null;
 let currentArtistId   = null;
 let currentArtistName = null;
 let currentArtistUrl  = null;
@@ -518,8 +554,141 @@ function switchTab(name, btn) {
   document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
-  btn.classList.add('active');
+  if (btn) btn.classList.add('active');
   if (name === 'stats') renderHistory();
+  if (name === 'bookmarks') renderBookmarks();
+  if (name === 'news') renderNews();
+}
+
+function bookmarkCurrent() {
+  if (!currentAlbumData) return;
+  addBookmark(currentAlbumData.album, currentAlbumData.artistName);
+  const btn = document.getElementById("bookmarkBtn");
+  btn.textContent = "✅";
+  setTimeout(() => { btn.textContent = "🔖"; }, 2000);
+}
+
+// ── Drawer ────────────────────────────────────────────────────────────────────
+function openDrawer() {
+  document.getElementById("drawer").classList.add("open");
+  document.getElementById("drawerOverlay").style.display = "block";
+}
+
+function closeDrawer() {
+  document.getElementById("drawer").classList.remove("open");
+  document.getElementById("drawerOverlay").style.display = "none";
+}
+
+function openDrawerTab(name) {
+  closeDrawer();
+  // Deactivate tab buttons, activate drawer page
+  document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  if (name === 'stats') renderHistory();
+  if (name === 'bookmarks') renderBookmarks();
+  if (name === 'news') renderNews();
+}
+
+// ── Vorgemerkte Alben ─────────────────────────────────────────────────────────
+function getBookmarks() {
+  try { return JSON.parse(localStorage.getItem("zt_bookmarks") || "[]"); }
+  catch { return []; }
+}
+
+function addBookmark(album, artistName) {
+  const bookmarks = getBookmarks();
+  const entry = {
+    album: album.name, artist: artistName,
+    year: album.release_date?.substring(0,4) || "",
+    cover: album.images?.[1]?.url || album.images?.[0]?.url || "",
+    albumUrl: album.external_urls?.spotify || "",
+    uri: album.uri
+  };
+  if (bookmarks.find(b => b.uri === entry.uri)) return; // kein Duplikat
+  bookmarks.unshift(entry);
+  localStorage.setItem("zt_bookmarks", JSON.stringify(bookmarks));
+}
+
+function removeBookmark(uri) {
+  const bookmarks = getBookmarks().filter(b => b.uri !== uri);
+  localStorage.setItem("zt_bookmarks", JSON.stringify(bookmarks));
+  renderBookmarks();
+}
+
+function renderBookmarks() {
+  const bookmarks = getBookmarks();
+  const el = document.getElementById("bookmarkList");
+  if (!bookmarks.length) {
+    el.innerHTML = '<div style="padding:20px;font-size:13px;color:var(--muted);text-align:center">Noch keine vorgemerkten Alben.<br>Lesezeichen-Icon beim Album antippen.</div>';
+    return;
+  }
+  el.innerHTML = bookmarks.map(b => `
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
+      ${b.cover ? `<img src="${b.cover}" alt="" loading="lazy" style="width:48px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0;">` : '<div style="width:48px;height:48px;border-radius:6px;background:var(--surface2);flex-shrink:0;"></div>'}
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${b.album}</div>
+        <div style="font-size:12px;color:var(--muted);">${b.artist} · ${b.year}</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
+        <a href="${b.albumUrl}" target="_blank" style="color:var(--green);font-size:12px;text-decoration:none;">▶</a>
+        <button onclick="removeBookmark('${b.uri}')" style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 4px;">×</button>
+      </div>
+    </div>`).join("");
+}
+
+// ── Neuheiten ─────────────────────────────────────────────────────────────────
+let newsLoaded = false;
+
+async function renderNews() {
+  const el = document.getElementById("newsList");
+  if (newsLoaded) return;
+  el.innerHTML = '<div style="padding:20px;font-size:13px;color:var(--muted);text-align:center">Neuheiten werden geladen…</div>';
+
+  try {
+    const token = getToken();
+    const artists = await fetchAllFollowedArtists();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const cutoff = thirtyDaysAgo.toISOString().split('T')[0];
+
+    const news = [];
+    // Nur erste 50 Künstler prüfen um API-Calls zu begrenzen
+    for (const artist of artists.slice(0, 50)) {
+      try {
+        const r = await fetch(
+          `https://api.spotify.com/v1/artists/${artist.id}/albums?include_groups=album,single&market=DE&limit=5`,
+          { headers:{ Authorization:"Bearer " + token } }
+        );
+        const d = await r.json();
+        for (const album of (d.items || [])) {
+          if (album.release_date >= cutoff) {
+            news.push({ ...album, artistName: artist.name });
+          }
+        }
+      } catch {}
+    }
+
+    news.sort((a,b) => b.release_date.localeCompare(a.release_date));
+
+    if (!news.length) {
+      el.innerHTML = '<div style="padding:20px;font-size:13px;color:var(--muted);text-align:center">Keine Neuheiten in den letzten 30 Tagen.</div>';
+      return;
+    }
+
+    el.innerHTML = news.map(a => `
+      <a href="${a.external_urls?.spotify || '#'}" target="_blank" style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);text-decoration:none;color:inherit;">
+        ${a.images?.[1]?.url ? `<img src="${a.images[1].url}" alt="" loading="lazy" style="width:48px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0;">` : '<div style="width:48px;height:48px;border-radius:6px;background:var(--surface2);flex-shrink:0;"></div>'}
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${a.name}</div>
+          <div style="font-size:12px;color:var(--muted);">${a.artistName} · ${a.release_date}</div>
+          <div style="font-size:11px;color:var(--green);margin-top:2px;">${a.album_type === 'single' ? 'Single/EP' : 'Album'}</div>
+        </div>
+      </a>`).join("");
+    newsLoaded = true;
+  } catch(e) {
+    el.innerHTML = `<div style="padding:20px;font-size:13px;color:var(--danger);text-align:center">Fehler beim Laden.</div>`;
+  }
 }
 
 // ── Blacklist ─────────────────────────────────────────────────────────────────
@@ -714,6 +883,49 @@ async function loadAlbumsByName(artistName) {
   await loadAlbums();
 }
 
+async function surpriseFavs() {
+  const btn = document.getElementById("surpriseFavsBtn");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>Einen Moment…';
+
+  try {
+    const favs = getFavorites();
+    if (!favs.length) { showError("Keine Favoriten", "Bitte zuerst Künstler hinzufügen."); return; }
+
+    const token = getToken();
+    for (let i = 0; i < 20; i++) {
+      const artistName = favs[Math.floor(Math.random() * favs.length)];
+      try {
+        const sr = await fetch(
+          "https://api.spotify.com/v1/search?q=" + encodeURIComponent("artist:" + artistName) + "&type=artist&limit=1&market=DE",
+          { headers:{ Authorization:"Bearer " + token } }
+        );
+        const sd = await sr.json();
+        const found = sd?.artists?.items?.[0];
+        if (!found) continue;
+
+        const studioAlbums = filterAlbums(await fetchAllAlbums(found.id));
+        if (!studioAlbums.length) continue;
+
+        currentArtistId   = found.id;
+        currentArtistName = found.name;
+        currentArtistUrl  = found.external_urls?.spotify || "";
+        currentMode       = "search";
+
+        const random = studioAlbums[Math.floor(Math.random() * studioAlbums.length)];
+        addToHistory(random, found.name, studioAlbums.length, currentArtistUrl);
+        showAlbumCard(random, found.name, studioAlbums.length, currentArtistUrl);
+        hideError();
+        switchTab('home', document.querySelector('.tab-btn'));
+        await playAlbum();
+        return;
+      } catch(e) { continue; }
+    }
+    showError("Kein passendes Album", "Bitte erneut versuchen.");
+  } catch(e) { showError("Fehler", e.message); }
+  finally { btn.disabled = false; btn.innerHTML = "🎲 Favoriten würfeln"; }
+}
+
 // ── Album des Tages ───────────────────────────────────────────────────────────
 function getTodayKey() {
   const d = new Date();
@@ -807,6 +1019,7 @@ function logout() {
   document.getElementById("loginScreen").style.display = "flex";
   document.getElementById("appScreen").style.display = "none";
   document.getElementById("tabBar").style.display = "none";
+  document.getElementById("hamburgerBtn").style.display = "none";
   document.getElementById("albumCard").classList.remove("visible");
   document.getElementById("anotherBtn").classList.remove("visible");
   showSessionBanner(false);
@@ -938,7 +1151,8 @@ async function disableShuffleAndRepeat() {
 
 // ── Album card ───────────────────────────────────────────────────────────────
 function showAlbumCard(album, artistName, totalAlbums, artistUrl) {
-  currentAlbumUri = album.uri;
+  currentAlbumUri  = album.uri;
+  currentAlbumData = { album, artistName };
   document.getElementById("coverArtist").textContent = artistName;
   document.getElementById("coverTitle").textContent  = album.name;
   document.getElementById("coverYear").textContent   = album.release_date?.substring(0,4) || "";
@@ -1170,7 +1384,7 @@ document.getElementById("favInput").addEventListener("keydown", e => {
 });
 
 // ── Swipe-Gesten für Tab-Navigation ──────────────────────────────────────────
-const TABS = ["home", "favs", "stats", "system"];
+const TABS = ["home", "favs"];
 let swipeStartX = 0;
 let swipeStartY = 0;
 
@@ -1214,6 +1428,7 @@ document.getElementById("appScreen").addEventListener("touchend", e => {
     document.getElementById("appScreen").style.display   = "flex";
     document.getElementById("appScreen").style.flexDirection = "column";
     document.getElementById("tabBar").style.display      = "flex";
+    document.getElementById("hamburgerBtn").style.display = "block";
 
     restoreLastAlbum();
     renderFavorites();
