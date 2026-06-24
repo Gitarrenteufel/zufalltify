@@ -497,13 +497,6 @@
       </div>
     </div>
 
-    <!-- NEUHEITEN TAB -->
-    <div class="tab-page" id="page-news">
-      <div style="padding-top:16px">
-        <div id="newsList"></div>
-      </div>
-    </div>
-
   </div>
 
   <!-- TAB BAR – nur Home + Favoriten -->
@@ -526,7 +519,6 @@
     <div style="padding:16px 20px 12px;font-size:11px;color:#888;text-transform:uppercase;letter-spacing:0.1em;border-bottom:1px solid #2a2a2a;">☰ Menü</div>
     <div class="drawer-item" onclick="openDrawerTab('stats')"><span class="di-icon">🕐</span><span>Verlauf</span></div>
     <div class="drawer-item" onclick="openDrawerTab('bookmarks')"><span class="di-icon">🔖</span><span>Vorgemerkte Alben</span></div>
-    <div class="drawer-item" onclick="openDrawerTab('news')"><span class="di-icon">🆕</span><span>Neuheiten</span></div>
     <div style="border-top:1px solid #2a2a2a;margin:4px 0"></div>
     <div class="drawer-item" onclick="openDrawerTab('system')"><span class="di-icon">⚙️</span><span>System</span></div>
     <div style="border-top:1px solid #2a2a2a;margin-top:auto;padding:14px 20px calc(14px + var(--safe-bottom)) 20px;display:flex;align-items:center;justify-content:center;">
@@ -571,7 +563,15 @@ function switchTab(name, btn) {
   if (btn) btn.classList.add('active');
   if (name === 'stats') renderHistory();
   if (name === 'bookmarks') renderBookmarks();
-  if (name === 'news') renderNews();
+}
+
+// ── Drawer ────────────────────────────────────────────────────────────────────
+function bookmarkCurrent() {
+  if (!currentAlbumData) return;
+  addBookmark(currentAlbumData.album, currentAlbumData.artistName);
+  const btn = document.getElementById("bookmarkBtn");
+  btn.textContent = "✅";
+  setTimeout(() => { btn.textContent = "🔖"; }, 2000);
 }
 
 function loadDefaultFavorites() {
@@ -589,6 +589,8 @@ function loadDefaultFavorites() {
   showError(msg, "");
   setTimeout(() => hideError(), 2500);
 }
+
+function bookmarkCurrent() {
   if (!currentAlbumData) return;
   addBookmark(currentAlbumData.album, currentAlbumData.artistName);
   const btn = document.getElementById("bookmarkBtn");
@@ -596,7 +598,22 @@ function loadDefaultFavorites() {
   setTimeout(() => { btn.textContent = "🔖"; }, 2000);
 }
 
-// ── Drawer ────────────────────────────────────────────────────────────────────
+function loadDefaultFavorites() {
+  const current = getFavorites();
+  let added = 0;
+  for (const name of DEFAULT_FAVORITES) {
+    if (!current.find(f => f.toLowerCase() === name.toLowerCase())) {
+      current.push(name);
+      added++;
+    }
+  }
+  saveFavorites(current);
+  renderFavorites();
+  const msg = added > 0 ? `${added} Künstler hinzugefügt.` : "Alle bereits vorhanden.";
+  showError(msg, "");
+  setTimeout(() => hideError(), 2500);
+}
+
 function openDrawer() {
   document.getElementById("drawer").classList.add("open");
   document.getElementById("drawerOverlay").style.display = "block";
@@ -615,7 +632,6 @@ function openDrawerTab(name) {
   document.getElementById('page-' + name).classList.add('active');
   if (name === 'stats') renderHistory();
   if (name === 'bookmarks') renderBookmarks();
-  if (name === 'news') renderNews();
 }
 
 // ── Vorgemerkte Alben ─────────────────────────────────────────────────────────
@@ -663,60 +679,6 @@ function renderBookmarks() {
         <button onclick="removeBookmark('${b.uri}')" style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 4px;">×</button>
       </div>
     </div>`).join("");
-}
-
-// ── Neuheiten ─────────────────────────────────────────────────────────────────
-let newsLoaded = false;
-
-async function renderNews() {
-  const el = document.getElementById("newsList");
-  if (newsLoaded) return;
-  el.innerHTML = '<div style="padding:20px;font-size:13px;color:var(--muted);text-align:center">Neuheiten werden geladen…</div>';
-
-  try {
-    const token = getToken();
-    const artists = await fetchAllFollowedArtists();
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const cutoff = thirtyDaysAgo.toISOString().split('T')[0];
-
-    const news = [];
-    // Nur erste 50 Künstler prüfen um API-Calls zu begrenzen
-    for (const artist of artists.slice(0, 50)) {
-      try {
-        const r = await fetch(
-          `https://api.spotify.com/v1/artists/${artist.id}/albums?include_groups=album,single&market=DE&limit=5`,
-          { headers:{ Authorization:"Bearer " + token } }
-        );
-        const d = await r.json();
-        for (const album of (d.items || [])) {
-          if (album.release_date >= cutoff) {
-            news.push({ ...album, artistName: artist.name });
-          }
-        }
-      } catch {}
-    }
-
-    news.sort((a,b) => b.release_date.localeCompare(a.release_date));
-
-    if (!news.length) {
-      el.innerHTML = '<div style="padding:20px;font-size:13px;color:var(--muted);text-align:center">Keine Neuheiten in den letzten 30 Tagen.</div>';
-      return;
-    }
-
-    el.innerHTML = news.map(a => `
-      <a href="${a.external_urls?.spotify || '#'}" target="_blank" style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);text-decoration:none;color:inherit;">
-        ${a.images?.[1]?.url ? `<img src="${a.images[1].url}" alt="" loading="lazy" style="width:48px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0;">` : '<div style="width:48px;height:48px;border-radius:6px;background:var(--surface2);flex-shrink:0;"></div>'}
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${a.name}</div>
-          <div style="font-size:12px;color:var(--muted);">${a.artistName} · ${a.release_date}</div>
-          <div style="font-size:11px;color:var(--green);margin-top:2px;">${a.album_type === 'single' ? 'Single/EP' : 'Album'}</div>
-        </div>
-      </a>`).join("");
-    newsLoaded = true;
-  } catch(e) {
-    el.innerHTML = `<div style="padding:20px;font-size:13px;color:var(--danger);text-align:center">Fehler beim Laden.</div>`;
-  }
 }
 
 // ── Blacklist ─────────────────────────────────────────────────────────────────
