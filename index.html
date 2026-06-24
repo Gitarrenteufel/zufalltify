@@ -11,11 +11,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Zufalltify">
 <link rel="apple-touch-icon" href="icon-192.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   :root {
     --bg:       #0d0d0d;
     --surface:  #1a1a1a;
@@ -33,7 +30,7 @@
   }
 
   body {
-    font-family: 'Inter', sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
@@ -151,7 +148,7 @@
   .cover-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 32px; color: var(--border); }
   .card-info-wrap { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
   .cover-artist { font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--green); }
-  .cover-title { font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 700; line-height: 1.2; color: var(--text); }
+  .cover-title { font-family: Georgia, 'Times New Roman', serif; font-size: 17px; font-weight: 700; line-height: 1.2; color: var(--text); }
   .cover-year { font-size: 12px; color: var(--muted); }
   .card-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
   .card-footer-info { font-size: 12px; color: var(--muted); }
@@ -353,7 +350,7 @@
 
       <!-- Album des Tages -->
       <div id="albumOfDayCard" onclick="playAlbumOfDay()">
-        <img class="aod-cover" id="aodCover" src="" alt="">
+        <img class="aod-cover" id="aodCover" src="" alt="" loading="lazy">
         <div style="flex:1;min-width:0">
           <div class="aod-label">🌅 Album des Tages</div>
           <div class="aod-title" id="aodTitle"></div>
@@ -370,7 +367,7 @@
 
       <div id="albumCard">
         <div class="cover-wrap">
-          <img id="albumCover" style="display:none" alt="Album Cover">
+          <img id="albumCover" style="display:none" alt="Album Cover" loading="lazy">
           <div class="cover-placeholder" id="coverPlaceholder">💿</div>
         </div>
         <div class="card-info-wrap">
@@ -582,7 +579,7 @@ function addToHistory(album, artistName, totalAlbums, artistUrl) {
   const entry = {
     album: album.name, artist: artistName,
     year: album.release_date?.substring(0,4) || "",
-    cover: album.images?.[1]?.url || album.images?.[0]?.url || "",
+    cover: album.images?.[2]?.url || album.images?.[1]?.url || album.images?.[0]?.url || "",
     albumUrl: album.external_urls?.spotify || "",
     ts: Date.now()
   };
@@ -600,7 +597,7 @@ function renderHistory() {
   }
   el.innerHTML = history.map(h => `
     <a class="history-item" ${h.albumUrl ? `href="${h.albumUrl}" target="_blank"` : ""} style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;">
-      ${h.cover ? `<img class="history-cover" src="${h.cover}" alt="">` : '<div class="history-cover"></div>'}
+      ${h.cover ? `<img class="history-cover" src="${h.cover}" alt="" loading="lazy">` : '<div class="history-cover"></div>'}
       <div class="history-info">
         <div class="history-album">${h.album}</div>
         <div class="history-artist">${h.artist}</div>
@@ -949,6 +946,12 @@ function showAlbumCard(album, artistName, totalAlbums, artistUrl) {
 
 // ── Play ─────────────────────────────────────────────────────────────────────
 async function playAlbum() {
+  // Token prüfen vor Play
+  const exp = localStorage.getItem("spotify_token_expires_at");
+  if (exp && parseInt(exp) - Date.now() < 0) {
+    const ok = await refreshToken();
+    if (!ok) { showSessionBanner(true); return; }
+  }
   const token    = getToken();
   const deviceId = localStorage.getItem("spotify_device_id");
   if (!currentAlbumUri) return;
@@ -1084,22 +1087,22 @@ async function surpriseMe() {
     if (!artists.length) { showError("Keine gefolgten Künstler", "Bitte Künstler auf Spotify folgen."); return; }
     for (let i = 0; i < 30; i++) {
       const artist = artists[Math.floor(Math.random() * artists.length)];
-      const studioAlbums = filterAlbums(await fetchAllAlbums(artist.id));
-      if (!studioAlbums.length) continue;
-      currentArtistId   = artist.id;
-      currentArtistName = artist.name;
-      currentArtistUrl  = artist.external_urls?.spotify || "";
-      currentMode       = "surprise";
-      const random = studioAlbums[Math.floor(Math.random() * studioAlbums.length)];
-      // Sofort in Verlauf – vor UI-Update und playAlbum
-      addToHistory(random, artist.name, studioAlbums.length, currentArtistUrl);
-      showAlbumCard(random, artist.name, studioAlbums.length, currentArtistUrl);
-      setStatus("");
-      await playAlbum();
-      return;
+      try {
+        const studioAlbums = filterAlbums(await fetchAllAlbums(artist.id));
+        if (!studioAlbums.length) continue;
+        currentArtistId   = artist.id;
+        currentArtistName = artist.name;
+        currentArtistUrl  = artist.external_urls?.spotify || "";
+        currentMode       = "surprise";
+        const random = studioAlbums[Math.floor(Math.random() * studioAlbums.length)];
+        addToHistory(random, artist.name, studioAlbums.length, currentArtistUrl);
+        showAlbumCard(random, artist.name, studioAlbums.length, currentArtistUrl);
+        await playAlbum();
+        return;
+      } catch(e) { continue; } // einzelnen Fehler überspringen, weiter versuchen
     }
     showError("Kein passendes Album", "Bitte erneut versuchen.");
-  } catch(e) { setStatus("Fehler: " + e.message, "error"); }
+  } catch(e) { showError("Fehler", e.message); }
   finally { btn.disabled = false; btn.innerHTML = "🎲 Überrasch mich"; }
 }
 
