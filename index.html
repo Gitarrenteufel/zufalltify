@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Zufalltify v3.10</title>
+<title>Zufalltify v3.11</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1DB954">
 <meta name="mobile-web-app-capable" content="yes">
@@ -414,7 +414,10 @@
           <div class="cover-year" id="coverYear"></div>
           <div class="card-footer">
             <a id="albumLink" href="#" target="_blank">In Spotify öffnen</a>
-            <button id="bookmarkBtn" onclick="bookmarkCurrent()" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:0;" title="Vormerken">🔖</button>
+            <div style="display:flex;gap:8px;">
+              <button id="favArtistBtn" onclick="addCurrentArtistToFavs()" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:0;" title="Künstler zu Favoriten">⭐</button>
+              <button id="bookmarkBtn" onclick="bookmarkCurrent()" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:0;" title="Album vormerken">🔖</button>
+            </div>
           </div>
         </div>
       </div>
@@ -430,13 +433,6 @@
         <span class="fav-count" id="favCount"></span>
       </div>
       <button class="btn btn-surprise" id="surpriseFavsBtn" onclick="surpriseFavs()" style="margin-bottom:12px;">🎲 Favoriten würfeln</button>
-      <div class="fav-add-row">
-        <div class="autocomplete-wrap">
-          <input type="text" id="favInput" placeholder="Künstler hinzufügen…" autocomplete="off">
-          <div class="autocomplete-dropdown" id="favDropdown"></div>
-        </div>
-        <button onclick="addFavorite()">+</button>
-      </div>
       <div class="fav-list" id="favList"></div>
     </div>
 
@@ -507,7 +503,7 @@
 
       <div class="system-footer">
         <button class="logout-link" onclick="logout()">Abmelden</button>
-        <span style="font-size:11px;color:var(--muted);margin-left:8px">v3.10</span>
+        <span style="font-size:11px;color:var(--muted);margin-left:8px">v3.11</span>
       </div>
 
     </div>
@@ -636,6 +632,24 @@ function bookmarkCurrent() {
   const btn = document.getElementById("bookmarkBtn");
   btn.textContent = "✅";
   setTimeout(() => { btn.textContent = "🔖"; }, 2000);
+}
+
+function addCurrentArtistToFavs() {
+  if (!currentArtistId || !currentArtistName) return;
+  const btn = document.getElementById("favArtistBtn");
+  const favs = getFavorites();
+  if (favs.length >= FAV_MAX) {
+    showError("Favoriten voll", `Maximal ${FAV_MAX} Künstler erlaubt.`);
+    return;
+  }
+  if (favs.find(f => getFavName(f).toLowerCase() === currentArtistName.toLowerCase())) {
+    btn.textContent = "✅";
+    setTimeout(() => { btn.textContent = "⭐"; }, 2000);
+    return;
+  }
+  addFavoriteById(currentArtistId, currentArtistName);
+  btn.textContent = "✅";
+  setTimeout(() => { btn.textContent = "⭐"; }, 2000);
 }
 
 function loadDefaultFavorites() {
@@ -835,10 +849,24 @@ function restoreLastAlbum() {
 
 // ── Favoriten ─────────────────────────────────────────────────────────────────
 const DEFAULT_FAVORITES = [
-  "AC/DC", "Amorphis", "Anthrax", "Bolt Thrower", "Death",
-  "Die drei ???", "Ghost Brigade", "Gojira", "John Sinclair",
-  "Katatonia", "Machine Head", "Motörhead", "Pantera",
-  "Paradise Lost", "Sepultura", "Slayer", "Such A Surge", "Teufelskicker"
+  { id: "711MCceyCBcFnzjGY4Q7Un", name: "AC/DC" },
+  { id: "1Ol0R5H1TFflezh7JYIBzn", name: "Amorphis" },
+  { id: "3NtFhSFVFNJGmFBFEFLsxG", name: "Anthrax" },
+  { id: "6Qwm8K1FSss5oCvT0OIUSC", name: "Bolt Thrower" },
+  { id: "5LGiPOl3MOXSP9l39HJQKW", name: "Death" },
+  { id: "1DZ4FPpHuXVHD6ZPqZCvOE", name: "Die drei ???" },
+  { id: "6M8kfGqAhpqmE6PuJrHnI2", name: "Ghost Brigade" },
+  { id: "0GDGKpJFhVpcjIGF8N6Bvx", name: "Gojira" },
+  { id: "6GGmSXkrE1DqHRG4AHzSNR", name: "John Sinclair" },
+  { id: "3HyMCFm0V9jGOWlGVHIBGP", name: "Katatonia" },
+  { id: "4kIwETcbpuFgRukE8o7Opd", name: "Machine Head" },
+  { id: "1DgQpFJgMuHr2UKFczNLfa", name: "Motörhead" },
+  { id: "5a2EFKLqiRqtKVRlHPnkXU", name: "Pantera" },
+  { id: "6TIiLVSXYZFbdkfXm7CXQR", name: "Paradise Lost" },
+  { id: "5UHGAbHwKcGAOCjZGJt5Wv", name: "Sepultura" },
+  { id: "1IQ2e1buppatiN1bxUVkrk", name: "Slayer" },
+  { id: "0MBcy6D2CyFXBHBUEWTtny", name: "Such A Surge" },
+  { id: "752p3IcSA76CVOvqoGcFWH", name: "Teufelskicker" }
 ];
 
 function getFavorites() {
@@ -854,19 +882,6 @@ function getFavorites() {
 
 function saveFavorites(favs) {
   localStorage.setItem("zt_favorites", JSON.stringify(favs));
-}
-
-function addFavorite() {
-  const input = document.getElementById("favInput");
-  const name = input.value.trim();
-  if (!name) return;
-  const favs = getFavorites();
-  if (favs.length >= FAV_MAX) { input.value = ""; return; }
-  if (favs.find(f => getFavName(f).toLowerCase() === name.toLowerCase())) { input.value = ""; return; }
-  favs.push(name); // als String ohne ID
-  saveFavorites(favs);
-  input.value = "";
-  renderFavorites();
 }
 
 function showModal(name) {
@@ -898,8 +913,6 @@ function renderFavorites() {
   document.getElementById("favCount").textContent = `${total}/${FAV_MAX}`;
   document.getElementById("favCount").style.color = full ? "var(--warn)" : "var(--muted)";
   document.getElementById("syssFavCount").textContent = `${total}/${FAV_MAX}`;
-  const addBtn = document.querySelector(".fav-add-row button");
-  if (addBtn) { addBtn.disabled = full; addBtn.style.opacity = full ? "0.4" : "1"; }
   const el = document.getElementById("favList");
   if (!favs.length) {
     el.innerHTML = '<div class="fav-empty">Noch keine Favoriten.<br>Künstler oben hinzufügen.</div>';
@@ -1555,25 +1568,6 @@ document.getElementById("artistInput").addEventListener("input", e => {
 
 document.getElementById("artistInput").addEventListener("keydown", e => {
   if (e.key === "Enter") { hideDropdowns(); loadAlbums(); }
-  if (e.key === "Escape") hideDropdowns();
-});
-
-// Favoriten – Autocomplete beim Tippen
-document.getElementById("favInput").addEventListener("input", e => {
-  clearTimeout(autocompleteTimer);
-  const q = e.target.value.trim();
-  if (q.length < 2) { hideDropdowns(); return; }
-  autocompleteTimer = setTimeout(async () => {
-    const artists = await searchArtists(q);
-    showDropdown("favDropdown", artists, artist => {
-      document.getElementById("favInput").value = "";
-      addFavoriteById(artist.id, artist.name);
-    });
-  }, 300);
-});
-
-document.getElementById("favInput").addEventListener("keydown", e => {
-  if (e.key === "Enter") { hideDropdowns(); addFavorite(); }
   if (e.key === "Escape") hideDropdowns();
 });
 
