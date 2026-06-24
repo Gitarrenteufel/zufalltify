@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Zufalltify v3.9</title>
+<title>Zufalltify v3.10</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1DB954">
 <meta name="mobile-web-app-capable" content="yes">
@@ -142,6 +142,29 @@
   .btn-search:hover:not(:disabled) { border-color: var(--green); color: var(--green); }
 
   /* ── Search ── */
+  /* ── Autocomplete ── */
+  .autocomplete-wrap { position: relative; flex: 1; }
+  .autocomplete-dropdown {
+    display: none; position: absolute; top: 100%; left: 0; right: 0;
+    background: var(--surface); border: 1px solid var(--green);
+    border-top: none; border-radius: 0 0 10px 10px;
+    z-index: 50; max-height: 240px; overflow-y: auto;
+  }
+  .autocomplete-dropdown.visible { display: block; }
+  .autocomplete-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; cursor: pointer; font-size: 14px;
+    border-bottom: 1px solid var(--border); transition: background 0.15s;
+  }
+  .autocomplete-item:last-child { border-bottom: none; }
+  .autocomplete-item:hover { background: var(--surface2); }
+  .autocomplete-img {
+    width: 32px; height: 32px; border-radius: 50%;
+    object-fit: cover; flex-shrink: 0; background: var(--surface2);
+  }
+  .autocomplete-name { flex: 1; font-weight: 500; }
+  .autocomplete-followers { font-size: 11px; color: var(--muted); flex-shrink: 0; }
+
   .search-row { display: flex; gap: 8px; margin-bottom: 12px; }
   input[type="text"] {
     flex: 1; background: var(--surface); border: 1px solid var(--border);
@@ -373,7 +396,10 @@
       <button class="btn btn-surprise" id="surpriseBtn" onclick="surpriseMe()">🎲 Überrasch mich</button>
 
       <div class="search-row">
-        <input type="text" id="artistInput" placeholder="Künstler eingeben…">
+        <div class="autocomplete-wrap">
+          <input type="text" id="artistInput" placeholder="Künstler eingeben…" autocomplete="off">
+          <div class="autocomplete-dropdown" id="searchDropdown"></div>
+        </div>
         <button class="btn btn-search" id="searchBtn" onclick="loadAlbums()">Suchen</button>
       </div>
 
@@ -405,7 +431,10 @@
       </div>
       <button class="btn btn-surprise" id="surpriseFavsBtn" onclick="surpriseFavs()" style="margin-bottom:12px;">🎲 Favoriten würfeln</button>
       <div class="fav-add-row">
-        <input type="text" id="favInput" placeholder="Künstler hinzufügen…">
+        <div class="autocomplete-wrap">
+          <input type="text" id="favInput" placeholder="Künstler hinzufügen…" autocomplete="off">
+          <div class="autocomplete-dropdown" id="favDropdown"></div>
+        </div>
         <button onclick="addFavorite()">+</button>
       </div>
       <div class="fav-list" id="favList"></div>
@@ -478,7 +507,7 @@
 
       <div class="system-footer">
         <button class="logout-link" onclick="logout()">Abmelden</button>
-        <span style="font-size:11px;color:var(--muted);margin-left:8px">v3.9</span>
+        <span style="font-size:11px;color:var(--muted);margin-left:8px">v3.10</span>
       </div>
 
     </div>
@@ -566,6 +595,41 @@ function switchTab(name, btn) {
 }
 
 // ── Drawer ────────────────────────────────────────────────────────────────────
+// Play directly by artist object (from autocomplete)
+async function playArtistById(artist) {
+  const token = getToken();
+  const btn = document.getElementById("searchBtn");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>';
+  hideError();
+  try {
+    const studioAlbums = filterAlbums(await fetchAllAlbums(artist.id));
+    if (!studioAlbums.length) { showError("Keine Alben gefunden", "Für diesen Künstler wurden keine passenden Alben gefunden."); return; }
+    currentArtistId   = artist.id;
+    currentArtistName = artist.name;
+    currentArtistUrl  = artist.external_urls?.spotify || "";
+    currentMode       = "search";
+    const random = studioAlbums[Math.floor(Math.random() * studioAlbums.length)];
+    addToHistory(random, artist.name, studioAlbums.length, currentArtistUrl);
+    showAlbumCard(random, artist.name, studioAlbums.length, currentArtistUrl);
+    hideError();
+    await playAlbum();
+  } catch(e) { showError("Fehler", e.message); }
+  finally { btn.disabled = false; btn.textContent = "Suchen"; }
+}
+
+function addFavoriteById(id, name) {
+  const favs = getFavorites();
+  if (favs.length >= FAV_MAX) return;
+  if (favs.find(f => (typeof f === 'object' ? f.name : f).toLowerCase() === name.toLowerCase())) return;
+  favs.push({ id, name });
+  saveFavorites(favs);
+  renderFavorites();
+}
+
+function getFavName(f) { return typeof f === 'object' ? f.name : f; }
+function getFavId(f)   { return typeof f === 'object' ? f.id   : null; }
+
 function bookmarkCurrent() {
   if (!currentAlbumData) return;
   addBookmark(currentAlbumData.album, currentAlbumData.artistName);
@@ -578,7 +642,7 @@ function loadDefaultFavorites() {
   const current = getFavorites();
   let added = 0;
   for (const name of DEFAULT_FAVORITES) {
-    if (!current.find(f => f.toLowerCase() === name.toLowerCase())) {
+    if (!current.find(f => getFavName(f).toLowerCase() === name.toLowerCase())) {
       current.push(name);
       added++;
     }
@@ -798,8 +862,8 @@ function addFavorite() {
   if (!name) return;
   const favs = getFavorites();
   if (favs.length >= FAV_MAX) { input.value = ""; return; }
-  if (favs.find(f => f.toLowerCase() === name.toLowerCase())) { input.value = ""; return; }
-  favs.push(name);
+  if (favs.find(f => getFavName(f).toLowerCase() === name.toLowerCase())) { input.value = ""; return; }
+  favs.push(name); // als String ohne ID
   saveFavorites(favs);
   input.value = "";
   renderFavorites();
@@ -808,8 +872,7 @@ function addFavorite() {
 function showModal(name) {
   document.getElementById("modalText").textContent = `„${name}" aus den Favoriten entfernen?`;
   document.getElementById("modalConfirm").onclick = () => {
-    saveFavorites(getFavorites().filter(f => f !== name));
-    renderFavorites();
+    doRemoveFavorite(name);
     closeModal();
   };
   document.getElementById("modal").classList.add("visible");
@@ -823,12 +886,18 @@ function removeFavorite(name) {
   showModal(name);
 }
 
+function doRemoveFavorite(name) {
+  saveFavorites(getFavorites().filter(f => getFavName(f) !== name));
+  renderFavorites();
+}
+
 function renderFavorites() {
-  const favs = getFavorites().slice().sort((a, b) => a.localeCompare(b, 'de'));
-  const full = getFavorites().length >= FAV_MAX;
-  document.getElementById("favCount").textContent = `${getFavorites().length}/${FAV_MAX}`;
+  const favs = getFavorites().slice().sort((a, b) => getFavName(a).localeCompare(getFavName(b), 'de'));
+  const total = getFavorites().length;
+  const full = total >= FAV_MAX;
+  document.getElementById("favCount").textContent = `${total}/${FAV_MAX}`;
   document.getElementById("favCount").style.color = full ? "var(--warn)" : "var(--muted)";
-  document.getElementById("syssFavCount").textContent = `${getFavorites().length}/${FAV_MAX}`;
+  document.getElementById("syssFavCount").textContent = `${total}/${FAV_MAX}`;
   const addBtn = document.querySelector(".fav-add-row button");
   if (addBtn) { addBtn.disabled = full; addBtn.style.opacity = full ? "0.4" : "1"; }
   const el = document.getElementById("favList");
@@ -836,22 +905,52 @@ function renderFavorites() {
     el.innerHTML = '<div class="fav-empty">Noch keine Favoriten.<br>Künstler oben hinzufügen.</div>';
     return;
   }
-  el.innerHTML = favs.map(name => `
-    <div class="fav-item" onclick="loadAlbumsByName('${name.replace(/'/g, "\\'")}')">
+  el.innerHTML = favs.map(f => {
+    const name = getFavName(f);
+    const safe = name.replace(/'/g, "\\'");
+    return `
+    <div class="fav-item" onclick="loadAlbumsByName('${safe}', ${f.id ? `'${f.id}'` : 'null'})">
       <span class="fav-name">${name}</span>
-      <button class="fav-remove" onclick="event.stopPropagation();removeFavorite('${name.replace(/'/g, "\\'")}')">×</button>
-    </div>`).join("");
+      <button class="fav-remove" onclick="event.stopPropagation();removeFavorite('${safe}')">×</button>
+    </div>`;
+  }).join("");
 }
 
-async function loadAlbumsByName(artistName) {
+async function loadAlbumsByName(artistName, artistId = null) {
   document.getElementById("artistInput").value = "";
   switchTab('home', document.querySelector('.tab-btn'));
-  // Direkt suchen ohne Eingabefeld
+  hideError();
+
+  // Wenn ID bekannt → direkt abspielen ohne erneute Suche
+  if (artistId) {
+    const btn = document.getElementById("searchBtn");
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spin"></span>';
+    try {
+      const token = getToken();
+      // Artist-Details holen für URL
+      const ar = await fetch(`https://api.spotify.com/v1/artists/${artistId}`, {headers:{Authorization:"Bearer "+token}});
+      const artist = await ar.json();
+      const studioAlbums = filterAlbums(await fetchAllAlbums(artistId));
+      if (!studioAlbums.length) { showError("Keine Alben gefunden", "Für diesen Künstler wurden keine passenden Alben gefunden."); return; }
+      currentArtistId   = artistId;
+      currentArtistName = artist.name || artistName;
+      currentArtistUrl  = artist.external_urls?.spotify || "";
+      currentMode       = "search";
+      const random = studioAlbums[Math.floor(Math.random() * studioAlbums.length)];
+      addToHistory(random, currentArtistName, studioAlbums.length, currentArtistUrl);
+      showAlbumCard(random, currentArtistName, studioAlbums.length, currentArtistUrl);
+      await playAlbum();
+    } catch(e) { showError("Fehler", e.message); }
+    finally { document.getElementById("searchBtn").disabled = false; document.getElementById("searchBtn").textContent = "Suchen"; }
+    return;
+  }
+
+  // Fallback: Namenssuche
   const token = getToken();
   const btn = document.getElementById("searchBtn");
   btn.disabled = true;
   btn.innerHTML = '<span class="spin"></span>';
-  hideError();
   try {
     const sr = await fetch(
       "https://api.spotify.com/v1/search?q=" + encodeURIComponent(artistName) + "&type=artist&limit=10&market=DE",
@@ -870,7 +969,6 @@ async function loadAlbumsByName(artistName) {
     const random = studioAlbums[Math.floor(Math.random() * studioAlbums.length)];
     addToHistory(random, found.name, studioAlbums.length, currentArtistUrl);
     showAlbumCard(random, found.name, studioAlbums.length, currentArtistUrl);
-    hideError();
     await playAlbum();
   } catch(e) { showError("Fehler", e.message); }
   finally { btn.disabled = false; btn.textContent = "Suchen"; }
@@ -887,27 +985,45 @@ async function surpriseFavs() {
 
     const token = getToken();
     for (let i = 0; i < 20; i++) {
-      const artistName = favs[Math.floor(Math.random() * favs.length)];
+      const fav = favs[Math.floor(Math.random() * favs.length)];
+      const favName = getFavName(fav);
+      const favId   = getFavId(fav);
       try {
-        const sr = await fetch(
-          "https://api.spotify.com/v1/search?q=" + encodeURIComponent(artistName) + "&type=artist&limit=10&market=DE",
-          { headers:{ Authorization:"Bearer " + token } }
-        );
-        const sd = await sr.json();
-        const found = sd?.artists?.items?.[0];
-        if (!found) continue;
+        let artistId, artistName, artistUrl;
 
-        const studioAlbums = filterAlbums(await fetchAllAlbums(found.id));
+        if (favId) {
+          // ID bekannt → direkt verwenden
+          const ar = await fetch(`https://api.spotify.com/v1/artists/${favId}`, {headers:{Authorization:"Bearer "+token}});
+          const artist = await ar.json();
+          artistId  = favId;
+          artistName = artist.name || favName;
+          artistUrl  = artist.external_urls?.spotify || "";
+        } else {
+          // Namenssuche
+          const sr = await fetch(
+            "https://api.spotify.com/v1/search?q=" + encodeURIComponent(favName) + "&type=artist&limit=10&market=DE",
+            { headers:{ Authorization:"Bearer " + token } }
+          );
+          const sd = await sr.json();
+          const items = sd?.artists?.items || [];
+          const found = items.find(a => a.name.toLowerCase() === favName.toLowerCase()) || items[0];
+          if (!found) continue;
+          artistId  = found.id;
+          artistName = found.name;
+          artistUrl  = found.external_urls?.spotify || "";
+        }
+
+        const studioAlbums = filterAlbums(await fetchAllAlbums(artistId));
         if (!studioAlbums.length) continue;
 
-        currentArtistId   = found.id;
-        currentArtistName = found.name;
-        currentArtistUrl  = found.external_urls?.spotify || "";
+        currentArtistId   = artistId;
+        currentArtistName = artistName;
+        currentArtistUrl  = artistUrl;
         currentMode       = "search";
 
         const random = studioAlbums[Math.floor(Math.random() * studioAlbums.length)];
-        addToHistory(random, found.name, studioAlbums.length, currentArtistUrl);
-        showAlbumCard(random, found.name, studioAlbums.length, currentArtistUrl);
+        addToHistory(random, artistName, studioAlbums.length, artistUrl);
+        showAlbumCard(random, artistName, studioAlbums.length, artistUrl);
         hideError();
         switchTab('home', document.querySelector('.tab-btn'));
         await playAlbum();
@@ -1371,12 +1487,99 @@ async function playAnother() {
   finally { btn.disabled = false; btn.innerHTML = "🔀 Anderes Album"; }
 }
 
+// ── Autocomplete ──────────────────────────────────────────────────────────────
+
+let autocompleteTimer = null;
+
+function formatFollowers(n) {
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+  if (n >= 1000) return (n / 1000).toFixed(0) + 'K';
+  return n;
+}
+
+async function searchArtists(query) {
+  const token = getToken();
+  if (!query.trim()) return [];
+  try {
+    const r = await fetch(
+      "https://api.spotify.com/v1/search?q=" + encodeURIComponent(query) + "&type=artist&limit=8&market=DE",
+      { headers:{ Authorization:"Bearer " + token } }
+    );
+    const d = await r.json();
+    return d?.artists?.items || [];
+  } catch { return []; }
+}
+
+function showDropdown(dropdownId, artists, onSelect) {
+  const el = document.getElementById(dropdownId);
+  if (!artists.length) { el.classList.remove("visible"); return; }
+  el.innerHTML = artists.map((a, i) => `
+    <div class="autocomplete-item" data-idx="${i}">
+      ${a.images?.[2]?.url || a.images?.[1]?.url
+        ? `<img class="autocomplete-img" src="${a.images?.[2]?.url || a.images?.[1]?.url}" alt="">`
+        : `<div class="autocomplete-img"></div>`}
+      <span class="autocomplete-name">${a.name}</span>
+      <span class="autocomplete-followers">${formatFollowers(a.followers?.total || 0)}</span>
+    </div>`).join("");
+  el.classList.add("visible");
+  el.querySelectorAll(".autocomplete-item").forEach((item, i) => {
+    item.addEventListener("click", () => {
+      el.classList.remove("visible");
+      onSelect(artists[i]);
+    });
+  });
+}
+
+function hideDropdowns() {
+  document.getElementById("searchDropdown")?.classList.remove("visible");
+  document.getElementById("favDropdown")?.classList.remove("visible");
+}
+
 // ── Event listeners ───────────────────────────────────────────────────────────
 document.getElementById("artistInput").addEventListener("keydown", e => {
   if (e.key === "Enter") loadAlbums();
 });
+// Suche – Autocomplete beim Tippen
+document.getElementById("artistInput").addEventListener("input", e => {
+  clearTimeout(autocompleteTimer);
+  const q = e.target.value.trim();
+  if (q.length < 2) { hideDropdowns(); return; }
+  autocompleteTimer = setTimeout(async () => {
+    const artists = await searchArtists(q);
+    showDropdown("searchDropdown", artists, artist => {
+      document.getElementById("artistInput").value = "";
+      playArtistById(artist);
+    });
+  }, 300);
+});
+
+document.getElementById("artistInput").addEventListener("keydown", e => {
+  if (e.key === "Enter") { hideDropdowns(); loadAlbums(); }
+  if (e.key === "Escape") hideDropdowns();
+});
+
+// Favoriten – Autocomplete beim Tippen
+document.getElementById("favInput").addEventListener("input", e => {
+  clearTimeout(autocompleteTimer);
+  const q = e.target.value.trim();
+  if (q.length < 2) { hideDropdowns(); return; }
+  autocompleteTimer = setTimeout(async () => {
+    const artists = await searchArtists(q);
+    showDropdown("favDropdown", artists, artist => {
+      document.getElementById("favInput").value = "";
+      addFavoriteById(artist.id, artist.name);
+    });
+  }, 300);
+});
+
 document.getElementById("favInput").addEventListener("keydown", e => {
-  if (e.key === "Enter") addFavorite();
+  if (e.key === "Enter") { hideDropdowns(); addFavorite(); }
+  if (e.key === "Escape") hideDropdowns();
+});
+
+// Dropdown schließen bei Klick außerhalb
+document.addEventListener("click", e => {
+  if (!e.target.closest(".autocomplete-wrap")) hideDropdowns();
 });
 
 // ── Swipe-Gesten für Tab-Navigation ──────────────────────────────────────────
