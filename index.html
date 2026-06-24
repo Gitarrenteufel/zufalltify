@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Zufalltify v3.8</title>
+<title>Zufalltify v3.9</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1DB954">
 <meta name="mobile-web-app-capable" content="yes">
@@ -478,7 +478,7 @@
 
       <div class="system-footer">
         <button class="logout-link" onclick="logout()">Abmelden</button>
-        <span style="font-size:11px;color:var(--muted);margin-left:8px">v3.8</span>
+        <span style="font-size:11px;color:var(--muted);margin-left:8px">v3.9</span>
       </div>
 
     </div>
@@ -844,9 +844,36 @@ function renderFavorites() {
 }
 
 async function loadAlbumsByName(artistName) {
-  document.getElementById("artistInput").value = artistName;
+  document.getElementById("artistInput").value = "";
   switchTab('home', document.querySelector('.tab-btn'));
-  await loadAlbums();
+  // Direkt suchen ohne Eingabefeld
+  const token = getToken();
+  const btn = document.getElementById("searchBtn");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>';
+  hideError();
+  try {
+    const sr = await fetch(
+      "https://api.spotify.com/v1/search?q=" + encodeURIComponent("artist:" + artistName) + "&type=artist&limit=5&market=DE",
+      { headers:{ Authorization:"Bearer " + token } }
+    );
+    const sd = await sr.json();
+    const items = sd?.artists?.items || [];
+    const found = items.find(a => a.name.toLowerCase() === artistName.toLowerCase()) || items[0];
+    if (!found) { showError("Künstler nicht gefunden", "Bitte Schreibweise prüfen."); return; }
+    const studioAlbums = filterAlbums(await fetchAllAlbums(found.id));
+    if (!studioAlbums.length) { showError("Keine Alben gefunden", "Für diesen Künstler wurden keine passenden Alben gefunden."); return; }
+    currentArtistId   = found.id;
+    currentArtistName = found.name;
+    currentArtistUrl  = found.external_urls?.spotify || "";
+    currentMode       = "search";
+    const random = studioAlbums[Math.floor(Math.random() * studioAlbums.length)];
+    addToHistory(random, found.name, studioAlbums.length, currentArtistUrl);
+    showAlbumCard(random, found.name, studioAlbums.length, currentArtistUrl);
+    hideError();
+    await playAlbum();
+  } catch(e) { showError("Fehler", e.message); }
+  finally { btn.disabled = false; btn.textContent = "Suchen"; }
 }
 
 async function surpriseFavs() {
@@ -1268,12 +1295,15 @@ async function loadAlbums() {
   hideError();
   try {
     const sr = await fetch(
-      "https://api.spotify.com/v1/search?q=" + encodeURIComponent("artist:" + artist) + "&type=artist&limit=1&market=DE",
+      "https://api.spotify.com/v1/search?q=" + encodeURIComponent("artist:" + artist) + "&type=artist&limit=5&market=DE",
       { headers:{ Authorization:"Bearer " + token } }
     );
     const sd = await sr.json();
-    const found = sd?.artists?.items?.[0];
+    const items = sd?.artists?.items || [];
+    // Exakter Namenstrefffer zuerst, Fallback auf ersten Treffer
+    const found = items.find(a => a.name.toLowerCase() === artist.toLowerCase()) || items[0];
     if (!found) { showError("Künstler nicht gefunden", "Bitte Schreibweise prüfen."); return; }
+    document.getElementById("artistInput").value = "";
     const studioAlbums = filterAlbums(await fetchAllAlbums(found.id));
     if (!studioAlbums.length) { showError("Keine Alben gefunden", "Für diesen Künstler wurden keine passenden Alben gefunden."); return; }
     currentArtistId   = found.id;
@@ -1283,9 +1313,9 @@ async function loadAlbums() {
     const random = studioAlbums[Math.floor(Math.random() * studioAlbums.length)];
     addToHistory(random, found.name, studioAlbums.length, currentArtistUrl);
     showAlbumCard(random, found.name, studioAlbums.length, currentArtistUrl);
-    setStatus("");
+    hideError();
     await playAlbum();
-  } catch(e) { setStatus("Fehler: " + e.message, "error"); }
+  } catch(e) { showError("Fehler", e.message); }
   finally { btn.disabled = false; btn.textContent = "Suchen"; }
 }
 
