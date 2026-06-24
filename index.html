@@ -58,10 +58,20 @@
   }
   header h1 { font-size: 26px; font-weight: 600; letter-spacing: -0.02em; }
   /* ── Status ── */
-  #status { font-size: 13px; color: var(--muted); text-align: center; min-height: 16px; margin: 0 20px 12px; transition: color 0.2s; }
-  #status.warn  { color: var(--warn); }
-  #status.error { color: var(--danger); }
-
+  /* ── Error card ── */
+  #errorCard {
+    display: none; margin: 0 20px 12px;
+    background: rgba(224,92,92,0.1); border: 1px solid var(--danger);
+    border-radius: var(--radius); padding: 14px 16px;
+    align-items: center; gap: 12px;
+  }
+  #errorCard.visible { display: flex; }
+  .error-icon { font-size: 24px; flex-shrink: 0; }
+  .error-text { flex: 1; }
+  .error-title { font-size: 14px; font-weight: 600; color: var(--danger); margin-bottom: 2px; }
+  .error-msg { font-size: 12px; color: var(--muted); }
+  .error-close { background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer; padding: 0 4px; flex-shrink: 0; }
+  .error-close:hover { color: var(--text); }
   /* ── Session Banner ── */
   #sessionBanner {
     display: none; margin: 0 20px 16px;
@@ -314,7 +324,14 @@
   <header>
     <h1>Zufalltify</h1>
   </header>
-  <div id="status"></div>
+  <div id="errorCard">
+    <div class="error-icon">⚠️</div>
+    <div class="error-text">
+      <div class="error-title" id="errorTitle"></div>
+      <div class="error-msg" id="errorMsg"></div>
+    </div>
+    <button class="error-close" onclick="hideError()">×</button>
+  </div>
   <div id="sessionBanner">
     <p>⚠️ Session abgelaufen</p>
     <button onclick="login()">Erneut anmelden</button>
@@ -534,10 +551,20 @@ function filterAlbums(items) {
 function getToken() { return localStorage.getItem("spotify_access_token"); }
 
 // ── Status ────────────────────────────────────────────────────────────────────
+function showError(title, msg = "") {
+  document.getElementById("errorTitle").textContent = title;
+  document.getElementById("errorMsg").textContent   = msg;
+  document.getElementById("errorCard").classList.add("visible");
+}
+
+function hideError() {
+  document.getElementById("errorCard").classList.remove("visible");
+}
+
+// Keep setStatus as no-op for token expiry flow
 function setStatus(msg, type = "") {
-  const el = document.getElementById("status");
-  el.textContent = msg;
-  el.className = type;
+  if (!msg) return;
+  if (type === "error" || type === "warn") showError(msg);
 }
 
 function showSessionBanner(visible) {
@@ -933,8 +960,16 @@ async function playAlbum() {
     headers:{ "Authorization":"Bearer " + token, "Content-Type":"application/json" },
     body: JSON.stringify({ context_uri: currentAlbumUri })
   });
-  if (r.ok || r.status === 204) { setStatus("▶ Wiedergabe gestartet"); setTimeout(() => setStatus(""), 3000); }
-  else { const txt = await r.text(); setStatus("Fehler: " + txt, "error"); }
+  if (r.ok || r.status === 204) {
+    hideError();
+  } else {
+    const data = await r.json().catch(() => ({}));
+    if (r.status === 404 || r.status === 403) {
+      showError("Kein Gerät verbunden", "Spotify auf dem Smartphone öffnen und erneut versuchen.");
+    } else {
+      showError("Wiedergabe fehlgeschlagen", data?.error?.message || "Unbekannter Fehler");
+    }
+  }
 }
 
 // ── API helpers ───────────────────────────────────────────────────────────────
@@ -1013,7 +1048,7 @@ async function loadAlbums() {
   const btn = document.getElementById("searchBtn");
   btn.disabled = true;
   btn.innerHTML = '<span class="spin"></span>';
-  setStatus("");
+  hideError();
   try {
     const sr = await fetch(
       "https://api.spotify.com/v1/search?q=" + encodeURIComponent("artist:" + artist) + "&type=artist&limit=1&market=DE",
@@ -1021,9 +1056,9 @@ async function loadAlbums() {
     );
     const sd = await sr.json();
     const found = sd?.artists?.items?.[0];
-    if (!found) { setStatus("Kein Künstler gefunden.", "error"); return; }
+    if (!found) { showError("Künstler nicht gefunden", "Bitte Schreibweise prüfen."); return; }
     const studioAlbums = filterAlbums(await fetchAllAlbums(found.id));
-    if (!studioAlbums.length) { setStatus("Keine Studioalben gefunden.", "error"); return; }
+    if (!studioAlbums.length) { showError("Keine Alben gefunden", "Für diesen Künstler wurden keine passenden Alben gefunden."); return; }
     currentArtistId   = found.id;
     currentArtistName = found.name;
     currentArtistUrl  = found.external_urls?.spotify || "";
@@ -1042,11 +1077,11 @@ async function surpriseMe() {
   const btn = document.getElementById("surpriseBtn");
   btn.disabled = true;
   btn.innerHTML = '<span class="spin"></span>Einen Moment…';
-  setStatus("");
+  hideError();
   try {
     if (!cachedArtists) cachedArtists = await fetchAllFollowedArtists();
     const artists = cachedArtists;
-    if (!artists.length) { setStatus("Keine gefolgten Künstler gefunden.", "error"); return; }
+    if (!artists.length) { showError("Keine gefolgten Künstler", "Bitte Künstler auf Spotify folgen."); return; }
     for (let i = 0; i < 30; i++) {
       const artist = artists[Math.floor(Math.random() * artists.length)];
       const studioAlbums = filterAlbums(await fetchAllAlbums(artist.id));
@@ -1063,7 +1098,7 @@ async function surpriseMe() {
       await playAlbum();
       return;
     }
-    setStatus("Kein passendes Album gefunden.", "error");
+    showError("Kein passendes Album", "Bitte erneut versuchen.");
   } catch(e) { setStatus("Fehler: " + e.message, "error"); }
   finally { btn.disabled = false; btn.innerHTML = "🎲 Überrasch mich"; }
 }
@@ -1076,7 +1111,7 @@ async function playAnother() {
   try {
     if (currentMode === "search" && currentArtistId) {
       const studioAlbums = filterAlbums(await fetchAllAlbums(currentArtistId));
-      if (!studioAlbums.length) { setStatus("Keine Studioalben gefunden.", "error"); return; }
+      if (!studioAlbums.length) { showError("Keine Alben gefunden", "Für diesen Künstler wurden keine passenden Alben gefunden."); return; }
       const random = studioAlbums[Math.floor(Math.random() * studioAlbums.length)];
       addToHistory(random, currentArtistName, studioAlbums.length, currentArtistUrl);
       showAlbumCard(random, currentArtistName, studioAlbums.length, currentArtistUrl);
@@ -1126,7 +1161,7 @@ document.getElementById("appScreen").addEventListener("touchend", e => {
   if (code) {
     setStatus("Anmeldung läuft…");
     const tokenData = await exchangeCode(code);
-    if (tokenData.error) { setStatus("Fehler: " + tokenData.error_description, "error"); return; }
+    if (tokenData.error) { showError("Anmeldefehler", tokenData.error_description); return; }
     localStorage.setItem("spotify_access_token",     tokenData.access_token);
     localStorage.setItem("spotify_refresh_token",    tokenData.refresh_token);
     localStorage.setItem("spotify_token_expires_at", Date.now() + (tokenData.expires_in || 3600) * 1000);
