@@ -1156,7 +1156,7 @@ function logout() {
 async function exchangeCode(code) {
   const r = await fetch(WORKER_URL + "/token", {
     method: "POST", headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({ code })
+    body: JSON.stringify({ code, redirect_uri: REDIRECT_URI })
   });
   return r.json();
 }
