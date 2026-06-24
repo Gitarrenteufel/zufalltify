@@ -466,6 +466,16 @@
         </div>
       </div>
 
+      <div class="system-section">
+        <h2>Favoriten</h2>
+        <div class="system-row">
+          <div class="system-item" style="cursor:pointer" onclick="loadDefaultFavorites()">
+            <span class="si-label">Standardfavoriten laden</span>
+            <span style="color:var(--green);font-size:13px">+</span>
+          </div>
+        </div>
+      </div>
+
       <div class="system-footer">
         <button class="logout-link" onclick="logout()">Abmelden</button>
         <span style="font-size:11px;color:var(--muted);margin-left:8px">v3.8</span>
@@ -564,7 +574,21 @@ function switchTab(name, btn) {
   if (name === 'news') renderNews();
 }
 
-function bookmarkCurrent() {
+function loadDefaultFavorites() {
+  const current = getFavorites();
+  let added = 0;
+  for (const name of DEFAULT_FAVORITES) {
+    if (!current.find(f => f.toLowerCase() === name.toLowerCase())) {
+      current.push(name);
+      added++;
+    }
+  }
+  saveFavorites(current);
+  renderFavorites();
+  const msg = added > 0 ? `${added} Künstler hinzugefügt.` : "Alle bereits vorhanden.";
+  showError(msg, "");
+  setTimeout(() => hideError(), 2500);
+}
   if (!currentAlbumData) return;
   addBookmark(currentAlbumData.album, currentAlbumData.artistName);
   const btn = document.getElementById("bookmarkBtn");
