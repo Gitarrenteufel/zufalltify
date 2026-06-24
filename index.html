@@ -499,7 +499,7 @@
 
   </div>
 
-  <!-- TAB BAR – nur Home + Favoriten -->
+  <!-- TAB BAR – Home + Favoriten (Verlauf, Vorgemerkte Alben, System im Drawer) -->
   <nav class="tab-bar" id="tabBar" style="display:none">
     <button class="tab-btn active" onclick="switchTab('home', this)">
       <span class="tab-icon">🏠</span>
@@ -566,30 +566,6 @@ function switchTab(name, btn) {
 }
 
 // ── Drawer ────────────────────────────────────────────────────────────────────
-function bookmarkCurrent() {
-  if (!currentAlbumData) return;
-  addBookmark(currentAlbumData.album, currentAlbumData.artistName);
-  const btn = document.getElementById("bookmarkBtn");
-  btn.textContent = "✅";
-  setTimeout(() => { btn.textContent = "🔖"; }, 2000);
-}
-
-function loadDefaultFavorites() {
-  const current = getFavorites();
-  let added = 0;
-  for (const name of DEFAULT_FAVORITES) {
-    if (!current.find(f => f.toLowerCase() === name.toLowerCase())) {
-      current.push(name);
-      added++;
-    }
-  }
-  saveFavorites(current);
-  renderFavorites();
-  const msg = added > 0 ? `${added} Künstler hinzugefügt.` : "Alle bereits vorhanden.";
-  showError(msg, "");
-  setTimeout(() => hideError(), 2500);
-}
-
 function bookmarkCurrent() {
   if (!currentAlbumData) return;
   addBookmark(currentAlbumData.album, currentAlbumData.artistName);
