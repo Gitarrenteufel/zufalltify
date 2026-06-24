@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Zufalltify v3.11</title>
+<title>Zufalltify v3.12</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1DB954">
 <meta name="mobile-web-app-capable" content="yes">
@@ -503,7 +503,7 @@
 
       <div class="system-footer">
         <button class="logout-link" onclick="logout()">Abmelden</button>
-        <span style="font-size:11px;color:var(--muted);margin-left:8px">v3.11</span>
+        <span style="font-size:11px;color:var(--muted);margin-left:8px">v3.12</span>
       </div>
 
     </div>
@@ -566,7 +566,10 @@
 </div>
 <script>
 const CLIENT_ID    = "7f11ab0b763a4d95ba84882b55101ee1";
-const REDIRECT_URI = "zufalltify://callback";
+const IS_WEBVIEW = /wv|WebView/.test(navigator.userAgent) || (window.Android !== undefined);
+const REDIRECT_URI = IS_WEBVIEW
+  ? "zufalltify://callback"
+  : "https://gitarrenteufel.github.io/zufalltify/";
 const WORKER_URL   = "https://zufalltify-token.summer-truth-edd2.workers.dev";
 const SCOPES       = "user-read-private user-read-playback-state user-modify-playback-state user-follow-read";
 const HISTORY_MAX  = 50;
