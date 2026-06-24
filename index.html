@@ -854,7 +854,7 @@ async function loadAlbumsByName(artistName) {
   hideError();
   try {
     const sr = await fetch(
-      "https://api.spotify.com/v1/search?q=" + encodeURIComponent("artist:" + artistName) + "&type=artist&limit=5&market=DE",
+      "https://api.spotify.com/v1/search?q=" + encodeURIComponent(artistName) + "&type=artist&limit=10&market=DE",
       { headers:{ Authorization:"Bearer " + token } }
     );
     const sd = await sr.json();
@@ -890,7 +890,7 @@ async function surpriseFavs() {
       const artistName = favs[Math.floor(Math.random() * favs.length)];
       try {
         const sr = await fetch(
-          "https://api.spotify.com/v1/search?q=" + encodeURIComponent("artist:" + artistName) + "&type=artist&limit=1&market=DE",
+          "https://api.spotify.com/v1/search?q=" + encodeURIComponent(artistName) + "&type=artist&limit=10&market=DE",
           { headers:{ Authorization:"Bearer " + token } }
         );
         const sd = await sr.json();
@@ -1295,7 +1295,7 @@ async function loadAlbums() {
   hideError();
   try {
     const sr = await fetch(
-      "https://api.spotify.com/v1/search?q=" + encodeURIComponent("artist:" + artist) + "&type=artist&limit=5&market=DE",
+      "https://api.spotify.com/v1/search?q=" + encodeURIComponent(artist) + "&type=artist&limit=10&market=DE",
       { headers:{ Authorization:"Bearer " + token } }
     );
     const sd = await sr.json();
