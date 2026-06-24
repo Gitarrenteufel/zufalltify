@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Zufalltify v3.6</title>
+<title>Zufalltify v3.7</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1DB954">
 <meta name="mobile-web-app-capable" content="yes">
@@ -459,7 +459,7 @@
 
       <div class="system-footer">
         <button class="logout-link" onclick="logout()">Abmelden</button>
-        <span style="font-size:11px;color:var(--muted);margin-left:8px">v3.6</span>
+        <span style="font-size:11px;color:var(--muted);margin-left:8px">v3.7</span>
       </div>
     </div>
 
@@ -504,7 +504,7 @@ const REDIRECT_URI = "zufalltify://callback";
 const WORKER_URL   = "https://zufalltify-token.summer-truth-edd2.workers.dev";
 const SCOPES       = "user-read-private user-read-playback-state user-modify-playback-state user-follow-read";
 const HISTORY_MAX  = 50;
-const FAV_MAX      = 25;
+const FAV_MAX      = 50;
 
 let currentAlbumUri   = null;
 let currentArtistId   = null;
@@ -635,9 +635,22 @@ function restoreLastAlbum() {
 }
 
 // ── Favoriten ─────────────────────────────────────────────────────────────────
+const DEFAULT_FAVORITES = [
+  "AC/DC", "Amorphis", "Anthrax", "Bolt Thrower", "Death",
+  "Die drei ???", "Ghost Brigade", "Gojira", "John Sinclair",
+  "Katatonia", "Machine Head", "Motörhead", "Pantera",
+  "Paradise Lost", "Sepultura", "Slayer", "Teufelskicker"
+];
+
 function getFavorites() {
-  try { return JSON.parse(localStorage.getItem("zt_favorites") || "[]"); }
-  catch { return []; }
+  try {
+    const stored = localStorage.getItem("zt_favorites");
+    if (stored !== null) return JSON.parse(stored);
+    // Erster Start – Standardliste laden
+    saveFavorites(DEFAULT_FAVORITES);
+    return DEFAULT_FAVORITES.slice();
+  }
+  catch { return DEFAULT_FAVORITES.slice(); }
 }
 
 function saveFavorites(favs) {
@@ -790,6 +803,7 @@ function logout() {
   localStorage.removeItem("spotify_access_token");
   localStorage.removeItem("spotify_token_expires_at");
   localStorage.removeItem("spotify_refresh_token");
+  localStorage.removeItem("zt_followed_cache");
   document.getElementById("loginScreen").style.display = "flex";
   document.getElementById("appScreen").style.display = "none";
   document.getElementById("tabBar").style.display = "none";
@@ -1029,6 +1043,15 @@ async function fetchAllAlbums(artistId) {
 }
 
 async function fetchAllFollowedArtists() {
+  // Cache prüfen – täglich aktualisieren
+  try {
+    const cached = JSON.parse(localStorage.getItem("zt_followed_cache") || "null");
+    if (cached && cached.date === getTodayKey() && cached.artists?.length) {
+      return cached.artists;
+    }
+  } catch {}
+
+  // Neu laden
   const token = getToken();
   let all = [], after = null;
   while (true) {
@@ -1040,7 +1063,18 @@ async function fetchAllFollowedArtists() {
     if (!d?.artists?.cursors?.after) break;
     after = d.artists.cursors.after;
   }
-  return all;
+
+  // In localStorage speichern – nur id, name, external_urls (klein halten)
+  const slim = all.map(a => ({
+    id: a.id,
+    name: a.name,
+    external_urls: a.external_urls
+  }));
+  try {
+    localStorage.setItem("zt_followed_cache", JSON.stringify({ date: getTodayKey(), artists: slim }));
+  } catch {}
+
+  return slim;
 }
 
 // ── loadAlbums ────────────────────────────────────────────────────────────────
