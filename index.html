@@ -1326,18 +1326,18 @@ async function playAnother() {
   btn.disabled = true;
   btn.innerHTML = '<span class="spin"></span>Einen Moment…';
   try {
-    if (currentMode === "search" && currentArtistId) {
+    if (currentArtistId) {
       const studioAlbums = filterAlbums(await fetchAllAlbums(currentArtistId));
       if (!studioAlbums.length) { showError("Keine Alben gefunden", "Für diesen Künstler wurden keine passenden Alben gefunden."); return; }
       const random = studioAlbums[Math.floor(Math.random() * studioAlbums.length)];
       addToHistory(random, currentArtistName, studioAlbums.length, currentArtistUrl);
       showAlbumCard(random, currentArtistName, studioAlbums.length, currentArtistUrl);
-      setStatus("");
+      hideError();
       await playAlbum();
     } else {
       await surpriseMe();
     }
-  } catch(e) { setStatus("Fehler: " + e.message, "error"); }
+  } catch(e) { showError("Fehler", e.message); }
   finally { btn.disabled = false; btn.innerHTML = "🔀 Anderes Album"; }
 }
 
