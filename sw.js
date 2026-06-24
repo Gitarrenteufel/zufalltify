@@ -1,4 +1,4 @@
-const CACHE = "zufalltify-v3.12";
+const CACHE = "zufalltify-v4.0";
 const ASSETS = [
   "/zufalltify/",
   "/zufalltify/index.html",
@@ -24,7 +24,6 @@ self.addEventListener("activate", e => {
 });
 
 self.addEventListener("fetch", e => {
-  // Nur GET-Requests cachen, API-Calls immer live
   if (e.request.method !== "GET") return;
   const url = new URL(e.request.url);
   if (url.hostname !== location.hostname) return;
