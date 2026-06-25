@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Zufalltify v4.5</title>
+<title>Zufalltify v4.6</title>
 <link rel="manifest" href="manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -541,7 +541,7 @@
 
       <div class="system-footer">
         <button class="logout-link" onclick="logout()">Abmelden</button>
-        <span style="font-size:11px;color:var(--muted);margin-left:8px">v4.5</span>
+        <span style="font-size:11px;color:var(--muted);margin-left:8px">v4.6</span>
       </div>
     </div>
 
@@ -616,10 +616,13 @@ const HOERSPIEL_IDS = new Set([
   "6lly2jn9MqaxaWRrkEzOsJ", // John Sinclair
   "55dz39BSDTWYbBFVZRj72b", // Asterix
   "3vlzAKeADwRpvZAgOom2Wh", // Jan Tenner
+  "752p3IcSA76CVOvqoGcFWH", // Teufelskicker
 ]);
 
 // Hörbuch-IDs – immer ausgeblendet (bei Bedarf ergänzen)
-const HOERBUCH_IDS = new Set([]);
+const HOERBUCH_IDS = new Set([
+  "2Xl8Eqgt8a9DsTohLDwZD3", // Gregs Tagebuch
+]);
 
 // Farben je Modus
 const MODE_COLORS = {
@@ -1054,9 +1057,8 @@ function getFavName(f) { return typeof f === 'object' ? f.name : f; }
 function getFavId(f)   { return typeof f === 'object' ? f.id   : null; }
 
 function addFavoriteById(id, name) {
-  // Automatisch in die richtige Liste – Hörspiel-Künstler immer in Hörspiel-Favoriten
-  const targetMode = HOERSPIEL_IDS.has(id) ? "hoerspiel" : "musik";
-  const targetKey  = targetMode === "hoerspiel" ? "zt_favorites_hoerspiel" : "zt_favorites_musik";
+  // Ziel-Liste folgt aktivem Modus
+  const targetKey = appMode === "hoerspiel" ? "zt_favorites_hoerspiel" : "zt_favorites_musik";
   let favs;
   try { favs = JSON.parse(localStorage.getItem(targetKey) || "[]"); }
   catch { favs = []; }
@@ -1426,10 +1428,9 @@ function bookmarkCurrent() {
 
 function addCurrentArtistToFavs() {
   if (!currentArtistId || !currentArtistName) return;
-  const btn        = document.getElementById("favArtistBtn");
-  // Ziel-Modus anhand der ID bestimmen
-  const targetMode = HOERSPIEL_IDS.has(currentArtistId) ? "hoerspiel" : "musik";
-  const targetKey  = targetMode === "hoerspiel" ? "zt_favorites_hoerspiel" : "zt_favorites_musik";
+  const btn       = document.getElementById("favArtistBtn");
+  // Ziel-Liste folgt aktivem Modus
+  const targetKey = appMode === "hoerspiel" ? "zt_favorites_hoerspiel" : "zt_favorites_musik";
   let favs;
   try { favs = JSON.parse(localStorage.getItem(targetKey) || "[]"); } catch { favs = []; }
   if (favs.length >= FAV_MAX) { showError("Favoriten voll", `Maximal ${FAV_MAX} Künstler erlaubt.`); return; }
