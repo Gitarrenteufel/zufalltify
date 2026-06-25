@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Zufalltify v4.6</title>
+<title>Zufalltify v4.7</title>
 <link rel="manifest" href="manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -541,7 +541,7 @@
 
       <div class="system-footer">
         <button class="logout-link" onclick="logout()">Abmelden</button>
-        <span style="font-size:11px;color:var(--muted);margin-left:8px">v4.6</span>
+        <span style="font-size:11px;color:var(--muted);margin-left:8px">v4.7</span>
       </div>
     </div>
 
@@ -676,6 +676,10 @@ function setMode(mode) {
   // Karte verstecken bevor neuer Modus geladen wird
   document.getElementById("albumOfDayCard").classList.remove("visible");
   pickAlbumOfDay().catch(() => {});
+  // Bei Vorgemerkte Alben zurück zu Home wechseln
+  if (document.getElementById("page-bookmarks").classList.contains("active")) {
+    switchTab("home", document.querySelector(".tab-btn"));
+  }
 }
 
 function applyModeColors() {
