@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Zufalltify v4.4</title>
+<title>Zufalltify v4.5</title>
 <link rel="manifest" href="manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -541,7 +541,7 @@
 
       <div class="system-footer">
         <button class="logout-link" onclick="logout()">Abmelden</button>
-        <span style="font-size:11px;color:var(--muted);margin-left:8px">v4.4</span>
+        <span style="font-size:11px;color:var(--muted);margin-left:8px">v4.5</span>
       </div>
     </div>
 
@@ -578,7 +578,7 @@
       <i class="ti ti-settings"></i><span>System</span>
     </div>
     <div style="border-top:1px solid #2a2a2a;margin-top:auto;padding:14px 20px calc(14px + var(--safe-bottom)) 20px;display:flex;align-items:center;justify-content:center;">
-      <span style="font-size:12px;color:#444">Zufalltify v4.4</span>
+
     </div>
   </div>
 
@@ -1426,15 +1426,21 @@ function bookmarkCurrent() {
 
 function addCurrentArtistToFavs() {
   if (!currentArtistId || !currentArtistName) return;
-  const btn  = document.getElementById("favArtistBtn");
-  const favs = getFavorites();
+  const btn        = document.getElementById("favArtistBtn");
+  // Ziel-Modus anhand der ID bestimmen
+  const targetMode = HOERSPIEL_IDS.has(currentArtistId) ? "hoerspiel" : "musik";
+  const targetKey  = targetMode === "hoerspiel" ? "zt_favorites_hoerspiel" : "zt_favorites_musik";
+  let favs;
+  try { favs = JSON.parse(localStorage.getItem(targetKey) || "[]"); } catch { favs = []; }
   if (favs.length >= FAV_MAX) { showError("Favoriten voll", `Maximal ${FAV_MAX} Künstler erlaubt.`); return; }
   if (favs.find(f => getFavName(f).toLowerCase() === currentArtistName.toLowerCase())) {
     btn.textContent = "✅";
     setTimeout(() => { btn.textContent = "⭐"; }, 2000);
     return;
   }
-  addFavoriteById(currentArtistId, currentArtistName);
+  favs.push({ id: currentArtistId, name: currentArtistName });
+  localStorage.setItem(targetKey, JSON.stringify(favs));
+  renderFavorites();
   btn.textContent = "✅";
   setTimeout(() => { btn.textContent = "⭐"; }, 2000);
 }
