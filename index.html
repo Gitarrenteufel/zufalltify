@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Zufalltify v4.8</title>
+<title>Zufalltify v4.9</title>
 <link rel="manifest" href="manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -436,10 +436,10 @@
           <div class="cover-year" id="coverYear"></div>
           <div class="card-footer">
             <a id="albumLink" href="#" target="_blank">In Spotify öffnen</a>
-            <div style="display:flex;gap:8px;">
-              <button id="favArtistBtn" onclick="addCurrentArtistToFavs()" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:0;" title="Künstler zu Favoriten">⭐</button>
-              <button id="bookmarkBtn" onclick="bookmarkCurrent()" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:0;" title="Album vormerken">🔖</button>
-              <button id="blacklistBtn" onclick="blacklistCurrent()" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:0;" title="Künstler sperren"><i class="ti ti-ban" style="font-size:18px;"></i></button>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <button id="favArtistBtn" onclick="addCurrentArtistToFavs()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:0;line-height:1;display:flex;align-items:center;" title="Künstler zu Favoriten"><i class="ti ti-heart" style="font-size:20px;"></i></button>
+              <button id="bookmarkBtn" onclick="bookmarkCurrent()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:0;line-height:1;display:flex;align-items:center;" title="Album vormerken"><i class="ti ti-bookmark" style="font-size:20px;"></i></button>
+              <button id="blacklistBtn" onclick="blacklistCurrent()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:0;line-height:1;display:flex;align-items:center;" title="Künstler sperren"><i class="ti ti-ban" style="font-size:20px;"></i></button>
             </div>
           </div>
         </div>
@@ -457,6 +457,13 @@
       </div>
       <button class="btn btn-surprise" id="surpriseFavsBtn" onclick="surpriseFavs()" style="margin-bottom:12px;">🎲 Favoriten würfeln</button>
       <div class="fav-list" id="favList"></div>
+    </div>
+
+    <!-- PLAYLISTEN TAB -->
+    <div class="tab-page" id="page-playlists">
+      <div style="padding-top:16px">
+        <div id="playlistContent"></div>
+      </div>
     </div>
 
     <!-- BLACKLIST TAB -->
@@ -549,7 +556,7 @@
 
       <div class="system-footer">
         <button class="logout-link" onclick="logout()">Abmelden</button>
-        <span style="font-size:11px;color:var(--muted);margin-left:8px">v4.8</span>
+        <span style="font-size:11px;color:var(--muted);margin-left:8px">v4.9</span>
       </div>
     </div>
 
@@ -564,6 +571,10 @@
     <button class="tab-btn" onclick="switchTab('favs', this)">
       <i class="ti ti-heart"></i>
       <span>Favoriten</span>
+    </button>
+    <button class="tab-btn" id="playlistTabBtn" onclick="switchTab('playlists', this)">
+      <i class="ti ti-playlist"></i>
+      <span>Playlisten</span>
     </button>
   </nav>
 
@@ -695,6 +706,10 @@ function setMode(mode) {
   if (document.getElementById("page-blacklist").classList.contains("active")) {
     renderBlacklist();
   }
+  // Bei Playlisten: Hinweis aktualisieren
+  if (document.getElementById("page-playlists").classList.contains("active")) {
+    renderPlaylists();
+  }
 }
 
 function applyModeColors() {
@@ -726,6 +741,7 @@ function switchTab(name, btn) {
   if (name === 'bookmarks')  renderBookmarks();
   if (name === 'blacklist')  renderBlacklist();
   if (name === 'favs')       renderFavorites();
+  if (name === 'playlists')  renderPlaylists();
 }
 
 // ── Drawer ────────────────────────────────────────────────────────────────────
@@ -983,6 +999,145 @@ function filterAlbums(items) {
   });
 }
 
+// ── Playlisten ───────────────────────────────────────────────────────────────
+const DEFAULT_PLAYLISTS = [
+  { id: "37i9dQZF1F5p3rmiWPIYgZ", name: "Lieblingssongs", uri: "spotify:playlist:37i9dQZF1F5p3rmiWPIYgZ" },
+];
+
+function getPlaylists() {
+  try {
+    const stored = localStorage.getItem("zt_playlists");
+    if (stored !== null) return JSON.parse(stored);
+    savePlaylists(DEFAULT_PLAYLISTS);
+    return DEFAULT_PLAYLISTS.slice();
+  } catch { return DEFAULT_PLAYLISTS.slice(); }
+}
+function savePlaylists(list) {
+  localStorage.setItem("zt_playlists", JSON.stringify(list));
+}
+
+function extractPlaylistId(input) {
+  // Spotify URL: https://open.spotify.com/playlist/xxxxx
+  const match = input.match(/playlist\/([A-Za-z0-9]+)/);
+  if (match) return match[1];
+  // Spotify URI: spotify:playlist:xxxxx
+  const uriMatch = input.match(/spotify:playlist:([A-Za-z0-9]+)/);
+  if (uriMatch) return uriMatch[1];
+  return null;
+}
+
+function addPlaylist() {
+  const linkInput = document.getElementById("playlistLinkInput");
+  const nameInput = document.getElementById("playlistNameInput");
+  const link = linkInput.value.trim();
+  const name = nameInput.value.trim();
+  if (!link || !name) { showError("Bitte Link und Name eingeben", ""); return; }
+  const id = extractPlaylistId(link);
+  if (!id) { showError("Ungültiger Playlist-Link", "Spotify-Link oder URI einfügen."); return; }
+  const list = getPlaylists();
+  if (list.find(p => p.id === id)) { showError("Playlist bereits vorhanden", ""); return; }
+  list.push({ id, name, uri: "spotify:playlist:" + id });
+  savePlaylists(list);
+  linkInput.value = "";
+  nameInput.value = "";
+  renderPlaylists();
+}
+
+function removePlaylist(id) {
+  savePlaylists(getPlaylists().filter(p => p.id !== id));
+  renderPlaylists();
+}
+
+async function startPlaylist(uri, name, cover) {
+  const token    = getToken();
+  const deviceId = localStorage.getItem("spotify_device_id");
+  // Shuffle aktivieren
+  const shuffleSuffix = deviceId ? "?device_id=" + encodeURIComponent(deviceId) : "";
+  try {
+    await fetch("https://api.spotify.com/v1/me/player/shuffle?state=true" + shuffleSuffix, {
+      method: "PUT", headers: { Authorization: "Bearer " + token }
+    });
+  } catch {}
+  // Playlist abspielen
+  let url = "https://api.spotify.com/v1/me/player/play";
+  if (deviceId) url += "?device_id=" + encodeURIComponent(deviceId);
+  let body;
+  body = JSON.stringify({ context_uri: uri });
+  const r = await fetch(url, {
+    method: "PUT",
+    headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+    body
+  });
+  if (r.ok || r.status === 204) {
+    hideError();
+    // Album-Karte mit Playlist-Info befüllen
+    currentAlbumUri   = uri;
+    currentAlbumData  = null;
+    currentArtistId   = null;
+    currentArtistName = null;
+    document.getElementById("coverArtist").textContent = "Playlist";
+    document.getElementById("coverTitle").textContent  = name;
+    document.getElementById("coverYear").textContent   = "";
+    document.getElementById("albumLink").href = uri.replace("spotify:playlist:", "https://open.spotify.com/playlist/");
+    const img = document.getElementById("albumCover");
+    const ph  = document.getElementById("coverPlaceholder");
+    if (cover) { img.src = cover; img.style.display = "block"; ph.style.display = "none"; }
+    else        { img.style.display = "none"; ph.style.display = "flex"; ph.textContent = "🎵"; }
+    document.getElementById("albumCard").classList.add("visible");
+    document.getElementById("anotherBtn").classList.remove("visible");
+    switchTab("home", document.querySelector(".tab-btn"));
+  } else {
+    showError("Wiedergabe fehlgeschlagen", "Spotify öffnen und erneut versuchen.");
+  }
+}
+
+async function getSpotifyUserId() {
+  const cached = localStorage.getItem("zt_spotify_user_id");
+  if (cached) return cached;
+  const token = getToken();
+  const r = await fetch("https://api.spotify.com/v1/me", { headers: { Authorization: "Bearer " + token } });
+  const d = await r.json();
+  if (d.id) localStorage.setItem("zt_spotify_user_id", d.id);
+  return d.id || "";
+}
+
+async function loadPlaylistCover(id) {
+  if (id === "liked") return null;
+  try {
+    const token = getToken();
+    const r = await fetch(`https://api.spotify.com/v1/playlists/${id}?fields=images`, {
+      headers: { Authorization: "Bearer " + token }
+    });
+    const d = await r.json();
+    return d?.images?.[0]?.url || null;
+  } catch { return null; }
+}
+
+function renderPlaylists() {
+  const el = document.getElementById("playlistContent");
+  if (appMode === "hoerspiel") {
+    el.innerHTML = '<div style="padding:20px;font-size:13px;color:var(--muted);text-align:center">Playlisten sind nur im Musik-Modus verfügbar.</div>';
+    return;
+  }
+  const list = getPlaylists();
+  el.innerHTML = `
+    <div style="display:flex;gap:8px;margin-bottom:16px;">
+      <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+        <input type="text" id="playlistLinkInput" placeholder="Spotify-Link einfügen…" style="width:100%;">
+        <input type="text" id="playlistNameInput" placeholder="Name der Playlist…" style="width:100%;">
+      </div>
+      <button onclick="addPlaylist()" style="background:var(--accent);border:none;color:#000;border-radius:10px;font-size:22px;font-weight:700;cursor:pointer;padding:0 16px;align-self:stretch;">+</button>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+      ${list.map(p => `
+        <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;" onclick="startPlaylist('${p.uri}', '${p.name.replace(/'/g,"\'")}', null)">
+          <i class="ti ti-playlist" style="font-size:20px;color:var(--muted);flex-shrink:0;"></i>
+          <span style="flex:1;font-size:15px;font-weight:500;">${p.name}</span>
+          ${p.id !== "37i9dQZF1F5p3rmiWPIYgZ" ? `<button onclick="event.stopPropagation();removePlaylist('${p.id}')" style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 4px;">×</button>` : ""}
+        </div>`).join("")}
+    </div>`;
+}
+
 // ── Blacklist ─────────────────────────────────────────────────────────────────
 function blacklistCurrent() {
   if (!currentArtistId || !currentArtistName) return;
@@ -994,8 +1149,8 @@ function blacklistCurrent() {
   }
   list.push({ id: currentArtistId, name: currentArtistName });
   saveBlacklist(list);
-  btn.innerHTML = '🚫';
-  setTimeout(() => { btn.innerHTML = '<i class="ti ti-ban" style="font-size:18px;"></i>'; }, 2000);
+  btn.innerHTML = '<i class="ti ti-ban" style="font-size:20px;color:var(--danger);"></i>';
+  setTimeout(() => { btn.innerHTML = '<i class="ti ti-ban" style="font-size:20px;"></i>'; }, 2000);
 }
 
 function removeFromBlacklist(id) {
@@ -1494,8 +1649,8 @@ function bookmarkCurrent() {
   if (!currentAlbumData) return;
   addBookmark(currentAlbumData.album, currentAlbumData.artistName);
   const btn = document.getElementById("bookmarkBtn");
-  btn.textContent = "✅";
-  setTimeout(() => { btn.textContent = "🔖"; }, 2000);
+  btn.innerHTML = '<i class="ti ti-bookmark" style="font-size:20px;color:var(--accent);"></i>';
+  setTimeout(() => { btn.innerHTML = '<i class="ti ti-bookmark" style="font-size:20px;"></i>'; }, 2000);
 }
 
 function addCurrentArtistToFavs() {
@@ -1507,15 +1662,15 @@ function addCurrentArtistToFavs() {
   try { favs = JSON.parse(localStorage.getItem(targetKey) || "[]"); } catch { favs = []; }
   if (favs.length >= FAV_MAX) { showError("Favoriten voll", `Maximal ${FAV_MAX} Künstler erlaubt.`); return; }
   if (favs.find(f => getFavName(f).toLowerCase() === currentArtistName.toLowerCase())) {
-    btn.textContent = "✅";
-    setTimeout(() => { btn.textContent = "⭐"; }, 2000);
+    btn.innerHTML = '<i class="ti ti-heart" style="font-size:20px;color:var(--accent);"></i>';
+    setTimeout(() => { btn.innerHTML = '<i class="ti ti-heart" style="font-size:20px;"></i>'; }, 2000);
     return;
   }
   favs.push({ id: currentArtistId, name: currentArtistName });
   localStorage.setItem(targetKey, JSON.stringify(favs));
   renderFavorites();
-  btn.textContent = "✅";
-  setTimeout(() => { btn.textContent = "⭐"; }, 2000);
+  btn.innerHTML = '<i class="ti ti-heart" style="font-size:20px;color:var(--accent);"></i>';
+  setTimeout(() => { btn.innerHTML = '<i class="ti ti-heart" style="font-size:20px;"></i>'; }, 2000);
 }
 
 // ── Album des Tages ───────────────────────────────────────────────────────────
@@ -1713,7 +1868,7 @@ document.addEventListener("click", e => {
 });
 
 // ── Swipe-Gesten ──────────────────────────────────────────────────────────────
-const TABS = ["home", "favs"];
+const TABS = ["home", "favs", "playlists"];
 let swipeStartX = 0, swipeStartY = 0;
 
 document.getElementById("appScreen").addEventListener("touchstart", e => {
