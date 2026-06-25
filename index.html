@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Zufalltify v4.7</title>
+<title>Zufalltify v4.8</title>
 <link rel="manifest" href="manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -439,6 +439,7 @@
             <div style="display:flex;gap:8px;">
               <button id="favArtistBtn" onclick="addCurrentArtistToFavs()" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:0;" title="Künstler zu Favoriten">⭐</button>
               <button id="bookmarkBtn" onclick="bookmarkCurrent()" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:0;" title="Album vormerken">🔖</button>
+              <button id="blacklistBtn" onclick="blacklistCurrent()" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:0;" title="Künstler sperren"><i class="ti ti-ban" style="font-size:18px;"></i></button>
             </div>
           </div>
         </div>
@@ -456,6 +457,13 @@
       </div>
       <button class="btn btn-surprise" id="surpriseFavsBtn" onclick="surpriseFavs()" style="margin-bottom:12px;">🎲 Favoriten würfeln</button>
       <div class="fav-list" id="favList"></div>
+    </div>
+
+    <!-- BLACKLIST TAB -->
+    <div class="tab-page" id="page-blacklist">
+      <div style="padding-top:16px">
+        <div id="blacklistList"></div>
+      </div>
     </div>
 
     <!-- VERLAUF TAB -->
@@ -541,7 +549,7 @@
 
       <div class="system-footer">
         <button class="logout-link" onclick="logout()">Abmelden</button>
-        <span style="font-size:11px;color:var(--muted);margin-left:8px">v4.7</span>
+        <span style="font-size:11px;color:var(--muted);margin-left:8px">v4.8</span>
       </div>
     </div>
 
@@ -572,6 +580,9 @@
     </div>
     <div class="drawer-item" onclick="openDrawerTab('bookmarks')">
       <i class="ti ti-bookmark"></i><span>Vorgemerkte Alben</span>
+    </div>
+    <div class="drawer-item" onclick="openDrawerTab('blacklist')">
+      <i class="ti ti-ban"></i><span>Gesperrte Künstler</span>
     </div>
     <div style="border-top:1px solid #2a2a2a;margin:4px 0"></div>
     <div class="drawer-item" onclick="openDrawerTab('system')">
@@ -680,6 +691,10 @@ function setMode(mode) {
   if (document.getElementById("page-bookmarks").classList.contains("active")) {
     renderBookmarks();
   }
+  // Bei Gesperrte Künstler: Inhalt für neuen Modus neu laden
+  if (document.getElementById("page-blacklist").classList.contains("active")) {
+    renderBlacklist();
+  }
 }
 
 function applyModeColors() {
@@ -707,9 +722,10 @@ function switchTab(name, btn) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
   if (btn) btn.classList.add('active');
-  if (name === 'stats')     renderHistory();
-  if (name === 'bookmarks') renderBookmarks();
-  if (name === 'favs')      renderFavorites();
+  if (name === 'stats')      renderHistory();
+  if (name === 'bookmarks')  renderBookmarks();
+  if (name === 'blacklist')  renderBlacklist();
+  if (name === 'favs')       renderFavorites();
 }
 
 // ── Drawer ────────────────────────────────────────────────────────────────────
@@ -728,6 +744,7 @@ function openDrawerTab(name) {
   document.getElementById('page-' + name).classList.add('active');
   if (name === 'stats')     renderHistory();
   if (name === 'bookmarks') renderBookmarks();
+  if (name === 'blacklist') renderBlacklist();
 }
 
 // ── Auth ─────────────────────────────────────────────────────────────────────
@@ -881,17 +898,32 @@ function isExcluded(artist) {
   return HOERBUCH_IDS.has(artist.id);
 }
 
+function getBlacklist() {
+  const key = appMode === "hoerspiel" ? "zt_blacklist_hoerspiel" : "zt_blacklist_musik";
+  try { return JSON.parse(localStorage.getItem(key) || "[]"); } catch { return []; }
+}
+function getBlacklistForMode(mode) {
+  const key = mode === "hoerspiel" ? "zt_blacklist_hoerspiel" : "zt_blacklist_musik";
+  try { return JSON.parse(localStorage.getItem(key) || "[]"); } catch { return []; }
+}
+function saveBlacklist(list) {
+  const key = appMode === "hoerspiel" ? "zt_blacklist_hoerspiel" : "zt_blacklist_musik";
+  localStorage.setItem(key, JSON.stringify(list));
+}
+
 function getArtistPoolForMode(artists) {
+  const blacklist = getBlacklist();
+  const blacklistIds = new Set(blacklist.map(b => b.id));
   if (appMode === "hoerspiel") {
     // Hörspiel-Pool kommt aus den Hörspiel-Favoriten, nicht aus gefolgten Künstlern
     return getFavorites().map(f => ({
       id: getFavId(f),
       name: getFavName(f),
       external_urls: { spotify: `https://open.spotify.com/artist/${getFavId(f)}` }
-    })).filter(a => a.id && !HOERBUCH_IDS.has(a.id));
+    })).filter(a => a.id && !HOERBUCH_IDS.has(a.id) && !blacklistIds.has(a.id));
   }
-  // Musik: gefollte Künstler minus Hörspiele minus Hörbücher
-  return artists.filter(a => !HOERSPIEL_IDS.has(a.id) && !HOERBUCH_IDS.has(a.id));
+  // Musik: gefollte Künstler minus Hörspiele minus Hörbücher minus Blacklist
+  return artists.filter(a => !HOERSPIEL_IDS.has(a.id) && !HOERBUCH_IDS.has(a.id) && !blacklistIds.has(a.id));
 }
 
 // ── Filter ────────────────────────────────────────────────────────────────────
@@ -949,6 +981,43 @@ function filterAlbums(items) {
     seen.add(k);
     return true;
   });
+}
+
+// ── Blacklist ─────────────────────────────────────────────────────────────────
+function blacklistCurrent() {
+  if (!currentArtistId || !currentArtistName) return;
+  const btn = document.getElementById("blacklistBtn");
+  const list = getBlacklist();
+  if (list.find(b => b.id === currentArtistId)) {
+    btn.innerHTML = '<i class="ti ti-ban" style="font-size:18px;"></i>';
+    return;
+  }
+  list.push({ id: currentArtistId, name: currentArtistName });
+  saveBlacklist(list);
+  btn.innerHTML = '🚫';
+  setTimeout(() => { btn.innerHTML = '<i class="ti ti-ban" style="font-size:18px;"></i>'; }, 2000);
+}
+
+function removeFromBlacklist(id) {
+  const list = getBlacklist().filter(b => b.id !== id);
+  saveBlacklist(list);
+  renderBlacklist();
+}
+
+function renderBlacklist() {
+  const list = getBlacklist();
+  const el   = document.getElementById("blacklistList");
+  if (!list.length) {
+    el.innerHTML = '<div style="padding:20px;font-size:13px;color:var(--muted);text-align:center">Keine gesperrten Künstler.<br>Ban-Symbol beim Künstler antippen.</div>';
+    return;
+  }
+  const sorted = list.slice().sort((a, b) => a.name.localeCompare(b.name, 'de'));
+  el.innerHTML = sorted.map(b => `
+    <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);">
+      <i class="ti ti-ban" style="font-size:20px;color:var(--muted);flex-shrink:0;"></i>
+      <span style="flex:1;font-size:15px;">${b.name}</span>
+      <button onclick="removeFromBlacklist('${b.id}')" style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 4px;" title="Sperre aufheben">×</button>
+    </div>`).join("");
 }
 
 // ── Verlauf ───────────────────────────────────────────────────────────────────
