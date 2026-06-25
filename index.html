@@ -676,9 +676,9 @@ function setMode(mode) {
   // Karte verstecken bevor neuer Modus geladen wird
   document.getElementById("albumOfDayCard").classList.remove("visible");
   pickAlbumOfDay().catch(() => {});
-  // Bei Vorgemerkte Alben zurück zu Home wechseln
+  // Bei Vorgemerkte Alben: Inhalt für neuen Modus neu laden
   if (document.getElementById("page-bookmarks").classList.contains("active")) {
-    switchTab("home", document.querySelector(".tab-btn"));
+    renderBookmarks();
   }
 }
 
