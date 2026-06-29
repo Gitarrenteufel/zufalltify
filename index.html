@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Zufalltify v4.10</title>
+<title>Zufalltify v4.11</title>
 <link rel="manifest" href="manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -556,7 +556,7 @@
 
       <div class="system-footer">
         <button class="logout-link" onclick="logout()">Abmelden</button>
-        <span style="font-size:11px;color:var(--muted);margin-left:8px">v4.10</span>
+        <span style="font-size:11px;color:var(--muted);margin-left:8px">v4.11</span>
       </div>
     </div>
 
@@ -1402,8 +1402,9 @@ function restoreLastAlbum() {
 }
 
 // ── Play ─────────────────────────────────────────────────────────────────────
-async function waitForDevice(maxRetries = 3, delayMs = 1000) {
+async function waitForDevice(maxRetries = 4, delayMs = 1000) {
   const token = getToken();
+  let spotifyOpened = false;
   for (let i = 0; i < maxRetries; i++) {
     try {
       const r = await fetch("https://api.spotify.com/v1/me/player/devices", {
@@ -1422,6 +1423,13 @@ async function waitForDevice(maxRetries = 3, delayMs = 1000) {
         return true;
       }
     } catch {}
+    // Beim ersten Fehlversuch Spotify öffnen (nur einmal)
+    if (i === 0 && !spotifyOpened) {
+      if (typeof AndroidBridge !== "undefined") {
+        AndroidBridge.openSpotify();
+        spotifyOpened = true;
+      }
+    }
     if (i < maxRetries - 1) await new Promise(r => setTimeout(r, delayMs));
   }
   return false;
