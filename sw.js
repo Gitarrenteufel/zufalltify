@@ -1,4 +1,4 @@
-const CACHE = "zufalltify-v4.9";
+const CACHE = "zufalltify-v4.10";
 const ASSETS = [
   "/zufalltify/",
   "/zufalltify/index.html",

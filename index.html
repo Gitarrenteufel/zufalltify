@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Zufalltify v4.9</title>
+<title>Zufalltify v4.10</title>
 <link rel="manifest" href="manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -556,7 +556,7 @@
 
       <div class="system-footer">
         <button class="logout-link" onclick="logout()">Abmelden</button>
-        <span style="font-size:11px;color:var(--muted);margin-left:8px">v4.9</span>
+        <span style="font-size:11px;color:var(--muted);margin-left:8px">v4.10</span>
       </div>
     </div>
 
@@ -1402,15 +1402,51 @@ function restoreLastAlbum() {
 }
 
 // ── Play ─────────────────────────────────────────────────────────────────────
+async function waitForDevice(maxRetries = 3, delayMs = 1000) {
+  const token = getToken();
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      const r = await fetch("https://api.spotify.com/v1/me/player/devices", {
+        headers: { Authorization: "Bearer " + token }
+      });
+      const data    = await r.json();
+      const devices = data.devices || [];
+      if (devices.length > 0) {
+        // Gerät automatisch setzen falls noch keins gespeichert
+        const savedId = localStorage.getItem("spotify_device_id");
+        if (!savedId || !devices.find(d => d.id === savedId)) {
+          localStorage.setItem("spotify_device_id",   devices[0].id);
+          localStorage.setItem("spotify_device_name", devices[0].name);
+          updateDevicePill(devices[0].name + " (automatisch)", true);
+        }
+        return true;
+      }
+    } catch {}
+    if (i < maxRetries - 1) await new Promise(r => setTimeout(r, delayMs));
+  }
+  return false;
+}
+
 async function playAlbum() {
   const exp = localStorage.getItem("spotify_token_expires_at");
   if (exp && parseInt(exp) - Date.now() < 0) {
     const ok = await refreshToken();
     if (!ok) { showSessionBanner(true); return; }
   }
-  const token    = getToken();
-  const deviceId = localStorage.getItem("spotify_device_id");
+  const token = getToken();
   if (!currentAlbumUri) return;
+
+  // Gerät prüfen, bei Bedarf auf Spotify warten
+  let deviceId = localStorage.getItem("spotify_device_id");
+  if (!deviceId) {
+    const found = await waitForDevice(3, 1000);
+    if (!found) {
+      showError("Kein Gerät verbunden", "Spotify öffnen und erneut versuchen.");
+      return;
+    }
+    deviceId = localStorage.getItem("spotify_device_id");
+  }
+
   await disableShuffleAndRepeat();
   let url = "https://api.spotify.com/v1/me/player/play";
   if (deviceId) url += "?device_id=" + encodeURIComponent(deviceId);
@@ -1424,7 +1460,20 @@ async function playAlbum() {
   } else {
     const data = await r.json().catch(() => ({}));
     if (r.status === 404 || r.status === 403) {
-      showError("Kein Gerät verbunden", "Spotify auf dem Smartphone öffnen und erneut versuchen.");
+      // Nochmal versuchen mit neuem Gerät
+      const found = await waitForDevice(2, 1500);
+      if (found) {
+        deviceId = localStorage.getItem("spotify_device_id");
+        let url2 = "https://api.spotify.com/v1/me/player/play";
+        if (deviceId) url2 += "?device_id=" + encodeURIComponent(deviceId);
+        const r2 = await fetch(url2, {
+          method: "PUT",
+          headers:{ "Authorization":"Bearer " + token, "Content-Type":"application/json" },
+          body: JSON.stringify({ context_uri: currentAlbumUri })
+        });
+        if (r2.ok || r2.status === 204) { hideError(); return; }
+      }
+      showError("Kein Gerät verbunden", "Spotify öffnen und erneut versuchen.");
     } else {
       showError("Wiedergabe fehlgeschlagen", data?.error?.message || "Unbekannter Fehler");
     }
