@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Zufalltify v4.11</title>
+<title>Zufalltify v4.14</title>
 <link rel="manifest" href="manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -556,7 +556,7 @@
 
       <div class="system-footer">
         <button class="logout-link" onclick="logout()">Abmelden</button>
-        <span style="font-size:11px;color:var(--muted);margin-left:8px">v4.11</span>
+        <span style="font-size:11px;color:var(--muted);margin-left:8px">v4.14</span>
       </div>
     </div>
 
@@ -1051,23 +1051,25 @@ function removePlaylist(id) {
 async function startPlaylist(uri, name, cover) {
   const token    = getToken();
   const deviceId = localStorage.getItem("spotify_device_id");
-  // Shuffle aktivieren
-  const shuffleSuffix = deviceId ? "?device_id=" + encodeURIComponent(deviceId) : "";
+  const suffix   = deviceId ? "?device_id=" + encodeURIComponent(deviceId) : "";
+
+  // Shuffle zuerst setzen und auf Bestätigung warten
   try {
-    await fetch("https://api.spotify.com/v1/me/player/shuffle?state=true" + shuffleSuffix, {
+    await fetch("https://api.spotify.com/v1/me/player/shuffle?state=true" + suffix, {
       method: "PUT", headers: { Authorization: "Bearer " + token }
     });
   } catch {}
+  await new Promise(res => setTimeout(res, 1200));
+
   // Playlist abspielen
   let url = "https://api.spotify.com/v1/me/player/play";
-  if (deviceId) url += "?device_id=" + encodeURIComponent(deviceId);
-  let body;
-  body = JSON.stringify({ context_uri: uri });
+  if (deviceId) url += suffix;
   const r = await fetch(url, {
     method: "PUT",
     headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
-    body
+    body: JSON.stringify({ context_uri: uri })
   });
+
   if (r.ok || r.status === 204) {
     hideError();
     // Album-Karte mit Playlist-Info befüllen
