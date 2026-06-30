@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Zufalltify v4.15</title>
+<title>Zufalltify v4.16</title>
 <link rel="manifest" href="manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -556,7 +556,7 @@
 
       <div class="system-footer">
         <button class="logout-link" onclick="logout()">Abmelden</button>
-        <span style="font-size:11px;color:var(--muted);margin-left:8px">v4.15</span>
+        <span style="font-size:11px;color:var(--muted);margin-left:8px">v4.16</span>
       </div>
     </div>
 
@@ -1060,7 +1060,7 @@ async function startPlaylist(uri, name, cover) {
       method: "PUT", headers: { Authorization: "Bearer " + token }
     });
   } catch {}
-  await new Promise(res => setTimeout(res, 1200));
+  await new Promise(res => setTimeout(res, 3000));
 
   // Playlist abspielen
   let url = "https://api.spotify.com/v1/me/player/play";
