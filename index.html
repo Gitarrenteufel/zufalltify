@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Zufalltify v4.23</title>
+<title>Zufalltify v4.24</title>
 <link rel="manifest" href="manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -559,7 +559,7 @@
 
       <div class="system-footer">
         <button class="logout-link" onclick="logout()">Abmelden</button>
-        <span style="font-size:11px;color:var(--muted);margin-left:8px">v4.23</span>
+        <span style="font-size:11px;color:var(--muted);margin-left:8px">v4.24</span>
       </div>
     </div>
 
@@ -1377,6 +1377,7 @@ function showAlbumCard(album, artistName, totalAlbums, artistUrl) {
   else        { img.style.display = "none"; ph.style.display = "flex"; }
   document.getElementById("albumCard").classList.add("visible");
   document.getElementById("anotherBtn").classList.add("visible");
+  updateCardIcons();
   const albumUrl = album.external_urls?.spotify || "";
   localStorage.setItem("zt_last_album", JSON.stringify({
     uri: album.uri, name: album.name, artist: artistName,
@@ -1410,7 +1411,36 @@ function restoreLastAlbum() {
     else          { img.style.display = "none"; ph.style.display = "flex"; }
     document.getElementById("albumCard").classList.add("visible");
     document.getElementById("anotherBtn").classList.add("visible");
+    // Icons nach Wiederherstellung aktualisieren
+    updateCardIcons();
   } catch {}
+}
+
+function updateCardIcons() {
+  if (!currentArtistId && !currentAlbumUri) return;
+  // Favoriten-Icon
+  const favs = getFavorites();
+  const isFav = currentArtistName && favs.find(f => getFavName(f).toLowerCase() === currentArtistName.toLowerCase());
+  const favBtn = document.getElementById("favArtistBtn");
+  if (favBtn) favBtn.innerHTML = isFav
+    ? '<i class="ti ti-heart" style="font-size:20px;color:var(--accent);"></i>'
+    : '<i class="ti ti-heart" style="font-size:20px;"></i>';
+
+  // Bookmark-Icon
+  const bookmarks = getBookmarks();
+  const isBookmarked = currentAlbumUri && bookmarks.find(b => b.uri === currentAlbumUri);
+  const bookBtn = document.getElementById("bookmarkBtn");
+  if (bookBtn) bookBtn.innerHTML = isBookmarked
+    ? '<i class="ti ti-bookmark" style="font-size:20px;color:var(--accent);"></i>'
+    : '<i class="ti ti-bookmark" style="font-size:20px;"></i>';
+
+  // Ban-Icon
+  const blacklist = getBlacklist();
+  const isBanned = currentArtistId && blacklist.find(b => b.id === currentArtistId);
+  const banBtn = document.getElementById("blacklistBtn");
+  if (banBtn) banBtn.innerHTML = isBanned
+    ? '<i class="ti ti-ban" style="font-size:20px;color:var(--danger);"></i>'
+    : '<i class="ti ti-ban" style="font-size:20px;"></i>';
 }
 
 // ── Play ─────────────────────────────────────────────────────────────────────
