@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Zufalltify v4.19</title>
+<title>Zufalltify v4.20</title>
 <link rel="manifest" href="manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -556,7 +556,7 @@
 
       <div class="system-footer">
         <button class="logout-link" onclick="logout()">Abmelden</button>
-        <span style="font-size:11px;color:var(--muted);margin-left:8px">v4.19</span>
+        <span style="font-size:11px;color:var(--muted);margin-left:8px">v4.20</span>
       </div>
     </div>
 
@@ -1405,7 +1405,7 @@ function restoreLastAlbum() {
 }
 
 // ── Play ─────────────────────────────────────────────────────────────────────
-async function waitForDevice(maxRetries = 5, delayMs = 2000) {
+async function waitForDevice(maxRetries = 2, delayMs = 1000) {
   const token = getToken();
   let spotifyOpened = false;
   for (let i = 0; i < maxRetries; i++) {
