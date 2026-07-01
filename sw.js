@@ -1,16 +1,19 @@
-const CACHE = "zufalltify-v4.26";
+const CACHE = "zufalltify-v5.0";
 const ASSETS = [
   "/zufalltify/",
   "/zufalltify/index.html",
+  "/zufalltify/config.js",
+  "/zufalltify/state.js",
+  "/zufalltify/spotify.js",
+  "/zufalltify/ui.js",
+  "/zufalltify/app.js",
   "/zufalltify/manifest.json",
   "/zufalltify/icon-192.png",
   "/zufalltify/icon-512.png"
 ];
 
 self.addEventListener("install", e => {
-  e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(ASSETS))
-  );
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
   self.skipWaiting();
 });
 
@@ -27,7 +30,6 @@ self.addEventListener("fetch", e => {
   if (e.request.method !== "GET") return;
   const url = new URL(e.request.url);
   if (url.hostname !== location.hostname) return;
-
   e.respondWith(
     caches.match(e.request).then(cached => cached || fetch(e.request))
   );

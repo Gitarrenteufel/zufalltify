@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Zufalltify v4.26</title>
+<title>Zufalltify v5.0</title>
 <link rel="manifest" href="manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -31,89 +31,33 @@
   }
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    background: var(--bg); color: var(--text);
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center;
   }
-  .wrap {
-    width: 100%;
-    max-width: 420px;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    padding-bottom: calc(var(--tab-h) + var(--safe-bottom));
-  }
+  .wrap { width: 100%; max-width: 420px; flex: 1; display: flex; flex-direction: column; padding-bottom: calc(var(--tab-h) + var(--safe-bottom)); }
 
-  /* ── Header ── */
-  header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 44px 16px 0;
-    gap: 10px;
-  }
+  /* Header */
+  header { display: flex; align-items: center; justify-content: space-between; padding: 44px 16px 0; gap: 10px; }
   header h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; flex-shrink: 0; }
 
-  /* ── Mode Toggle ── */
-  .mode-toggle {
-    display: flex; align-items: center;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    padding: 3px;
-    gap: 2px;
-    flex-shrink: 0;
-  }
-  .mode-btn {
-    font-size: 10px; font-weight: 600;
-    padding: 5px 11px;
-    border-radius: 999px;
-    border: none; cursor: pointer;
-    font-family: inherit;
-    letter-spacing: 0.03em;
-    background: transparent;
-    color: var(--muted);
-    transition: background 0.2s, color 0.2s;
-  }
-  .mode-btn.active {
-    background: var(--accent);
-    color: #000;
-  }
+  /* Mode Toggle */
+  .mode-toggle { display: flex; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 3px; gap: 2px; flex-shrink: 0; }
+  .mode-btn { font-size: 10px; font-weight: 600; padding: 5px 11px; border-radius: 999px; border: none; cursor: pointer; font-family: inherit; letter-spacing: 0.03em; background: transparent; color: var(--muted); transition: background 0.2s, color 0.2s; }
+  .mode-btn.active { background: var(--accent); color: #000; }
 
-  /* ── Hamburger ── */
-  #hamburgerBtn {
-    display: none; background: none; border: none;
-    cursor: pointer; padding: 2px 0;
-    color: var(--text); font-size: 22px; line-height: 1;
-    flex-shrink: 0;
-  }
+  /* Hamburger */
+  #hamburgerBtn { display: none; background: none; border: none; cursor: pointer; padding: 2px 0; color: var(--text); font-size: 22px; line-height: 1; flex-shrink: 0; }
 
-  /* ── Drawer ── */
+  /* Drawer */
   #drawer { display: none; }
   #drawer.open { display: flex !important; }
-  .drawer-header {
-    padding: 16px 20px 12px;
-    font-size: 11px; color: var(--muted);
-    text-transform: uppercase; letter-spacing: 0.1em;
-    border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; gap: 8px;
-  }
-  .drawer-item {
-    display: flex; align-items: center; gap: 14px;
-    padding: 15px 20px; font-size: 15px; cursor: pointer;
-    transition: background 0.15s; color: var(--text);
-  }
+  .drawer-header { padding: 16px 20px 12px; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+  .drawer-item { display: flex; align-items: center; gap: 14px; padding: 15px 20px; font-size: 15px; cursor: pointer; transition: background 0.15s; color: var(--text); }
   .drawer-item:hover { background: var(--surface2); }
   .drawer-item i { font-size: 20px; width: 24px; text-align: center; flex-shrink: 0; color: var(--muted); }
 
-  /* ── Error card ── */
-  #errorCard {
-    display: none; margin: 0 20px 12px;
-    background: rgba(224,92,92,0.1); border: 1px solid var(--danger);
-    border-radius: var(--radius); padding: 14px 16px;
-    align-items: center; gap: 12px;
-  }
+  /* Error card */
+  #errorCard { display: none; margin: 0 20px 12px; background: rgba(224,92,92,0.1); border: 1px solid var(--danger); border-radius: var(--radius); padding: 14px 16px; align-items: center; gap: 12px; }
   #errorCard.visible { display: flex; }
   .error-icon { font-size: 24px; flex-shrink: 0; }
   .error-text { flex: 1; }
@@ -122,100 +66,48 @@
   .error-close { background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer; padding: 0 4px; flex-shrink: 0; }
   .error-close:hover { color: var(--text); }
 
-  /* ── Session Banner ── */
-  #sessionBanner {
-    display: none; margin: 0 20px 16px;
-    background: rgba(224,92,92,0.12); border: 1px solid var(--danger);
-    border-radius: 10px; padding: 12px 16px; text-align: center;
-  }
+  /* Session Banner */
+  #sessionBanner { display: none; margin: 0 20px 16px; background: rgba(224,92,92,0.12); border: 1px solid var(--danger); border-radius: 10px; padding: 12px 16px; text-align: center; }
   #sessionBanner p { font-size: 13px; color: var(--danger); margin-bottom: 10px; }
-  #sessionBanner button {
-    background: var(--danger); color: #fff; border: none;
-    border-radius: 8px; font-family: inherit; font-size: 13px;
-    font-weight: 600; padding: 8px 20px; cursor: pointer;
-  }
+  #sessionBanner button { background: var(--danger); color: #fff; border: none; border-radius: 8px; font-family: inherit; font-size: 13px; font-weight: 600; padding: 8px 20px; cursor: pointer; }
 
-  /* ── Tab Pages ── */
+  /* Tab Pages */
   .tab-page { display: none; flex: 1; padding: 0 20px 20px; overflow-y: auto; }
   .tab-page.active { display: block; }
   #page-home { display: none; }
   #page-home.active { display: flex; flex-direction: column; gap: 12px; padding-top: 8px; }
 
-  /* ── Tab Bar ── */
-  .tab-bar {
-    position: fixed; bottom: 0; left: 50%;
-    transform: translateX(-50%);
-    width: 100%; max-width: 420px;
-    height: calc(var(--tab-h) + var(--safe-bottom));
-    padding-bottom: var(--safe-bottom);
-    background: var(--surface);
-    border-top: 1px solid var(--border);
-    display: flex;
-    z-index: 100;
-  }
-  .tab-btn {
-    flex: 1; display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    gap: 3px; background: none; border: none;
-    color: var(--muted); font-family: inherit;
-    font-size: 10px; font-weight: 500;
-    cursor: pointer; transition: color 0.15s;
-    letter-spacing: 0.04em;
-  }
+  /* Tab Bar */
+  .tab-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 420px; height: calc(var(--tab-h) + var(--safe-bottom)); padding-bottom: var(--safe-bottom); background: var(--surface); border-top: 1px solid var(--border); display: flex; z-index: 100; }
+  .tab-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; background: none; border: none; color: var(--muted); font-family: inherit; font-size: 10px; font-weight: 500; cursor: pointer; transition: color 0.15s; letter-spacing: 0.04em; }
   .tab-btn i { font-size: 20px; line-height: 1; }
   .tab-btn.active { color: var(--accent); }
 
-  /* ── Buttons ── */
+  /* Buttons */
   .btn { border: none; border-radius: 10px; font-family: inherit; font-weight: 600; cursor: pointer; transition: all 0.18s; white-space: nowrap; }
   .btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-  .btn-surprise {
-    width: 100%; background: var(--accent); color: #000;
-    font-size: 16px; padding: 17px; border-radius: 12px;
-    margin-bottom: 12px; letter-spacing: 0.01em;
-  }
+  .btn-surprise { width: 100%; background: var(--accent); color: #000; font-size: 16px; padding: 17px; border-radius: 12px; margin-bottom: 12px; letter-spacing: 0.01em; }
   .btn-surprise:hover:not(:disabled) { background: var(--accent-hi); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(29,185,84,0.3); }
   .btn-surprise:active { transform: translateY(0); }
-
-  .btn-search {
-    background: var(--surface); border: 1px solid var(--border);
-    color: var(--text); font-size: 14px; padding: 13px 16px;
-  }
+  .btn-search { background: var(--surface); border: 1px solid var(--border); color: var(--text); font-size: 14px; padding: 13px 16px; }
   .btn-search:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
 
-  /* ── Autocomplete ── */
+  /* Autocomplete */
   .autocomplete-wrap { position: relative; flex: 1; }
-  .autocomplete-dropdown {
-    display: none; position: absolute; top: 100%; left: 0; right: 0;
-    background: var(--surface); border: 1px solid var(--accent);
-    border-top: none; border-radius: 0 0 10px 10px;
-    z-index: 50; max-height: 240px; overflow-y: auto;
-  }
+  .autocomplete-dropdown { display: none; position: absolute; top: 100%; left: 0; right: 0; background: var(--surface); border: 1px solid var(--accent); border-top: none; border-radius: 0 0 10px 10px; z-index: 50; max-height: 240px; overflow-y: auto; }
   .autocomplete-dropdown.visible { display: block; }
-  .autocomplete-item {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 14px; cursor: pointer; font-size: 14px;
-    border-bottom: 1px solid var(--border); transition: background 0.15s;
-  }
+  .autocomplete-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; cursor: pointer; font-size: 14px; border-bottom: 1px solid var(--border); transition: background 0.15s; }
   .autocomplete-item:last-child { border-bottom: none; }
   .autocomplete-item:hover { background: var(--surface2); }
-  .autocomplete-img {
-    width: 32px; height: 32px; border-radius: 50%;
-    object-fit: cover; flex-shrink: 0; background: var(--surface2);
-  }
+  .autocomplete-img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0; background: var(--surface2); }
   .autocomplete-name { flex: 1; font-weight: 500; }
   .autocomplete-followers { font-size: 11px; color: var(--muted); flex-shrink: 0; }
-
   .search-row { display: flex; gap: 8px; margin-bottom: 12px; }
-  input[type="text"] {
-    flex: 1; background: var(--surface); border: 1px solid var(--border);
-    border-radius: 10px; color: var(--text); font-family: inherit;
-    font-size: 15px; padding: 13px 16px; outline: none; transition: border-color 0.2s;
-  }
+  input[type="text"] { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: inherit; font-size: 15px; padding: 13px 16px; outline: none; transition: border-color 0.2s; }
   input[type="text"]:focus { border-color: var(--accent); }
   input[type="text"]::placeholder { color: var(--muted); }
 
-  /* ── Album card ── */
+  /* Album Card */
   #albumCard { display: none; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); padding: 12px; flex-direction: row; gap: 14px; align-items: flex-start; }
   #albumCard.visible { display: flex; }
   .cover-wrap { width: 88px; height: 88px; border-radius: 10px; overflow: hidden; flex-shrink: 0; background: var(--surface2); }
@@ -226,107 +118,60 @@
   .cover-title { font-family: Georgia, 'Times New Roman', serif; font-size: 17px; font-weight: 700; line-height: 1.2; color: var(--text); }
   .cover-year { font-size: 12px; color: var(--muted); }
   .card-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
-  .card-footer-info { font-size: 12px; color: var(--muted); }
   #albumLink { color: var(--accent); text-decoration: none; font-size: 12px; font-weight: 500; }
   #albumLink:hover { text-decoration: underline; }
 
-  /* ── Anderes Album ── */
+  /* Anderes Album */
   #anotherBtn { display: none; width: 100%; background: var(--surface); border: 1px solid var(--border); color: var(--text); font-size: 14px; font-weight: 500; padding: 12px; border-radius: 10px; margin-bottom: 12px; font-family: inherit; cursor: pointer; transition: border-color 0.18s, color 0.18s; }
   #anotherBtn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
   #anotherBtn:disabled { opacity: 0.4; cursor: not-allowed; }
   #anotherBtn.visible { display: block; }
 
-  /* ── Album des Tages ── */
-  #albumOfDayCard {
-    background: var(--surface); border: 1px solid var(--accent);
-    border-radius: var(--radius); padding: 14px 16px;
-    margin-bottom: 12px; display: none; cursor: pointer;
-    transition: border-color 0.2s;
-  }
+  /* Album des Tages */
+  #albumOfDayCard { background: var(--surface); border: 1px solid var(--accent); border-radius: var(--radius); padding: 14px 16px; display: none; cursor: pointer; transition: border-color 0.2s; }
   #albumOfDayCard:hover { border-color: var(--accent-hi); }
   #albumOfDayCard.visible { display: flex; align-items: center; gap: 12px; }
-  .aod-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); margin-bottom: 3px; font-weight: 600; }
+  .aod-label  { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); margin-bottom: 3px; font-weight: 600; }
   .aod-title  { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .aod-artist { font-size: 12px; color: var(--muted); margin-top: 1px; }
   .aod-cover  { width: 48px; height: 48px; border-radius: 6px; object-fit: cover; flex-shrink: 0; background: var(--surface2); }
 
-  /* ── Panels ── */
-  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 12px; overflow: hidden; }
-  .panel-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: pointer; user-select: none; font-size: 13px; font-weight: 500; color: var(--muted); transition: color 0.15s; }
-  .panel-header:hover { color: var(--text); }
-  .panel-toggle { font-size: 10px; transition: transform 0.2s; }
-  .panel-toggle.open { transform: rotate(180deg); }
-  .panel-body { display: none; border-top: 1px solid var(--border); }
-  .panel-body.open { display: block; }
-
-  /* ── Verlauf ── */
-  .history-item { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--border); font-size: 13px; }
-  .history-item:last-child { border-bottom: none; }
-  .history-cover { width: 40px; height: 40px; border-radius: 4px; object-fit: cover; flex-shrink: 0; background: var(--surface2); }
-  .history-info { flex: 1; min-width: 0; }
-  .history-album { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .history-artist { font-size: 12px; color: var(--muted); margin-top: 1px; }
-  .history-meta { font-size: 11px; color: var(--muted); text-align: right; flex-shrink: 0; line-height: 1.6; }
-
-  /* ── Favoriten ── */
-  .fav-header-row {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 16px 0 10px;
-  }
+  /* Favoriten */
+  .fav-header-row { display: flex; align-items: center; justify-content: space-between; padding: 16px 0 10px; }
   .fav-header-row h2 { font-size: 18px; font-weight: 600; }
   .fav-count { font-size: 13px; color: var(--muted); }
   .fav-list { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-  .fav-item {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 14px 16px; border-bottom: 1px solid var(--border);
-    font-size: 15px; cursor: pointer; transition: background 0.15s;
-  }
+  .fav-item { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 15px; cursor: pointer; transition: background 0.15s; }
   .fav-item:last-child { border-bottom: none; }
   .fav-item:hover { background: var(--surface2); }
   .fav-name { flex: 1; }
   .fav-remove { background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer; padding: 0 4px; line-height: 1; }
   .fav-remove:hover { color: var(--danger); }
+  .fav-empty { padding: 20px 16px; font-size: 13px; color: var(--muted); text-align: center; }
 
-  /* ── Modal ── */
-  #modal {
-    display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,0.6); z-index: 200;
-    align-items: center; justify-content: center; padding: 24px;
-  }
+  /* Modal */
+  #modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; align-items: center; justify-content: center; padding: 24px; }
   #modal.visible { display: flex; }
-  .modal-box {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 24px; width: 100%; max-width: 320px;
-  }
+  .modal-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; width: 100%; max-width: 320px; }
   .modal-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
   .modal-text  { font-size: 14px; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
   .modal-btns  { display: flex; gap: 10px; }
   .modal-btns button { flex: 1; padding: 12px; border-radius: 10px; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; border: none; }
   .modal-cancel  { background: var(--surface2); color: var(--text); }
   .modal-confirm { background: var(--danger); color: #fff; }
-  .fav-empty { padding: 20px 16px; font-size: 13px; color: var(--muted); text-align: center; }
 
-  /* ── System ── */
+  /* System */
   .system-section { margin-bottom: 20px; }
   .system-section h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 8px; padding-top: 16px; }
   .system-row { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-  .system-item {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 14px 16px; border-bottom: 1px solid var(--border);
-    font-size: 14px;
-  }
+  .system-item { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 14px; }
   .system-item:last-child { border-bottom: none; }
   .system-item .si-label { color: var(--muted); font-size: 13px; }
   .system-item .si-value { font-weight: 500; }
   .system-item .si-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); flex-shrink: 0; margin-right: 8px; }
   .system-item .si-dot.ok   { background: var(--accent); }
   .system-item .si-dot.warn { background: var(--warn); }
-
-  .device-pill-sys {
-    display: flex; align-items: center; gap: 8px; cursor: pointer;
-    padding: 14px 16px; border-bottom: 1px solid var(--border);
-    transition: background 0.15s;
-  }
+  .device-pill-sys { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 14px 16px; border-bottom: 1px solid var(--border); transition: background 0.15s; }
   .device-pill-sys:hover { background: var(--surface2); }
   #deviceSelectorSys { display: none; border-top: 1px solid var(--border); padding: 12px 16px; }
   #deviceSelectorSys p { font-size: 11px; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.08em; }
@@ -335,19 +180,15 @@
   .device-type { font-size: 11px; color: var(--muted); margin-left: 6px; }
   .system-footer { text-align: center; padding: 8px 0 4px; }
 
-  /* ── Filter ── */
-  .filter-item {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 13px 16px; border-bottom: 1px solid var(--border);
-    cursor: pointer; font-size: 14px;
-  }
+  /* Filter */
+  .filter-item { display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; border-bottom: 1px solid var(--border); cursor: pointer; font-size: 14px; }
   .filter-item:hover { background: var(--surface2); }
   .filter-label { flex: 1; }
   .filter-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
   .logout-link { font-size: 13px; color: var(--muted); background: none; border: none; cursor: pointer; font-family: inherit; text-decoration: underline; text-underline-offset: 3px; padding: 4px; }
   .logout-link:hover { color: var(--text); }
 
-  /* ── Login ── */
+  /* Login */
   #loginScreen { text-align: center; padding: 60px 20px; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
   #loginScreen .icon { font-size: 48px; margin-bottom: 20px; }
   #loginScreen h2 { font-size: 22px; font-weight: 600; margin-bottom: 10px; }
@@ -355,7 +196,7 @@
   .btn-login { background: var(--accent); color: #000; font-size: 15px; font-weight: 700; padding: 15px 32px; border-radius: 999px; border: none; cursor: pointer; font-family: inherit; transition: background 0.2s; }
   .btn-login:hover { background: var(--accent-hi); }
 
-  /* ── Spinner ── */
+  /* Spinner */
   .spin { display: inline-block; width: 13px; height: 13px; border: 2px solid rgba(0,0,0,0.15); border-top-color: currentColor; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 5px; }
   .btn-surprise .spin { border-top-color: #000; border-color: rgba(0,0,0,0.15); }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -371,10 +212,10 @@
   <header>
     <h1>Zufalltify</h1>
     <div class="mode-toggle">
-      <button class="mode-btn active" id="btnMusik" onclick="setMode('musik')">Musik</button>
-      <button class="mode-btn" id="btnHoerspiel" onclick="setMode('hoerspiel')">Hörspiel</button>
+      <button class="mode-btn active" id="btnMusik" onclick="app.setMode('musik')">Musik</button>
+      <button class="mode-btn" id="btnHoerspiel" onclick="app.setMode('hoerspiel')">Hörspiel</button>
     </div>
-    <button id="hamburgerBtn" onclick="openDrawer()" aria-label="Menü">
+    <button id="hamburgerBtn" onclick="app.openDrawer()" aria-label="Menü">
       <i class="ti ti-menu-2"></i>
     </button>
   </header>
@@ -385,11 +226,11 @@
       <div class="error-title" id="errorTitle"></div>
       <div class="error-msg" id="errorMsg"></div>
     </div>
-    <button class="error-close" onclick="hideError()">×</button>
+    <button class="error-close" onclick="ui.hideError()">×</button>
   </div>
   <div id="sessionBanner">
     <p>⚠️ Session abgelaufen</p>
-    <button onclick="login()">Erneut anmelden</button>
+    <button onclick="app.login()">Erneut anmelden</button>
   </div>
 
   <!-- LOGIN -->
@@ -397,35 +238,35 @@
     <div class="icon">🎵</div>
     <h2>Musik nach Zufall</h2>
     <p>Verbinde dein Spotify-Konto<br>und entdecke zufällige Alben.</p>
-    <button class="btn-login" onclick="login()">Mit Spotify anmelden</button>
+    <button class="btn-login" onclick="app.login()">Mit Spotify anmelden</button>
   </div>
 
   <!-- APP -->
   <div id="appScreen" style="display:none;flex:1;flex-direction:column;">
 
-    <!-- HOME TAB -->
+    <!-- HOME -->
     <div class="tab-page active" id="page-home">
-
-      <div id="albumOfDayCard" onclick="playAlbumOfDay()">
+      <div id="albumOfDayCard" onclick="app.playAlbumOfDay()">
         <img class="aod-cover" id="aodCover" src="" alt="" loading="lazy">
         <div style="flex:1;min-width:0">
           <div class="aod-label" id="aodLabel">🌅 Album des Tages</div>
-          <div class="aod-title" id="aodTitle"></div>
+          <div class="aod-title"  id="aodTitle"></div>
           <div class="aod-artist" id="aodArtist"></div>
         </div>
       </div>
 
-      <button id="spotifyOpenBtn" onclick="openSpotifyFromApp()" style="display:none;width:100%;background:var(--surface);border:1px solid var(--accent);color:var(--accent);font-size:14px;font-weight:600;padding:13px;border-radius:12px;font-family:inherit;cursor:pointer;">
+      <button id="spotifyOpenBtn" onclick="app.openSpotifyFromApp()" style="display:none;width:100%;background:var(--surface);border:1px solid var(--accent);color:var(--accent);font-size:14px;font-weight:600;padding:13px;border-radius:12px;font-family:inherit;cursor:pointer;">
         <i class="ti ti-brand-spotify" style="font-size:16px;vertical-align:middle;margin-right:6px;"></i>Spotify öffnen
       </button>
-      <button class="btn btn-surprise" id="surpriseBtn" onclick="surpriseMe()">🎲 Überrasch mich</button>
+
+      <button class="btn btn-surprise" id="surpriseBtn" onclick="app.surpriseMe()">🎲 Überrasch mich</button>
 
       <div class="search-row">
         <div class="autocomplete-wrap">
           <input type="text" id="artistInput" placeholder="Künstler eingeben…" autocomplete="off">
           <div class="autocomplete-dropdown" id="searchDropdown"></div>
         </div>
-        <button class="btn btn-search" id="searchBtn" onclick="loadAlbums()">Suchen</button>
+        <button class="btn btn-search" id="searchBtn" onclick="app.playArtist(null, document.getElementById('artistInput').value.trim(), null)">Suchen</button>
       </div>
 
       <div id="albumCard">
@@ -435,67 +276,72 @@
         </div>
         <div class="card-info-wrap">
           <div class="cover-artist" id="coverArtist"></div>
-          <div class="cover-title" id="coverTitle"></div>
-          <div class="cover-year" id="coverYear"></div>
+          <div class="cover-title"  id="coverTitle"></div>
+          <div class="cover-year"   id="coverYear"></div>
           <div class="card-footer">
             <a id="albumLink" href="#" target="_blank">In Spotify öffnen</a>
             <div style="display:flex;gap:8px;align-items:center;">
-              <button id="favArtistBtn" onclick="addCurrentArtistToFavs()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:0;line-height:1;display:flex;align-items:center;" title="Künstler zu Favoriten"><i class="ti ti-heart" style="font-size:20px;"></i></button>
-              <button id="bookmarkBtn" onclick="bookmarkCurrent()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:0;line-height:1;display:flex;align-items:center;" title="Album vormerken"><i class="ti ti-bookmark" style="font-size:20px;"></i></button>
-              <button id="blacklistBtn" onclick="blacklistCurrent()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:0;line-height:1;display:flex;align-items:center;" title="Künstler sperren"><i class="ti ti-ban" style="font-size:20px;"></i></button>
+              <button id="favArtistBtn" onclick="app.addCurrentArtistToFavs()" style="background:none;border:none;color:var(--muted);cursor:pointer;padding:0;line-height:1;display:flex;align-items:center;" title="Künstler zu Favoriten">
+                <i class="ti ti-heart" style="font-size:20px;"></i>
+              </button>
+              <button id="bookmarkBtn" onclick="app.bookmarkCurrent()" style="background:none;border:none;color:var(--muted);cursor:pointer;padding:0;line-height:1;display:flex;align-items:center;" title="Album vormerken">
+                <i class="ti ti-bookmark" style="font-size:20px;"></i>
+              </button>
+              <button id="blacklistBtn" onclick="app.blacklistCurrent()" style="background:none;border:none;color:var(--muted);cursor:pointer;padding:0;line-height:1;display:flex;align-items:center;" title="Künstler sperren">
+                <i class="ti ti-ban" style="font-size:20px;"></i>
+              </button>
             </div>
           </div>
         </div>
       </div>
 
-      <button id="anotherBtn" onclick="playAnother()">🔀 Anderes Album</button>
-
+      <button id="anotherBtn" onclick="app.playAnother()">🔀 Anderes Album</button>
     </div>
 
-    <!-- FAVORITEN TAB -->
+    <!-- FAVORITEN -->
     <div class="tab-page" id="page-favs">
       <div class="fav-header-row">
         <h2 id="favTabTitle">Favoriten</h2>
         <span class="fav-count" id="favCount"></span>
       </div>
-      <button class="btn btn-surprise" id="surpriseFavsBtn" onclick="surpriseFavs()" style="margin-bottom:12px;">🎲 Favoriten würfeln</button>
+      <button class="btn btn-surprise" id="surpriseFavsBtn" onclick="app.surpriseFavs()" style="margin-bottom:12px;">🎲 Favoriten würfeln</button>
       <div class="fav-list" id="favList"></div>
     </div>
 
-    <!-- PLAYLISTEN TAB -->
+    <!-- PLAYLISTEN -->
     <div class="tab-page" id="page-playlists">
       <div style="padding-top:16px">
         <div id="playlistContent"></div>
       </div>
     </div>
 
-    <!-- BLACKLIST TAB -->
+    <!-- BLACKLIST -->
     <div class="tab-page" id="page-blacklist">
       <div style="padding-top:16px">
         <div id="blacklistList"></div>
       </div>
     </div>
 
-    <!-- VERLAUF TAB -->
+    <!-- VERLAUF -->
     <div class="tab-page" id="page-stats">
       <div style="padding-top:16px">
         <div id="historyList"></div>
       </div>
     </div>
 
-    <!-- VORGEMERKTE ALBEN TAB -->
+    <!-- VORGEMERKTE ALBEN -->
     <div class="tab-page" id="page-bookmarks">
       <div style="padding-top:16px">
         <div id="bookmarkList"></div>
       </div>
     </div>
 
-    <!-- SYSTEM TAB -->
+    <!-- SYSTEM -->
     <div class="tab-page" id="page-system">
       <div class="system-section">
         <h2>Gerät</h2>
         <div class="system-row">
-          <div class="device-pill-sys" onclick="toggleDeviceSelector()">
+          <div class="device-pill-sys" onclick="app.toggleDeviceSelector()">
             <span class="si-dot" id="deviceDot"></span>
             <span id="deviceLabel" style="flex:1;font-size:14px">Kein Gerät gewählt</span>
             <span style="color:var(--border);font-size:11px">▾</span>
@@ -512,19 +358,19 @@
         <div class="system-row">
           <label class="filter-item">
             <span class="filter-label">Alben</span>
-            <input type="checkbox" id="filterAlbum" checked onchange="saveFilters()">
+            <input type="checkbox" id="filterAlbum" checked onchange="app.saveFilters()">
           </label>
           <label class="filter-item">
             <span class="filter-label">Singles und EPs</span>
-            <input type="checkbox" id="filterSingle" onchange="saveFilters()">
+            <input type="checkbox" id="filterSingle" onchange="app.saveFilters()">
           </label>
           <label class="filter-item">
             <span class="filter-label">Compilations</span>
-            <input type="checkbox" id="filterCompilation" onchange="saveFilters()">
+            <input type="checkbox" id="filterCompilation" onchange="app.saveFilters()">
           </label>
           <label class="filter-item" style="border-bottom:none">
             <span class="filter-label">Mit dabei in</span>
-            <input type="checkbox" id="filterAppearsOn" onchange="saveFilters()">
+            <input type="checkbox" id="filterAppearsOn" onchange="app.saveFilters()">
           </label>
         </div>
       </div>
@@ -550,7 +396,7 @@
       <div class="system-section">
         <h2>Favoriten</h2>
         <div class="system-row">
-          <div class="system-item" style="cursor:pointer" onclick="loadDefaultFavorites()">
+          <div class="system-item" style="cursor:pointer" onclick="app.loadDefaultFavorites()">
             <span class="si-label">Standardfavoriten laden</span>
             <span style="color:var(--accent);font-size:13px">+</span>
           </div>
@@ -558,8 +404,8 @@
       </div>
 
       <div class="system-footer">
-        <button class="logout-link" onclick="logout()">Abmelden</button>
-        <span style="font-size:11px;color:var(--muted);margin-left:8px">v4.26</span>
+        <button class="logout-link" onclick="app.logout()">Abmelden</button>
+        <span style="font-size:11px;color:var(--muted);margin-left:8px">v5.0</span>
       </div>
     </div>
 
@@ -567,43 +413,37 @@
 
   <!-- TAB BAR -->
   <nav class="tab-bar" id="tabBar" style="display:none">
-    <button class="tab-btn active" onclick="switchTab('home', this)">
-      <i class="ti ti-home"></i>
-      <span>Home</span>
+    <button class="tab-btn active" onclick="app.switchTab('home', this)">
+      <i class="ti ti-home"></i><span>Home</span>
     </button>
-    <button class="tab-btn" onclick="switchTab('favs', this)">
-      <i class="ti ti-heart"></i>
-      <span>Favoriten</span>
+    <button class="tab-btn" onclick="app.switchTab('favs', this)">
+      <i class="ti ti-heart"></i><span>Favoriten</span>
     </button>
-    <button class="tab-btn" id="playlistTabBtn" onclick="switchTab('playlists', this)">
-      <i class="ti ti-playlist"></i>
-      <span>Playlisten</span>
+    <button class="tab-btn" id="playlistTabBtn" onclick="app.switchTab('playlists', this)">
+      <i class="ti ti-playlist"></i><span>Playlisten</span>
     </button>
   </nav>
 
   <!-- Drawer Overlay -->
-  <div id="drawerOverlay" onclick="closeDrawer()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100"></div>
+  <div id="drawerOverlay" onclick="app.closeDrawer()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100"></div>
 
   <!-- Drawer -->
   <div id="drawer" style="display:none;position:fixed;top:0;right:0;bottom:0;width:260px;max-width:85vw;background:#1a1a1a;border-left:1px solid #2a2a2a;z-index:101;flex-direction:column;">
     <div class="drawer-header">
       <i class="ti ti-menu-2"></i> Menü
     </div>
-    <div class="drawer-item" onclick="openDrawerTab('stats')">
+    <div class="drawer-item" onclick="app.openDrawerTab('stats')">
       <i class="ti ti-history"></i><span>Verlauf</span>
     </div>
-    <div class="drawer-item" onclick="openDrawerTab('bookmarks')">
+    <div class="drawer-item" onclick="app.openDrawerTab('bookmarks')">
       <i class="ti ti-bookmark"></i><span>Vorgemerkte Alben</span>
     </div>
-    <div class="drawer-item" onclick="openDrawerTab('blacklist')">
+    <div class="drawer-item" onclick="app.openDrawerTab('blacklist')">
       <i class="ti ti-ban"></i><span>Gesperrte Künstler</span>
     </div>
     <div style="border-top:1px solid #2a2a2a;margin:4px 0"></div>
-    <div class="drawer-item" onclick="openDrawerTab('system')">
+    <div class="drawer-item" onclick="app.openDrawerTab('system')">
       <i class="ti ti-settings"></i><span>System</span>
-    </div>
-    <div style="border-top:1px solid #2a2a2a;margin-top:auto;padding:14px 20px calc(14px + var(--safe-bottom)) 20px;display:flex;align-items:center;justify-content:center;">
-
     </div>
   </div>
 
@@ -613,7 +453,7 @@
       <div class="modal-title">Favorit entfernen</div>
       <div class="modal-text" id="modalText"></div>
       <div class="modal-btns">
-        <button class="modal-cancel" onclick="closeModal()">Abbrechen</button>
+        <button class="modal-cancel" onclick="ui.closeModal()">Abbrechen</button>
         <button class="modal-confirm" id="modalConfirm">Entfernen</button>
       </div>
     </div>
@@ -621,1444 +461,10 @@
 
 </div><!-- /wrap -->
 
-<script>
-// ── Konfiguration ─────────────────────────────────────────────────────────────
-const CLIENT_ID    = "7f11ab0b763a4d95ba84882b55101ee1";
-const IS_WEBVIEW   = window.location.protocol === 'zufalltify:' ||
-  (typeof Android !== 'undefined') ||
-  (/Android/.test(navigator.userAgent) && /wv/.test(navigator.userAgent));
-const REDIRECT_URI = IS_WEBVIEW
-  ? "zufalltify://callback"
-  : "https://gitarrenteufel.github.io/zufalltify/";
-const WORKER_URL   = "https://zufalltify-token.summer-truth-edd2.workers.dev";
-const SCOPES       = "user-read-private user-read-playback-state user-modify-playback-state user-follow-read";
-const HISTORY_MAX  = 50;
-const FAV_MAX      = 50;
-
-// Hörspiel-IDs – Ausschlussliste für Musik-Modus
-const HOERSPIEL_IDS = new Set([
-  "3meJIgRw7YleJrmbpbJK6S", // Die drei ???
-  "6lly2jn9MqaxaWRrkEzOsJ", // John Sinclair
-  "55dz39BSDTWYbBFVZRj72b", // Asterix
-  "3vlzAKeADwRpvZAgOom2Wh", // Jan Tenner
-]);
-
-// Hörbuch-IDs – immer ausgeblendet (bei Bedarf ergänzen)
-const HOERBUCH_IDS = new Set([
-  "2Xl8Eqgt8a9DsTohLDwZD3", // Gregs Tagebuch
-]);
-
-// Farben je Modus
-const MODE_COLORS = {
-  musik:     { accent: "#1DB954", accentHi: "#1ed760", accentDark: "#0f3d1e" },
-  hoerspiel: { accent: "#7EB8D4", accentHi: "#9ECCE3", accentDark: "#0d2a38" },
-};
-
-// Standard-Favoriten
-const DEFAULT_FAVORITES_MUSIK = [
-  { id: "711MCceyCBcFnzjGY4Q7Un", name: "AC/DC" },
-  { id: "1Ol0R5H1TFflezh7JYIBzn", name: "Amorphis" },
-  { id: "3NtFhSFVFNJGmFBFEFLsxG", name: "Anthrax" },
-  { id: "6Qwm8K1FSss5oCvT0OIUSC", name: "Bolt Thrower" },
-  { id: "5LGiPOl3MOXSP9l39HJQKW", name: "Death" },
-  { id: "6M8kfGqAhpqmE6PuJrHnI2", name: "Ghost Brigade" },
-  { id: "0GDGKpJFhVpcjIGF8N6Bvx", name: "Gojira" },
-  { id: "3HyMCFm0V9jGOWlGVHIBGP", name: "Katatonia" },
-  { id: "4kIwETcbpuFgRukE8o7Opd", name: "Machine Head" },
-  { id: "1DgQpFJgMuHr2UKFczNLfa", name: "Motörhead" },
-  { id: "5a2EFKLqiRqtKVRlHPnkXU", name: "Pantera" },
-  { id: "6TIiLVSXYZFbdkfXm7CXQR", name: "Paradise Lost" },
-  { id: "5UHGAbHwKcGAOCjZGJt5Wv", name: "Sepultura" },
-  { id: "1IQ2e1buppatiN1bxUVkrk", name: "Slayer" },
-  { id: "0MBcy6D2CyFXBHBUEWTtny", name: "Such A Surge" },
-];
-
-const DEFAULT_FAVORITES_HOERSPIEL = [
-  { id: "3meJIgRw7YleJrmbpbJK6S", name: "Die drei ???" },
-  { id: "55dz39BSDTWYbBFVZRj72b", name: "Asterix" },
-  { id: "6lly2jn9MqaxaWRrkEzOsJ", name: "John Sinclair" },
-  { id: "3vlzAKeADwRpvZAgOom2Wh", name: "Jan Tenner" },
-];
-
-// ── State ─────────────────────────────────────────────────────────────────────
-let currentAlbumUri   = null;
-let currentAlbumData  = null;
-let currentArtistId   = null;
-let currentArtistName = null;
-let currentArtistUrl  = null;
-let currentMode       = null; // "search" | "surprise"
-let cachedArtists     = null;
-let appMode           = localStorage.getItem("zt_mode") || "musik"; // "musik" | "hoerspiel"
-
-// ── Modus ─────────────────────────────────────────────────────────────────────
-function setMode(mode) {
-  appMode = mode;
-  localStorage.setItem("zt_mode", mode);
-  applyModeColors();
-  updateModeToggle();
-  updateModeLabels();
-  renderFavorites();
-  // Karte verstecken bevor neuer Modus geladen wird
-  document.getElementById("albumOfDayCard").classList.remove("visible");
-  pickAlbumOfDay().catch(() => {});
-  // Bei Vorgemerkte Alben: Inhalt für neuen Modus neu laden
-  if (document.getElementById("page-bookmarks").classList.contains("active")) {
-    renderBookmarks();
-  }
-  // Bei Gesperrte Künstler: Inhalt für neuen Modus neu laden
-  if (document.getElementById("page-blacklist").classList.contains("active")) {
-    renderBlacklist();
-  }
-  // Bei Playlisten: Hinweis aktualisieren
-  if (document.getElementById("page-playlists").classList.contains("active")) {
-    renderPlaylists();
-  }
-  // Icons aktualisieren wenn Albumkarte sichtbar
-  if (document.getElementById("albumCard").classList.contains("visible")) {
-    updateCardIcons();
-  }
-}
-
-function applyModeColors() {
-  const c = MODE_COLORS[appMode];
-  const root = document.documentElement;
-  root.style.setProperty("--accent",      c.accent);
-  root.style.setProperty("--accent-hi",   c.accentHi);
-  root.style.setProperty("--accent-dark", c.accentDark);
-}
-
-function updateModeToggle() {
-  document.getElementById("btnMusik").classList.toggle("active", appMode === "musik");
-  document.getElementById("btnHoerspiel").classList.toggle("active", appMode === "hoerspiel");
-}
-
-function updateModeLabels() {
-  const isHoerspiel = appMode === "hoerspiel";
-  document.getElementById("aodLabel").textContent     = isHoerspiel ? "🎧 Hörspiel des Tages" : "🌅 Album des Tages";
-  document.getElementById("favTabTitle").textContent  = isHoerspiel ? "Hörspiel-Favoriten" : "Musik-Favoriten";
-}
-
-// ── Tab Navigation ────────────────────────────────────────────────────────────
-function switchTab(name, btn) {
-  document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('page-' + name).classList.add('active');
-  if (btn) btn.classList.add('active');
-  if (name === 'stats')      renderHistory();
-  if (name === 'bookmarks')  renderBookmarks();
-  if (name === 'blacklist')  renderBlacklist();
-  if (name === 'favs')       renderFavorites();
-  if (name === 'playlists')  renderPlaylists();
-}
-
-// ── Drawer ────────────────────────────────────────────────────────────────────
-function openDrawer() {
-  document.getElementById("drawer").classList.add("open");
-  document.getElementById("drawerOverlay").style.display = "block";
-}
-function closeDrawer() {
-  document.getElementById("drawer").classList.remove("open");
-  document.getElementById("drawerOverlay").style.display = "none";
-}
-function openDrawerTab(name) {
-  closeDrawer();
-  document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('page-' + name).classList.add('active');
-  if (name === 'stats')     renderHistory();
-  if (name === 'bookmarks') renderBookmarks();
-  if (name === 'blacklist') renderBlacklist();
-}
-
-// ── Auth ─────────────────────────────────────────────────────────────────────
-async function login() {
-  const url = new URL("https://accounts.spotify.com/authorize");
-  url.searchParams.set("client_id",     CLIENT_ID);
-  url.searchParams.set("response_type", "code");
-  url.searchParams.set("redirect_uri",  REDIRECT_URI);
-  url.searchParams.set("scope",         SCOPES);
-  location.href = url.toString();
-}
-
-function logout() {
-  ["spotify_access_token","spotify_token_expires_at","spotify_refresh_token","zt_followed_cache"]
-    .forEach(k => localStorage.removeItem(k));
-  document.getElementById("loginScreen").style.display    = "flex";
-  document.getElementById("appScreen").style.display      = "none";
-  document.getElementById("tabBar").style.display         = "none";
-  document.getElementById("hamburgerBtn").style.display   = "none";
-  document.getElementById("albumCard").classList.remove("visible");
-  document.getElementById("anotherBtn").classList.remove("visible");
-  showSessionBanner(false);
-}
-
-async function exchangeCode(code) {
-  const r = await fetch(WORKER_URL + "/token", {
-    method: "POST", headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({ code, redirect_uri: REDIRECT_URI })
-  });
-  return r.json();
-}
-
-async function refreshToken() {
-  const refresh_token = localStorage.getItem("spotify_refresh_token");
-  if (!refresh_token) return false;
-  try {
-    const r = await fetch(WORKER_URL + "/refresh", {
-      method: "POST", headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({ refresh_token })
-    });
-    const data = await r.json();
-    if (data.access_token) {
-      localStorage.setItem("spotify_access_token",     data.access_token);
-      localStorage.setItem("spotify_token_expires_at", Date.now() + (data.expires_in || 3600) * 1000);
-      if (data.refresh_token) localStorage.setItem("spotify_refresh_token", data.refresh_token);
-      return true;
-    }
-    return false;
-  } catch { return false; }
-}
-
-async function checkTokenExpiry() {
-  const exp = localStorage.getItem("spotify_token_expires_at");
-  if (!exp) return;
-  const rem = parseInt(exp) - Date.now();
-  if (rem < 0) {
-    const ok = await refreshToken();
-    if (ok) showSessionBanner(false);
-    else showSessionBanner(true);
-  } else if (rem < 5 * 60 * 1000) {
-    await refreshToken();
-  }
-}
-
-async function loadProfile(token) {
-  const r = await fetch("https://api.spotify.com/v1/me", { headers:{ Authorization:"Bearer " + token } });
-  return r.json();
-}
-
-function getToken() { return localStorage.getItem("spotify_access_token"); }
-
-// ── Status / Fehler ───────────────────────────────────────────────────────────
-function showError(title, msg = "") {
-  document.getElementById("errorTitle").textContent = title;
-  document.getElementById("errorMsg").textContent   = msg;
-  document.getElementById("errorCard").classList.add("visible");
-}
-function hideError() {
-  document.getElementById("errorCard").classList.remove("visible");
-}
-function setStatus(msg, type = "") {
-  if (!msg) return;
-  if (type === "error" || type === "warn") showError(msg);
-}
-function showSessionBanner(visible) {
-  document.getElementById("sessionBanner").style.display = visible ? "block" : "none";
-}
-
-// ── Spotify API ───────────────────────────────────────────────────────────────
-async function fetchAllAlbums(artistId) {
-  const token = getToken();
-  let all = [];
-  let url = `https://api.spotify.com/v1/artists/${artistId}/albums?include_groups=${getIncludeGroups()}&market=DE&limit=50`;
-  while (url) {
-    const r = await fetch(url, { headers:{ Authorization:"Bearer " + token } });
-    const d = await r.json();
-    all.push(...(d.items || []));
-    url = d.next || null;
-  }
-  return all;
-}
-
-async function fetchAllFollowedArtists() {
-  try {
-    const cached = JSON.parse(localStorage.getItem("zt_followed_cache") || "null");
-    if (cached && cached.date === getTodayKey() && cached.artists?.length) return cached.artists;
-  } catch {}
-  const token = getToken();
-  let all = [], after = null;
-  while (true) {
-    let url = "https://api.spotify.com/v1/me/following?type=artist&limit=50";
-    if (after) url += "&after=" + encodeURIComponent(after);
-    const r = await fetch(url, { headers:{ Authorization:"Bearer " + token } });
-    const d = await r.json();
-    all.push(...(d?.artists?.items || []));
-    if (!d?.artists?.cursors?.after) break;
-    after = d.artists.cursors.after;
-  }
-  const slim = all.map(a => ({ id: a.id, name: a.name, external_urls: a.external_urls }));
-  try { localStorage.setItem("zt_followed_cache", JSON.stringify({ date: getTodayKey(), artists: slim })); } catch {}
-  return slim;
-}
-
-async function searchArtists(query) {
-  const token = getToken();
-  if (!query.trim()) return [];
-  try {
-    const r = await fetch(
-      "https://api.spotify.com/v1/search?q=" + encodeURIComponent(query) + "&type=artist&limit=8&market=DE",
-      { headers:{ Authorization:"Bearer " + token } }
-    );
-    const d = await r.json();
-    return d?.artists?.items || [];
-  } catch { return []; }
-}
-
-async function disableShuffleAndRepeat() {
-  const token    = getToken();
-  const deviceId = localStorage.getItem("spotify_device_id");
-  const suffix   = deviceId ? "&device_id=" + encodeURIComponent(deviceId) : "";
-  try {
-    await Promise.all([
-      fetch("https://api.spotify.com/v1/me/player/shuffle?state=false" + suffix, { method:"PUT", headers:{ Authorization:"Bearer " + token } }),
-      fetch("https://api.spotify.com/v1/me/player/repeat?state=off"    + suffix, { method:"PUT", headers:{ Authorization:"Bearer " + token } })
-    ]);
-  } catch {}
-}
-
-// ── Künstler-Filterung ────────────────────────────────────────────────────────
-function isExcluded(artist) {
-  return HOERBUCH_IDS.has(artist.id);
-}
-
-function getBlacklist() {
-  const key = appMode === "hoerspiel" ? "zt_blacklist_hoerspiel" : "zt_blacklist_musik";
-  try { return JSON.parse(localStorage.getItem(key) || "[]"); } catch { return []; }
-}
-function getBlacklistForMode(mode) {
-  const key = mode === "hoerspiel" ? "zt_blacklist_hoerspiel" : "zt_blacklist_musik";
-  try { return JSON.parse(localStorage.getItem(key) || "[]"); } catch { return []; }
-}
-function saveBlacklist(list) {
-  const key = appMode === "hoerspiel" ? "zt_blacklist_hoerspiel" : "zt_blacklist_musik";
-  localStorage.setItem(key, JSON.stringify(list));
-}
-
-function getArtistPoolForMode(artists) {
-  const blacklist = getBlacklist();
-  const blacklistIds = new Set(blacklist.map(b => b.id));
-  if (appMode === "hoerspiel") {
-    // Hörspiel-Pool kommt aus den Hörspiel-Favoriten, nicht aus gefolgten Künstlern
-    return getFavorites().map(f => ({
-      id: getFavId(f),
-      name: getFavName(f),
-      external_urls: { spotify: `https://open.spotify.com/artist/${getFavId(f)}` }
-    })).filter(a => a.id && !HOERBUCH_IDS.has(a.id) && !blacklistIds.has(a.id));
-  }
-  // Musik: gefollte Künstler minus Hörspiele minus Hörbücher minus Blacklist
-  return artists.filter(a => !HOERSPIEL_IDS.has(a.id) && !HOERBUCH_IDS.has(a.id) && !blacklistIds.has(a.id));
-}
-
-// ── Filter ────────────────────────────────────────────────────────────────────
-function getFilters() {
-  try { return JSON.parse(localStorage.getItem("zt_filters") || '{"album":true,"single":false,"compilation":false,"appears_on":false}'); }
-  catch { return { album: true, single: false, compilation: false, appears_on: false }; }
-}
-function saveFilters() {
-  const filters = {
-    album:       document.getElementById("filterAlbum").checked,
-    single:      document.getElementById("filterSingle").checked,
-    compilation: document.getElementById("filterCompilation").checked,
-    appears_on:  document.getElementById("filterAppearsOn").checked,
-  };
-  if (!Object.values(filters).some(Boolean)) {
-    document.getElementById("filterAlbum").checked = true;
-    filters.album = true;
-  }
-  localStorage.setItem("zt_filters", JSON.stringify(filters));
-}
-function loadFilters() {
-  const f = getFilters();
-  document.getElementById("filterAlbum").checked       = f.album;
-  document.getElementById("filterSingle").checked      = f.single;
-  document.getElementById("filterCompilation").checked = f.compilation;
-  document.getElementById("filterAppearsOn").checked   = f.appears_on;
-}
-function getIncludeGroups() {
-  const f = getFilters();
-  const groups = [];
-  if (f.album)       groups.push("album");
-  if (f.single)      groups.push("single");
-  if (f.compilation) groups.push("compilation");
-  if (f.appears_on)  groups.push("appears_on");
-  return groups.length ? groups.join(",") : "album";
-}
-
-// ── Album-Filterung ───────────────────────────────────────────────────────────
-function normalizeAlbumName(name) {
-  return name.toLowerCase()
-    .replace(/\(.*?\)/g, '').replace(/\[.*?\]/g, '')
-    .replace(/\bremaster(ed)?\b/g, '').replace(/\bdeluxe\b/g, '')
-    .replace(/\bsuper\b/g, '').replace(/\bexpanded\b/g, '')
-    .replace(/\bcollector'?s?\b/g, '').replace(/\bedition\b/g, '')
-    .replace(/\banniversary\b/g, '')
-    .replace(/\b\d{4}\s*(mix|remaster|version|edition)\b/g, '')
-    .replace(/\bmix\b/g, '').replace(/\bversion\b/g, '')
-    .replace(/\s+/g, ' ').trim();
-}
-function filterAlbums(items) {
-  const seen = new Set();
-  return items.filter(a => {
-    const k = normalizeAlbumName(a.name);
-    if (seen.has(k)) return false;
-    seen.add(k);
-    return true;
-  });
-}
-
-// ── Playlisten ───────────────────────────────────────────────────────────────
-const DEFAULT_PLAYLISTS = [
-  { id: "37i9dQZF1F5p3rmiWPIYgZ", name: "Lieblingssongs", uri: "spotify:playlist:37i9dQZF1F5p3rmiWPIYgZ" },
-];
-
-function getPlaylists() {
-  try {
-    const stored = localStorage.getItem("zt_playlists");
-    if (stored !== null) return JSON.parse(stored);
-    savePlaylists(DEFAULT_PLAYLISTS);
-    return DEFAULT_PLAYLISTS.slice();
-  } catch { return DEFAULT_PLAYLISTS.slice(); }
-}
-function savePlaylists(list) {
-  localStorage.setItem("zt_playlists", JSON.stringify(list));
-}
-
-function extractPlaylistId(input) {
-  // Spotify URL: https://open.spotify.com/playlist/xxxxx
-  const match = input.match(/playlist\/([A-Za-z0-9]+)/);
-  if (match) return match[1];
-  // Spotify URI: spotify:playlist:xxxxx
-  const uriMatch = input.match(/spotify:playlist:([A-Za-z0-9]+)/);
-  if (uriMatch) return uriMatch[1];
-  return null;
-}
-
-function addPlaylist() {
-  const linkInput = document.getElementById("playlistLinkInput");
-  const nameInput = document.getElementById("playlistNameInput");
-  const link = linkInput.value.trim();
-  const name = nameInput.value.trim();
-  if (!link || !name) { showError("Bitte Link und Name eingeben", ""); return; }
-  const id = extractPlaylistId(link);
-  if (!id) { showError("Ungültiger Playlist-Link", "Spotify-Link oder URI einfügen."); return; }
-  const list = getPlaylists();
-  if (list.find(p => p.id === id)) { showError("Playlist bereits vorhanden", ""); return; }
-  list.push({ id, name, uri: "spotify:playlist:" + id });
-  savePlaylists(list);
-  linkInput.value = "";
-  nameInput.value = "";
-  renderPlaylists();
-}
-
-function removePlaylist(id) {
-  savePlaylists(getPlaylists().filter(p => p.id !== id));
-  renderPlaylists();
-}
-
-async function startPlaylist(uri, name, cover) {
-  const token    = getToken();
-  const deviceId = localStorage.getItem("spotify_device_id");
-  const deviceQuery = deviceId ? encodeURIComponent(deviceId) : "";
-
-  // Shuffle zuerst setzen und auf Bestätigung warten
-  try {
-    const shuffleUrl = "https://api.spotify.com/v1/me/player/shuffle?state=true" + (deviceId ? "&device_id=" + deviceQuery : "");
-    await fetch(shuffleUrl, {
-      method: "PUT", headers: { Authorization: "Bearer " + token }
-    });
-  } catch {}
-  await new Promise(res => setTimeout(res, 1200));
-
-  // Playlist abspielen
-  let url = "https://api.spotify.com/v1/me/player/play";
-  if (deviceId) url += "?device_id=" + deviceQuery;
-  const r = await fetch(url, {
-    method: "PUT",
-    headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
-    body: JSON.stringify({ context_uri: uri })
-  });
-
-  if (r.ok || r.status === 204) {
-    hideError();
-    // Album-Karte mit Playlist-Info befüllen
-    currentAlbumUri   = uri;
-    currentAlbumData  = null;
-    currentArtistId   = null;
-    currentArtistName = null;
-    document.getElementById("coverArtist").textContent = "Playlist";
-    document.getElementById("coverTitle").textContent  = name;
-    document.getElementById("coverYear").textContent   = "";
-    document.getElementById("albumLink").href = uri.replace("spotify:playlist:", "https://open.spotify.com/playlist/");
-    const img = document.getElementById("albumCover");
-    const ph  = document.getElementById("coverPlaceholder");
-    if (cover) { img.src = cover; img.style.display = "block"; ph.style.display = "none"; }
-    else        { img.style.display = "none"; ph.style.display = "flex"; ph.textContent = "🎵"; }
-    document.getElementById("albumCard").classList.add("visible");
-    document.getElementById("anotherBtn").classList.remove("visible");
-    switchTab("home", document.querySelector(".tab-btn"));
-  } else {
-    showError("Wiedergabe fehlgeschlagen", "Spotify öffnen und erneut versuchen.");
-  }
-}
-
-async function getSpotifyUserId() {
-  const cached = localStorage.getItem("zt_spotify_user_id");
-  if (cached) return cached;
-  const token = getToken();
-  const r = await fetch("https://api.spotify.com/v1/me", { headers: { Authorization: "Bearer " + token } });
-  const d = await r.json();
-  if (d.id) localStorage.setItem("zt_spotify_user_id", d.id);
-  return d.id || "";
-}
-
-async function loadPlaylistCover(id) {
-  if (id === "liked") return null;
-  try {
-    const token = getToken();
-    const r = await fetch(`https://api.spotify.com/v1/playlists/${id}?fields=images`, {
-      headers: { Authorization: "Bearer " + token }
-    });
-    const d = await r.json();
-    return d?.images?.[0]?.url || null;
-  } catch { return null; }
-}
-
-function renderPlaylists() {
-  const el = document.getElementById("playlistContent");
-  if (appMode === "hoerspiel") {
-    el.innerHTML = '<div style="padding:20px;font-size:13px;color:var(--muted);text-align:center">Playlisten sind nur im Musik-Modus verfügbar.</div>';
-    return;
-  }
-  const list = getPlaylists();
-  el.innerHTML = `
-    <div style="display:flex;gap:8px;margin-bottom:16px;">
-      <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
-        <input type="text" id="playlistLinkInput" placeholder="Spotify-Link einfügen…" style="width:100%;">
-        <input type="text" id="playlistNameInput" placeholder="Name der Playlist…" style="width:100%;">
-      </div>
-      <button onclick="addPlaylist()" style="background:var(--accent);border:none;color:#000;border-radius:10px;font-size:22px;font-weight:700;cursor:pointer;padding:0 16px;align-self:stretch;">+</button>
-    </div>
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
-      ${list.map(p => `
-        <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;" onclick="startPlaylist('${p.uri}', '${p.name.replace(/'/g,"\'")}', null)">
-          <i class="ti ti-playlist" style="font-size:20px;color:var(--muted);flex-shrink:0;"></i>
-          <span style="flex:1;font-size:15px;font-weight:500;">${p.name}</span>
-          ${p.id !== "37i9dQZF1F5p3rmiWPIYgZ" ? `<button onclick="event.stopPropagation();removePlaylist('${p.id}')" style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 4px;">×</button>` : ""}
-        </div>`).join("")}
-    </div>`;
-}
-
-// ── Blacklist ─────────────────────────────────────────────────────────────────
-function blacklistCurrent() {
-  if (!currentArtistId || !currentArtistName) return;
-  const btn = document.getElementById("blacklistBtn");
-  const list = getBlacklist();
-  if (list.find(b => b.id === currentArtistId)) {
-    btn.innerHTML = '<i class="ti ti-ban" style="font-size:18px;"></i>';
-    return;
-  }
-  list.push({ id: currentArtistId, name: currentArtistName });
-  saveBlacklist(list);
-  btn.innerHTML = '<i class="ti ti-ban" style="font-size:20px;color:var(--danger);"></i>';
-  setTimeout(() => { btn.innerHTML = '<i class="ti ti-ban" style="font-size:20px;"></i>'; }, 2000);
-}
-
-function removeFromBlacklist(id) {
-  const list = getBlacklist().filter(b => b.id !== id);
-  saveBlacklist(list);
-  renderBlacklist();
-}
-
-function renderBlacklist() {
-  const list = getBlacklist();
-  const el   = document.getElementById("blacklistList");
-  if (!list.length) {
-    el.innerHTML = '<div style="padding:20px;font-size:13px;color:var(--muted);text-align:center">Keine gesperrten Künstler.<br>Ban-Symbol beim Künstler antippen.</div>';
-    return;
-  }
-  const sorted = list.slice().sort((a, b) => a.name.localeCompare(b.name, 'de'));
-  el.innerHTML = sorted.map(b => `
-    <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);">
-      <i class="ti ti-ban" style="font-size:20px;color:var(--muted);flex-shrink:0;"></i>
-      <span style="flex:1;font-size:15px;">${b.name}</span>
-      <button onclick="removeFromBlacklist('${b.id}')" style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 4px;" title="Sperre aufheben">×</button>
-    </div>`).join("");
-}
-
-// ── Verlauf ───────────────────────────────────────────────────────────────────
-function getTodayKey() {
-  const d = new Date();
-  return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
-}
-function getHistory() {
-  try { return JSON.parse(localStorage.getItem("zt_history") || "[]"); }
-  catch { return []; }
-}
-function addToHistory(album, artistName, totalAlbums, artistUrl) {
-  const history = getHistory();
-  const entry = {
-    album: album.name, artist: artistName,
-    year: album.release_date?.substring(0,4) || "",
-    cover: album.images?.[2]?.url || album.images?.[1]?.url || album.images?.[0]?.url || "",
-    albumUrl: album.external_urls?.spotify || "",
-    ts: Date.now()
-  };
-  const filtered = history.filter(h => h.album !== entry.album || h.artist !== entry.artist);
-  filtered.unshift(entry);
-  localStorage.setItem("zt_history", JSON.stringify(filtered.slice(0, HISTORY_MAX)));
-}
-function renderHistory() {
-  const history = getHistory();
-  const el = document.getElementById("historyList");
-  if (!history.length) {
-    el.innerHTML = '<div style="padding:20px 0;font-size:13px;color:var(--muted);text-align:center">Noch nichts gespielt.</div>';
-    return;
-  }
-  el.innerHTML = history.map(h => `
-    <a class="history-item" ${h.albumUrl ? `href="${h.albumUrl}" target="_blank"` : ""} style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;">
-      ${h.cover ? `<img class="history-cover" src="${h.cover}" alt="" loading="lazy">` : '<div class="history-cover"></div>'}
-      <div class="history-info">
-        <div class="history-album">${h.album}</div>
-        <div class="history-artist">${h.artist}</div>
-      </div>
-      <div class="history-meta">${h.year}</div>
-    </a>`).join("");
-}
-
-// ── Vorgemerkte Alben (modusgetrennt) ────────────────────────────────────────
-function bookmarkKey() {
-  return appMode === "hoerspiel" ? "zt_bookmarks_hoerspiel" : "zt_bookmarks_musik";
-}
-function getBookmarks() {
-  try { return JSON.parse(localStorage.getItem(bookmarkKey()) || "[]"); }
-  catch { return []; }
-}
-function addBookmark(album, artistName) {
-  const bookmarks = getBookmarks();
-  const entry = {
-    album: album.name, artist: artistName,
-    year: album.release_date?.substring(0,4) || "",
-    cover: album.images?.[1]?.url || album.images?.[0]?.url || "",
-    albumUrl: album.external_urls?.spotify || "",
-    uri: album.uri
-  };
-  if (bookmarks.find(b => b.uri === entry.uri)) return;
-  bookmarks.unshift(entry);
-  localStorage.setItem(bookmarkKey(), JSON.stringify(bookmarks));
-}
-function removeBookmark(uri) {
-  const bookmarks = getBookmarks().filter(b => b.uri !== uri);
-  localStorage.setItem(bookmarkKey(), JSON.stringify(bookmarks));
-  renderBookmarks();
-}
-function renderBookmarks() {
-  const bookmarks = getBookmarks();
-  const el = document.getElementById("bookmarkList");
-  if (!bookmarks.length) {
-    el.innerHTML = '<div style="padding:20px;font-size:13px;color:var(--muted);text-align:center">Noch keine vorgemerkten Alben.<br>Lesezeichen-Icon beim Album antippen.</div>';
-    return;
-  }
-  el.innerHTML = bookmarks.map(b => `
-    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
-      ${b.cover ? `<img src="${b.cover}" alt="" loading="lazy" style="width:48px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0;">` : '<div style="width:48px;height:48px;border-radius:6px;background:var(--surface2);flex-shrink:0;"></div>'}
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${b.album}</div>
-        <div style="font-size:12px;color:var(--muted);">${b.artist} · ${b.year}</div>
-      </div>
-      <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
-        <a href="${b.albumUrl}" target="_blank" style="color:var(--accent);font-size:12px;text-decoration:none;">▶</a>
-        <button onclick="removeBookmark('${b.uri}')" style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 4px;">×</button>
-      </div>
-    </div>`).join("");
-}
-
-// ── Favoriten (modusgetrennt) ─────────────────────────────────────────────────
-function favKey() {
-  return appMode === "hoerspiel" ? "zt_favorites_hoerspiel" : "zt_favorites_musik";
-}
-function getFavorites() {
-  try {
-    const stored = localStorage.getItem(favKey());
-    if (stored !== null) return JSON.parse(stored);
-    const defaults = appMode === "hoerspiel" ? DEFAULT_FAVORITES_HOERSPIEL : DEFAULT_FAVORITES_MUSIK;
-    saveFavorites(defaults);
-    return defaults.slice();
-  } catch {
-    return (appMode === "hoerspiel" ? DEFAULT_FAVORITES_HOERSPIEL : DEFAULT_FAVORITES_MUSIK).slice();
-  }
-}
-function saveFavorites(favs) {
-  localStorage.setItem(favKey(), JSON.stringify(favs));
-}
-function getFavName(f) { return typeof f === 'object' ? f.name : f; }
-function getFavId(f)   { return typeof f === 'object' ? f.id   : null; }
-
-function addFavoriteById(id, name) {
-  // Ziel-Liste folgt aktivem Modus
-  const targetKey = appMode === "hoerspiel" ? "zt_favorites_hoerspiel" : "zt_favorites_musik";
-  let favs;
-  try { favs = JSON.parse(localStorage.getItem(targetKey) || "[]"); }
-  catch { favs = []; }
-  if (favs.length >= FAV_MAX) return;
-  if (favs.find(f => getFavName(f).toLowerCase() === name.toLowerCase())) return;
-  favs.push({ id, name });
-  localStorage.setItem(targetKey, JSON.stringify(favs));
-  renderFavorites();
-}
-
-function loadDefaultFavorites() {
-  const defaults = appMode === "hoerspiel" ? DEFAULT_FAVORITES_HOERSPIEL : DEFAULT_FAVORITES_MUSIK;
-  const current = getFavorites();
-  let added = 0;
-  for (const d of defaults) {
-    const dName = getFavName(d);
-    if (!current.find(f => getFavName(f).toLowerCase() === dName.toLowerCase())) {
-      current.push(d);
-      added++;
-    }
-  }
-  saveFavorites(current);
-  renderFavorites();
-  const msg = added > 0 ? `${added} Künstler hinzugefügt.` : "Alle bereits vorhanden.";
-  showError(msg, "");
-  setTimeout(() => hideError(), 2500);
-}
-
-function renderFavorites() {
-  const favs  = getFavorites().slice().sort((a, b) => getFavName(a).localeCompare(getFavName(b), 'de'));
-  const total = getFavorites().length;
-  const full  = total >= FAV_MAX;
-  document.getElementById("favCount").textContent      = `${total}/${FAV_MAX}`;
-  document.getElementById("favCount").style.color      = full ? "var(--warn)" : "var(--muted)";
-  document.getElementById("syssFavCountMusik").textContent    = getFavoritesForMode("musik").length + "/" + FAV_MAX;
-  document.getElementById("syssFavCountHoerspiel").textContent = getFavoritesForMode("hoerspiel").length + "/" + FAV_MAX;
-  const el = document.getElementById("favList");
-  if (!favs.length) {
-    el.innerHTML = '<div class="fav-empty">Noch keine Favoriten.<br>Künstler über Suche oder ⭐ hinzufügen.</div>';
-    return;
-  }
-  el.innerHTML = favs.map(f => {
-    const name = getFavName(f);
-    const safe = name.replace(/'/g, "\\'");
-    return `
-    <div class="fav-item" onclick="loadAlbumsByName('${safe}', ${f.id ? `'${f.id}'` : 'null'})">
-      <span class="fav-name">${name}</span>
-      <button class="fav-remove" onclick="event.stopPropagation();removeFavorite('${safe}')">×</button>
-    </div>`;
-  }).join("");
-}
-
-function getFavoritesForMode(mode) {
-  const key = mode === "hoerspiel" ? "zt_favorites_hoerspiel" : "zt_favorites_musik";
-  try { return JSON.parse(localStorage.getItem(key) || "[]"); }
-  catch { return []; }
-}
-
-function showModal(name) {
-  document.getElementById("modalText").textContent = `„${name}" aus den Favoriten entfernen?`;
-  document.getElementById("modalConfirm").onclick = () => { doRemoveFavorite(name); closeModal(); };
-  document.getElementById("modal").classList.add("visible");
-}
-function closeModal() { document.getElementById("modal").classList.remove("visible"); }
-function removeFavorite(name) { showModal(name); }
-function doRemoveFavorite(name) {
-  saveFavorites(getFavorites().filter(f => getFavName(f) !== name));
-  renderFavorites();
-}
-
-// ── Album-Karte ───────────────────────────────────────────────────────────────
-function showAlbumCard(album, artistName, totalAlbums, artistUrl) {
-  currentAlbumUri  = album.uri;
-  currentAlbumData = { album, artistName };
-  document.getElementById("coverArtist").textContent = artistName;
-  document.getElementById("coverTitle").textContent  = album.name;
-  document.getElementById("coverYear").textContent   = album.release_date?.substring(0,4) || "";
-  document.getElementById("albumLink").href = album.external_urls?.spotify || "#";
-  const img   = document.getElementById("albumCover");
-  const ph    = document.getElementById("coverPlaceholder");
-  const cover = album.images?.[0]?.url;
-  if (cover) { img.src = cover; img.style.display = "block"; ph.style.display = "none"; }
-  else        { img.style.display = "none"; ph.style.display = "flex"; }
-  document.getElementById("albumCard").classList.add("visible");
-  document.getElementById("anotherBtn").classList.add("visible");
-  updateCardIcons();
-  const albumUrl = album.external_urls?.spotify || "";
-  localStorage.setItem("zt_last_album", JSON.stringify({
-    uri: album.uri, name: album.name, artist: artistName,
-    artistId: currentArtistId || null,
-    year: album.release_date?.substring(0,4) || "",
-    cover: cover || "", albumUrl, artistUrl: artistUrl || "", totalAlbums,
-    mode: appMode
-  }));
-}
-
-function restoreLastAlbum() {
-  try {
-    const raw = localStorage.getItem("zt_last_album");
-    if (!raw) return;
-    const a = JSON.parse(raw);
-    // Nur wiederherstellen wenn passend zum aktuellen Modus
-    if (a.mode && a.mode !== appMode) return;
-    // State vollständig wiederherstellen
-    currentAlbumUri   = a.uri;
-    currentArtistId   = a.artistId   || null;
-    currentArtistName = a.artist     || null;
-    currentArtistUrl  = a.artistUrl  || null;
-    currentAlbumData  = { album: { uri: a.uri, name: a.name, external_urls: { spotify: a.albumUrl }, images: a.cover ? [{ url: a.cover }] : [] }, artistName: a.artist };
-    document.getElementById("coverArtist").textContent = a.artist;
-    document.getElementById("coverTitle").textContent  = a.name;
-    document.getElementById("coverYear").textContent   = a.year;
-    document.getElementById("albumLink").href = a.albumUrl || "#";
-    const img = document.getElementById("albumCover");
-    const ph  = document.getElementById("coverPlaceholder");
-    if (a.cover) { img.src = a.cover; img.style.display = "block"; ph.style.display = "none"; }
-    else          { img.style.display = "none"; ph.style.display = "flex"; }
-    document.getElementById("albumCard").classList.add("visible");
-    document.getElementById("anotherBtn").classList.add("visible");
-    // Icons nach Wiederherstellung aktualisieren
-    updateCardIcons();
-  } catch {}
-}
-
-function updateCardIcons() {
-  if (!currentArtistId && !currentAlbumUri) return;
-  // Favoriten-Icon
-  const favs = getFavorites();
-  const isFav = currentArtistName && favs.find(f => getFavName(f).toLowerCase() === currentArtistName.toLowerCase());
-  const favBtn = document.getElementById("favArtistBtn");
-  if (favBtn) favBtn.innerHTML = isFav
-    ? '<i class="ti ti-heart" style="font-size:20px;color:var(--accent);"></i>'
-    : '<i class="ti ti-heart" style="font-size:20px;"></i>';
-
-  // Bookmark-Icon
-  const bookmarks = getBookmarks();
-  const isBookmarked = currentAlbumUri && bookmarks.find(b => b.uri === currentAlbumUri);
-  const bookBtn = document.getElementById("bookmarkBtn");
-  if (bookBtn) bookBtn.innerHTML = isBookmarked
-    ? '<i class="ti ti-bookmark" style="font-size:20px;color:var(--accent);"></i>'
-    : '<i class="ti ti-bookmark" style="font-size:20px;"></i>';
-
-  // Ban-Icon
-  const blacklist = getBlacklist();
-  const isBanned = currentArtistId && blacklist.find(b => b.id === currentArtistId);
-  const banBtn = document.getElementById("blacklistBtn");
-  if (banBtn) banBtn.innerHTML = isBanned
-    ? '<i class="ti ti-ban" style="font-size:20px;color:var(--danger);"></i>'
-    : '<i class="ti ti-ban" style="font-size:20px;"></i>';
-}
-
-// ── Play ─────────────────────────────────────────────────────────────────────
-async function waitForDevice(maxRetries = 2, delayMs = 1000) {
-  const token = getToken();
-  let spotifyOpened = false;
-  for (let i = 0; i < maxRetries; i++) {
-    try {
-      const r = await fetch("https://api.spotify.com/v1/me/player/devices", {
-        headers: { Authorization: "Bearer " + token }
-      });
-      const data    = await r.json();
-      const devices = data.devices || [];
-      if (devices.length > 0) {
-        // Gerät automatisch setzen falls noch keins gespeichert
-        const savedId = localStorage.getItem("spotify_device_id");
-        if (!savedId || !devices.find(d => d.id === savedId)) {
-          localStorage.setItem("spotify_device_id",   devices[0].id);
-          localStorage.setItem("spotify_device_name", devices[0].name);
-          updateDevicePill(devices[0].name + " (automatisch)", true);
-        }
-        return true;
-      }
-    } catch {}
-    // Beim ersten Fehlversuch Spotify öffnen (nur einmal)
-    if (i === 0 && !spotifyOpened) {
-      if (typeof AndroidBridge !== "undefined") {
-        AndroidBridge.openSpotify();
-        spotifyOpened = true;
-      }
-    }
-    if (i < maxRetries - 1) await new Promise(r => setTimeout(r, delayMs));
-  }
-  return false;
-}
-
-async function playAlbum() {
-  const exp = localStorage.getItem("spotify_token_expires_at");
-  if (exp && parseInt(exp) - Date.now() < 0) {
-    const ok = await refreshToken();
-    if (!ok) { showSessionBanner(true); return; }
-  }
-  const token = getToken();
-  if (!currentAlbumUri) return;
-
-  // Gerät prüfen, bei Bedarf auf Spotify warten
-  let deviceId = localStorage.getItem("spotify_device_id");
-  if (!deviceId) {
-    const found = await waitForDevice(3, 1000);
-    if (!found) {
-      showError("Kein Gerät verbunden", "Spotify öffnen und erneut versuchen.");
-      return;
-    }
-    deviceId = localStorage.getItem("spotify_device_id");
-  }
-
-  await disableShuffleAndRepeat();
-  let url = "https://api.spotify.com/v1/me/player/play";
-  if (deviceId) url += "?device_id=" + encodeURIComponent(deviceId);
-  const r = await fetch(url, {
-    method: "PUT",
-    headers:{ "Authorization":"Bearer " + token, "Content-Type":"application/json" },
-    body: JSON.stringify({ context_uri: currentAlbumUri })
-  });
-  if (r.ok || r.status === 204) {
-    hideError();
-  } else {
-    const data = await r.json().catch(() => ({}));
-    if (r.status === 404 || r.status === 403) {
-      // Nochmal versuchen mit neuem Gerät
-      const found = await waitForDevice(2, 1500);
-      if (found) {
-        deviceId = localStorage.getItem("spotify_device_id");
-        let url2 = "https://api.spotify.com/v1/me/player/play";
-        if (deviceId) url2 += "?device_id=" + encodeURIComponent(deviceId);
-        const r2 = await fetch(url2, {
-          method: "PUT",
-          headers:{ "Authorization":"Bearer " + token, "Content-Type":"application/json" },
-          body: JSON.stringify({ context_uri: currentAlbumUri })
-        });
-        if (r2.ok || r2.status === 204) { hideError(); return; }
-      }
-      showError("Kein Gerät verbunden", "Spotify öffnen und erneut versuchen.");
-    } else {
-      showError("Wiedergabe fehlgeschlagen", data?.error?.message || "Unbekannter Fehler");
-    }
-  }
-}
-
-// ── Surprise Me ───────────────────────────────────────────────────────────────
-async function surpriseMe() {
-  const btn = document.getElementById("surpriseBtn");
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spin"></span>Einen Moment…';
-  hideError();
-  try {
-    if (!cachedArtists) cachedArtists = await fetchAllFollowedArtists();
-    const pool = getArtistPoolForMode(cachedArtists);
-    if (!pool.length) {
-      showError(
-        appMode === "hoerspiel" ? "Keine Hörspiel-Künstler gefunden" : "Keine gefolgten Künstler",
-        appMode === "hoerspiel" ? "Hörspiel-Favoriten sind leer." : "Bitte Künstler auf Spotify folgen."
-      );
-      return;
-    }
-    for (let i = 0; i < 30; i++) {
-      const artist = pool[Math.floor(Math.random() * pool.length)];
-      try {
-        const studioAlbums = filterAlbums(await fetchAllAlbums(artist.id));
-        if (!studioAlbums.length) continue;
-        currentArtistId   = artist.id;
-        currentArtistName = artist.name;
-        currentArtistUrl  = artist.external_urls?.spotify || "";
-        currentMode       = "surprise";
-        const random = studioAlbums[Math.floor(Math.random() * studioAlbums.length)];
-        addToHistory(random, artist.name, studioAlbums.length, currentArtistUrl);
-        showAlbumCard(random, artist.name, studioAlbums.length, currentArtistUrl);
-        await playAlbum();
-        return;
-      } catch { continue; }
-    }
-    showError("Kein passendes Album", "Bitte erneut versuchen.");
-  } catch(e) { showError("Fehler", e.message); }
-  finally { btn.disabled = false; btn.innerHTML = "🎲 Überrasch mich"; }
-}
-
-// ── Anderes Album ─────────────────────────────────────────────────────────────
-async function playAnother() {
-  const btn = document.getElementById("anotherBtn");
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spin"></span>Einen Moment…';
-  try {
-    if (currentArtistId) {
-      const studioAlbums = filterAlbums(await fetchAllAlbums(currentArtistId));
-      if (!studioAlbums.length) { showError("Keine Alben gefunden", "Für diesen Künstler wurden keine passenden Alben gefunden."); return; }
-      const random = studioAlbums[Math.floor(Math.random() * studioAlbums.length)];
-      addToHistory(random, currentArtistName, studioAlbums.length, currentArtistUrl);
-      showAlbumCard(random, currentArtistName, studioAlbums.length, currentArtistUrl);
-      hideError();
-      await playAlbum();
-    } else {
-      await surpriseMe();
-    }
-  } catch(e) { showError("Fehler", e.message); }
-  finally { btn.disabled = false; btn.innerHTML = "🔀 Anderes Album"; }
-}
-
-// ── Favoriten würfeln ─────────────────────────────────────────────────────────
-async function surpriseFavs() {
-  const btn = document.getElementById("surpriseFavsBtn");
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spin"></span>Einen Moment…';
-  try {
-    const favs = getFavorites();
-    if (!favs.length) { showError("Keine Favoriten", "Bitte zuerst Künstler hinzufügen."); return; }
-    const token = getToken();
-    for (let i = 0; i < 20; i++) {
-      const fav    = favs[Math.floor(Math.random() * favs.length)];
-      const favName = getFavName(fav);
-      const favId   = getFavId(fav);
-      try {
-        let artistId, artistName, artistUrl;
-        if (favId) {
-          const ar   = await fetch(`https://api.spotify.com/v1/artists/${favId}`, {headers:{Authorization:"Bearer "+token}});
-          const artist = await ar.json();
-          artistId   = favId;
-          artistName = artist.name || favName;
-          artistUrl  = artist.external_urls?.spotify || "";
-        } else {
-          const sr = await fetch(
-            "https://api.spotify.com/v1/search?q=" + encodeURIComponent(favName) + "&type=artist&limit=10&market=DE",
-            { headers:{ Authorization:"Bearer " + token } }
-          );
-          const sd    = await sr.json();
-          const items = sd?.artists?.items || [];
-          const found = items.find(a => a.name.toLowerCase() === favName.toLowerCase()) || items[0];
-          if (!found) continue;
-          artistId   = found.id;
-          artistName = found.name;
-          artistUrl  = found.external_urls?.spotify || "";
-        }
-        const studioAlbums = filterAlbums(await fetchAllAlbums(artistId));
-        if (!studioAlbums.length) continue;
-        currentArtistId   = artistId;
-        currentArtistName = artistName;
-        currentArtistUrl  = artistUrl;
-        currentMode       = "search";
-        const random = studioAlbums[Math.floor(Math.random() * studioAlbums.length)];
-        addToHistory(random, artistName, studioAlbums.length, artistUrl);
-        showAlbumCard(random, artistName, studioAlbums.length, artistUrl);
-        hideError();
-        switchTab('home', document.querySelector('.tab-btn'));
-        await playAlbum();
-        return;
-      } catch { continue; }
-    }
-    showError("Kein passendes Album", "Bitte erneut versuchen.");
-  } catch(e) { showError("Fehler", e.message); }
-  finally { btn.disabled = false; btn.innerHTML = "🎲 Favoriten würfeln"; }
-}
-
-// ── Suche ─────────────────────────────────────────────────────────────────────
-async function loadAlbums() {
-  const token  = getToken();
-  const artist = document.getElementById("artistInput").value.trim();
-  if (!artist) return;
-  const btn = document.getElementById("searchBtn");
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spin"></span>';
-  hideError();
-  try {
-    const sr = await fetch(
-      "https://api.spotify.com/v1/search?q=" + encodeURIComponent(artist) + "&type=artist&limit=10&market=DE",
-      { headers:{ Authorization:"Bearer " + token } }
-    );
-    const sd    = await sr.json();
-    const items = sd?.artists?.items || [];
-    const found = items.find(a => a.name.toLowerCase() === artist.toLowerCase()) || items[0];
-    if (!found) { showError("Künstler nicht gefunden", "Bitte Schreibweise prüfen."); return; }
-    document.getElementById("artistInput").value = "";
-    const studioAlbums = filterAlbums(await fetchAllAlbums(found.id));
-    if (!studioAlbums.length) { showError("Keine Alben gefunden", "Für diesen Künstler wurden keine passenden Alben gefunden."); return; }
-    currentArtistId   = found.id;
-    currentArtistName = found.name;
-    currentArtistUrl  = found.external_urls?.spotify || "";
-    currentMode       = "search";
-    const random = studioAlbums[Math.floor(Math.random() * studioAlbums.length)];
-    addToHistory(random, found.name, studioAlbums.length, currentArtistUrl);
-    showAlbumCard(random, found.name, studioAlbums.length, currentArtistUrl);
-    hideError();
-    await playAlbum();
-  } catch(e) { showError("Fehler", e.message); }
-  finally { btn.disabled = false; btn.textContent = "Suchen"; }
-}
-
-async function loadAlbumsByName(artistName, artistId = null) {
-  document.getElementById("artistInput").value = "";
-  switchTab('home', document.querySelector('.tab-btn'));
-  hideError();
-  const btn = document.getElementById("searchBtn");
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spin"></span>';
-  try {
-    const token = getToken();
-    if (artistId) {
-      const ar     = await fetch(`https://api.spotify.com/v1/artists/${artistId}`, {headers:{Authorization:"Bearer "+token}});
-      const artist = await ar.json();
-      const studioAlbums = filterAlbums(await fetchAllAlbums(artistId));
-      if (!studioAlbums.length) { showError("Keine Alben gefunden", "Für diesen Künstler wurden keine passenden Alben gefunden."); return; }
-      currentArtistId   = artistId;
-      currentArtistName = artist.name || artistName;
-      currentArtistUrl  = artist.external_urls?.spotify || "";
-      currentMode       = "search";
-      const random = studioAlbums[Math.floor(Math.random() * studioAlbums.length)];
-      addToHistory(random, currentArtistName, studioAlbums.length, currentArtistUrl);
-      showAlbumCard(random, currentArtistName, studioAlbums.length, currentArtistUrl);
-      await playAlbum();
-    } else {
-      const sr    = await fetch(
-        "https://api.spotify.com/v1/search?q=" + encodeURIComponent(artistName) + "&type=artist&limit=10&market=DE",
-        { headers:{ Authorization:"Bearer " + token } }
-      );
-      const sd    = await sr.json();
-      const items = sd?.artists?.items || [];
-      const found = items.find(a => a.name.toLowerCase() === artistName.toLowerCase()) || items[0];
-      if (!found) { showError("Künstler nicht gefunden", "Bitte Schreibweise prüfen."); return; }
-      const studioAlbums = filterAlbums(await fetchAllAlbums(found.id));
-      if (!studioAlbums.length) { showError("Keine Alben gefunden", "Für diesen Künstler wurden keine passenden Alben gefunden."); return; }
-      currentArtistId   = found.id;
-      currentArtistName = found.name;
-      currentArtistUrl  = found.external_urls?.spotify || "";
-      currentMode       = "search";
-      const random = studioAlbums[Math.floor(Math.random() * studioAlbums.length)];
-      addToHistory(random, found.name, studioAlbums.length, currentArtistUrl);
-      showAlbumCard(random, found.name, studioAlbums.length, currentArtistUrl);
-      await playAlbum();
-    }
-  } catch(e) { showError("Fehler", e.message); }
-  finally { btn.disabled = false; btn.textContent = "Suchen"; }
-}
-
-async function playArtistById(artist) {
-  const btn = document.getElementById("searchBtn");
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spin"></span>';
-  hideError();
-  try {
-    const studioAlbums = filterAlbums(await fetchAllAlbums(artist.id));
-    if (!studioAlbums.length) { showError("Keine Alben gefunden", "Für diesen Künstler wurden keine passenden Alben gefunden."); return; }
-    currentArtistId   = artist.id;
-    currentArtistName = artist.name;
-    currentArtistUrl  = artist.external_urls?.spotify || "";
-    currentMode       = "search";
-    const random = studioAlbums[Math.floor(Math.random() * studioAlbums.length)];
-    addToHistory(random, artist.name, studioAlbums.length, currentArtistUrl);
-    showAlbumCard(random, artist.name, studioAlbums.length, currentArtistUrl);
-    hideError();
-    await playAlbum();
-  } catch(e) { showError("Fehler", e.message); }
-  finally { btn.disabled = false; btn.textContent = "Suchen"; }
-}
-
-// ── Favoriten-Buttons (Album-Karte) ───────────────────────────────────────────
-function bookmarkCurrent() {
-  if (!currentAlbumData) return;
-  addBookmark(currentAlbumData.album, currentAlbumData.artistName);
-  const btn = document.getElementById("bookmarkBtn");
-  btn.innerHTML = '<i class="ti ti-bookmark" style="font-size:20px;color:var(--accent);"></i>';
-  setTimeout(() => { btn.innerHTML = '<i class="ti ti-bookmark" style="font-size:20px;"></i>'; }, 2000);
-}
-
-function addCurrentArtistToFavs() {
-  if (!currentArtistId || !currentArtistName) return;
-  const btn       = document.getElementById("favArtistBtn");
-  // Ziel-Liste folgt aktivem Modus
-  const targetKey = appMode === "hoerspiel" ? "zt_favorites_hoerspiel" : "zt_favorites_musik";
-  let favs;
-  try { favs = JSON.parse(localStorage.getItem(targetKey) || "[]"); } catch { favs = []; }
-  if (favs.length >= FAV_MAX) { showError("Favoriten voll", `Maximal ${FAV_MAX} Künstler erlaubt.`); return; }
-  if (favs.find(f => getFavName(f).toLowerCase() === currentArtistName.toLowerCase())) {
-    btn.innerHTML = '<i class="ti ti-heart" style="font-size:20px;color:var(--accent);"></i>';
-    setTimeout(() => { btn.innerHTML = '<i class="ti ti-heart" style="font-size:20px;"></i>'; }, 2000);
-    return;
-  }
-  favs.push({ id: currentArtistId, name: currentArtistName });
-  localStorage.setItem(targetKey, JSON.stringify(favs));
-  renderFavorites();
-  btn.innerHTML = '<i class="ti ti-heart" style="font-size:20px;color:var(--accent);"></i>';
-  setTimeout(() => { btn.innerHTML = '<i class="ti ti-heart" style="font-size:20px;"></i>'; }, 2000);
-}
-
-// ── Album des Tages ───────────────────────────────────────────────────────────
-function aodKey() {
-  return appMode === "hoerspiel" ? "zt_album_of_day_hoerspiel" : "zt_album_of_day_musik";
-}
-function getAlbumOfDay() {
-  try { return JSON.parse(localStorage.getItem(aodKey()) || "null"); }
-  catch { return null; }
-}
-
-async function pickAlbumOfDay() {
-  const todayKey = getTodayKey();
-  const existing = getAlbumOfDay();
-  if (existing && existing.date === todayKey) { showAlbumOfDay(existing); return; }
-
-  if (!cachedArtists) cachedArtists = await fetchAllFollowedArtists();
-  const pool = getArtistPoolForMode(cachedArtists);
-  if (!pool.length) return;
-
-  for (let i = 0; i < 30; i++) {
-    const artist = pool[Math.floor(Math.random() * pool.length)];
-    try {
-      const studioAlbums = filterAlbums(await fetchAllAlbums(artist.id));
-      if (!studioAlbums.length) continue;
-      const album = studioAlbums[Math.floor(Math.random() * studioAlbums.length)];
-      const entry = {
-        date: todayKey, uri: album.uri, name: album.name,
-        artist: artist.name, artistId: artist.id,
-        artistUrl: artist.external_urls?.spotify || "",
-        albumUrl: album.external_urls?.spotify || "",
-        cover: album.images?.[1]?.url || album.images?.[0]?.url || "",
-        totalAlbums: studioAlbums.length
-      };
-      localStorage.setItem(aodKey(), JSON.stringify(entry));
-      showAlbumOfDay(entry);
-      return;
-    } catch { continue; }
-  }
-}
-
-function showAlbumOfDay(entry) {
-  const card = document.getElementById("albumOfDayCard");
-  document.getElementById("aodTitle").textContent  = entry.name;
-  document.getElementById("aodArtist").textContent = entry.artist;
-  const img = document.getElementById("aodCover");
-  if (entry.cover) { img.src = entry.cover; img.style.display = "block"; }
-  else img.style.display = "none";
-  card.classList.add("visible");
-}
-
-async function playAlbumOfDay() {
-  const entry = getAlbumOfDay();
-  if (!entry) return;
-  currentAlbumUri   = entry.uri;
-  currentArtistId   = entry.artistId;
-  currentArtistName = entry.artist;
-  currentArtistUrl  = entry.artistUrl;
-  currentMode       = "search";
-  document.getElementById("coverArtist").textContent = entry.artist;
-  document.getElementById("coverTitle").textContent  = entry.name;
-  document.getElementById("coverYear").textContent   = "";
-  document.getElementById("albumLink").href = entry.albumUrl || "#";
-  const img = document.getElementById("albumCover");
-  const ph  = document.getElementById("coverPlaceholder");
-  if (entry.cover) { img.src = entry.cover; img.style.display = "block"; ph.style.display = "none"; }
-  else              { img.style.display = "none"; ph.style.display = "flex"; }
-  document.getElementById("albumCard").classList.add("visible");
-  document.getElementById("anotherBtn").classList.add("visible");
-  await playAlbum();
-}
-
-// ── Panel toggle ──────────────────────────────────────────────────────────────
-function togglePanel(id) {
-  const body   = document.getElementById(id + "Body");
-  const toggle = document.getElementById(id + "Toggle");
-  const open   = body.classList.toggle("open");
-  toggle.classList.toggle("open", open);
-}
-
-// ── Device ───────────────────────────────────────────────────────────────────
-function toggleDeviceSelector() {
-  const sel = document.getElementById("deviceSelectorSys");
-  if (sel.style.display === "block") sel.style.display = "none";
-  else loadDeviceSelector();
-}
-async function loadDeviceSelector() {
-  const token = getToken();
-  const r     = await fetch("https://api.spotify.com/v1/me/player/devices", { headers:{ Authorization:"Bearer " + token } });
-  const data  = await r.json();
-  const devices = data.devices || [];
-  const list    = document.getElementById("deviceList");
-  list.innerHTML = "";
-  if (!devices.length) {
-    list.innerHTML = '<p style="color:var(--warn);font-size:13px">Keine Geräte gefunden – Spotify öffnen und erneut versuchen.</p>';
-  } else {
-    devices.forEach(d => {
-      const btn = document.createElement("button");
-      btn.className = "device-btn";
-      btn.innerHTML = d.name + '<span class="device-type">(' + d.type + ')</span>';
-      btn.onclick = () => {
-        localStorage.setItem("spotify_device_id",   d.id);
-        localStorage.setItem("spotify_device_name", d.name);
-        updateDevicePill(d.name, true);
-        document.getElementById("deviceSelectorSys").style.display = "none";
-      };
-      list.appendChild(btn);
-    });
-  }
-  document.getElementById("deviceSelectorSys").style.display = "block";
-}
-function updateDevicePill(name, ok) {
-  document.getElementById("deviceLabel").textContent = name || "Kein Gerät gewählt";
-  const dot = document.getElementById("deviceDot");
-  dot.className = "si-dot" + (ok === true ? " ok" : ok === false ? " warn" : "");
-}
-function showSpotifyOpenBtn(visible) {
-  const btn = document.getElementById("spotifyOpenBtn");
-  if (btn) btn.style.display = visible ? "block" : "none";
-}
-
-async function openSpotifyFromApp() {
-  if (typeof AndroidBridge !== "undefined") {
-    AndroidBridge.openSpotify();
-  }
-  // Nach 5s Gerät nochmal prüfen
-  setTimeout(async () => {
-    await checkDevice();
-  }, 5000);
-}
-
-async function checkDevice() {
-  const token     = getToken();
-  if (!token) return;
-  const savedId   = localStorage.getItem("spotify_device_id");
-  const savedName = localStorage.getItem("spotify_device_name");
-  try {
-    const r       = await fetch("https://api.spotify.com/v1/me/player/devices", { headers:{ Authorization:"Bearer " + token } });
-    const data    = await r.json();
-    const devices = data.devices || [];
-    if (devices.length >= 1) {
-      const d = devices.find(d => d.id === savedId) || devices[0];
-      localStorage.setItem("spotify_device_id",   d.id);
-      localStorage.setItem("spotify_device_name", d.name);
-      updateDevicePill(d.name + (devices.length === 1 ? " (automatisch)" : ""), true);
-      showSpotifyOpenBtn(false);
-    } else if (devices.length > 1) {
-      const found = devices.find(d => d.id === savedId);
-      if (found) updateDevicePill(savedName, true);
-      else updateDevicePill("Gerät wählen ▾", false);
-      showSpotifyOpenBtn(false);
-    } else {
-      if (savedName) updateDevicePill(savedName + " – nicht erreichbar", false);
-      showSpotifyOpenBtn(true);
-    }
-  } catch {
-    if (savedName) updateDevicePill(savedName, null);
-    showSpotifyOpenBtn(true);
-  }
-}
-
-// ── Autocomplete ──────────────────────────────────────────────────────────────
-let autocompleteTimer = null;
-
-function formatFollowers(n) {
-  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
-  if (n >= 1000)    return (n / 1000).toFixed(0) + 'K';
-  return n;
-}
-
-function showDropdown(dropdownId, artists, onSelect) {
-  const el = document.getElementById(dropdownId);
-  if (!artists.length) { el.classList.remove("visible"); return; }
-  el.innerHTML = artists.map((a, i) => `
-    <div class="autocomplete-item" data-idx="${i}">
-      ${a.images?.[2]?.url || a.images?.[1]?.url
-        ? `<img class="autocomplete-img" src="${a.images?.[2]?.url || a.images?.[1]?.url}" alt="">`
-        : `<div class="autocomplete-img"></div>`}
-      <span class="autocomplete-name">${a.name}</span>
-      <span class="autocomplete-followers">${formatFollowers(a.followers?.total || 0)}</span>
-    </div>`).join("");
-  el.classList.add("visible");
-  el.querySelectorAll(".autocomplete-item").forEach((item, i) => {
-    item.addEventListener("click", () => {
-      el.classList.remove("visible");
-      onSelect(artists[i]);
-    });
-  });
-}
-
-function hideDropdowns() {
-  document.getElementById("searchDropdown")?.classList.remove("visible");
-}
-
-// ── Event Listeners ───────────────────────────────────────────────────────────
-document.getElementById("artistInput").addEventListener("input", e => {
-  clearTimeout(autocompleteTimer);
-  const q = e.target.value.trim();
-  if (q.length < 2) { hideDropdowns(); return; }
-  autocompleteTimer = setTimeout(async () => {
-    const artists = await searchArtists(q);
-    showDropdown("searchDropdown", artists, artist => {
-      document.getElementById("artistInput").value = "";
-      playArtistById(artist);
-    });
-  }, 300);
-});
-
-document.getElementById("artistInput").addEventListener("keydown", e => {
-  if (e.key === "Enter")  { hideDropdowns(); loadAlbums(); }
-  if (e.key === "Escape") hideDropdowns();
-});
-
-document.addEventListener("click", e => {
-  if (!e.target.closest(".autocomplete-wrap")) hideDropdowns();
-});
-
-// ── Swipe-Gesten ──────────────────────────────────────────────────────────────
-const TABS = ["home", "favs", "playlists"];
-let swipeStartX = 0, swipeStartY = 0;
-
-document.getElementById("appScreen").addEventListener("touchstart", e => {
-  swipeStartX = e.touches[0].clientX;
-  swipeStartY = e.touches[0].clientY;
-}, { passive: true });
-
-document.getElementById("appScreen").addEventListener("touchend", e => {
-  const dx = e.changedTouches[0].clientX - swipeStartX;
-  const dy = e.changedTouches[0].clientY - swipeStartY;
-  if (Math.abs(dx) < 50 || Math.abs(dy) > 100) return;
-  const activeTab = document.querySelector(".tab-btn.active");
-  const btns = Array.from(document.querySelectorAll(".tab-btn"));
-  const idx  = btns.indexOf(activeTab);
-  if (dx < 0 && idx < TABS.length - 1) switchTab(TABS[idx + 1], btns[idx + 1]);
-  if (dx > 0 && idx > 0)               switchTab(TABS[idx - 1], btns[idx - 1]);
-}, { passive: true });
-
-// ── Init ──────────────────────────────────────────────────────────────────────
-(async () => {
-  // Modus-Farben sofort anwenden
-  applyModeColors();
-  updateModeToggle();
-  updateModeLabels();
-
-  const params = new URLSearchParams(location.search);
-  const code   = params.get("code");
-
-  if (code) {
-    const tokenData = await exchangeCode(code);
-    if (tokenData.error) { showError("Anmeldefehler", tokenData.error_description); return; }
-    localStorage.setItem("spotify_access_token",     tokenData.access_token);
-    localStorage.setItem("spotify_refresh_token",    tokenData.refresh_token);
-    localStorage.setItem("spotify_token_expires_at", Date.now() + (tokenData.expires_in || 3600) * 1000);
-    await loadProfile(tokenData.access_token);
-    history.replaceState({}, "", "/");
-  }
-
-  const token = getToken();
-  if (token) {
-    document.getElementById("loginScreen").style.display      = "none";
-    document.getElementById("appScreen").style.display        = "flex";
-    document.getElementById("appScreen").style.flexDirection  = "column";
-    document.getElementById("tabBar").style.display           = "flex";
-    document.getElementById("hamburgerBtn").style.display     = "block";
-
-    restoreLastAlbum();
-    renderFavorites();
-    loadFilters();
-
-    fetchAllFollowedArtists().then(artists => {
-      cachedArtists = artists;
-      document.getElementById("followedCount").textContent = artists.length;
-    }).catch(() => {});
-
-    await checkDevice();
-    pickAlbumOfDay().catch(() => {});
-  }
-
-  await checkTokenExpiry();
-  setInterval(checkTokenExpiry, 60 * 1000);
-
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("/zufalltify/sw.js").catch(e => console.warn("SW:", e));
-  }
-})();
-</script>
+<script src="config.js"></script>
+<script src="state.js"></script>
+<script src="spotify.js"></script>
+<script src="ui.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
