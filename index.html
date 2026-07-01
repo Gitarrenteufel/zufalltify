@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Zufalltify v4.22</title>
+<title>Zufalltify v4.23</title>
 <link rel="manifest" href="manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -559,7 +559,7 @@
 
       <div class="system-footer">
         <button class="logout-link" onclick="logout()">Abmelden</button>
-        <span style="font-size:11px;color:var(--muted);margin-left:8px">v4.22</span>
+        <span style="font-size:11px;color:var(--muted);margin-left:8px">v4.23</span>
       </div>
     </div>
 
@@ -1380,6 +1380,7 @@ function showAlbumCard(album, artistName, totalAlbums, artistUrl) {
   const albumUrl = album.external_urls?.spotify || "";
   localStorage.setItem("zt_last_album", JSON.stringify({
     uri: album.uri, name: album.name, artist: artistName,
+    artistId: currentArtistId || null,
     year: album.release_date?.substring(0,4) || "",
     cover: cover || "", albumUrl, artistUrl: artistUrl || "", totalAlbums,
     mode: appMode
@@ -1393,7 +1394,12 @@ function restoreLastAlbum() {
     const a = JSON.parse(raw);
     // Nur wiederherstellen wenn passend zum aktuellen Modus
     if (a.mode && a.mode !== appMode) return;
-    currentAlbumUri = a.uri;
+    // State vollständig wiederherstellen
+    currentAlbumUri   = a.uri;
+    currentArtistId   = a.artistId   || null;
+    currentArtistName = a.artist     || null;
+    currentArtistUrl  = a.artistUrl  || null;
+    currentAlbumData  = { album: { uri: a.uri, name: a.name, external_urls: { spotify: a.albumUrl }, images: a.cover ? [{ url: a.cover }] : [] }, artistName: a.artist };
     document.getElementById("coverArtist").textContent = a.artist;
     document.getElementById("coverTitle").textContent  = a.name;
     document.getElementById("coverYear").textContent   = a.year;
