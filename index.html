@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Zufalltify v4.24</title>
+<title>Zufalltify v4.25</title>
 <link rel="manifest" href="manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -559,7 +559,7 @@
 
       <div class="system-footer">
         <button class="logout-link" onclick="logout()">Abmelden</button>
-        <span style="font-size:11px;color:var(--muted);margin-left:8px">v4.24</span>
+        <span style="font-size:11px;color:var(--muted);margin-left:8px">v4.25</span>
       </div>
     </div>
 
@@ -712,6 +712,10 @@ function setMode(mode) {
   // Bei Playlisten: Hinweis aktualisieren
   if (document.getElementById("page-playlists").classList.contains("active")) {
     renderPlaylists();
+  }
+  // Icons aktualisieren wenn Albumkarte sichtbar
+  if (document.getElementById("albumCard").classList.contains("visible")) {
+    updateCardIcons();
   }
 }
 
