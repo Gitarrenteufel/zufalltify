@@ -1897,7 +1897,10 @@ function showSpotifyOpenBtn(visible) {
 
 async function openSpotifyFromApp() {
   if (typeof AndroidBridge !== "undefined") {
+    showError("Bridge gefunden – Spotify wird gestartet…", "");
     AndroidBridge.openSpotify();
+  } else {
+    showError("Bridge NICHT gefunden", "AndroidBridge ist undefined");
   }
   // Nach 4s Gerät nochmal prüfen
   setTimeout(async () => {
