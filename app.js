@@ -111,7 +111,7 @@ const app = {
     if (typeof AndroidBridge !== "undefined") {
       AndroidBridge.openSpotify();
     }
-    setTimeout(async () => { await app.checkDevice(); }, 5000);
+    // checkDevice wird durch visibilitychange ausgelöst wenn App zurückkommt
   },
 
   async toggleDeviceSelector() {
@@ -608,6 +608,13 @@ const app = {
 
     document.addEventListener("click", e => {
       if (!e.target.closest(".autocomplete-wrap")) ui.hideDropdown();
+    });
+
+    // Sichtbarkeits-Wechsel: Gerät prüfen wenn App in Vordergrund kommt
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        app.checkDevice().catch(() => {});
+      }
     });
 
     // Swipe-Gesten
