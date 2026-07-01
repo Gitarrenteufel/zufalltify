@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Zufalltify v4.20</title>
+<title>Zufalltify v4.21</title>
 <link rel="manifest" href="manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -415,6 +415,9 @@
         </div>
       </div>
 
+      <button id="spotifyOpenBtn" onclick="openSpotifyFromApp()" style="display:none;width:100%;background:var(--surface);border:1px solid #1DB954;color:#1DB954;font-size:14px;font-weight:600;padding:13px;border-radius:12px;font-family:inherit;cursor:pointer;margin-bottom:-4px;">
+        <i class="ti ti-brand-spotify" style="font-size:16px;vertical-align:middle;margin-right:6px;"></i>Spotify öffnen
+      </button>
       <button class="btn btn-surprise" id="surpriseBtn" onclick="surpriseMe()">🎲 Überrasch mich</button>
 
       <div class="search-row">
@@ -556,7 +559,7 @@
 
       <div class="system-footer">
         <button class="logout-link" onclick="logout()">Abmelden</button>
-        <span style="font-size:11px;color:var(--muted);margin-left:8px">v4.20</span>
+        <span style="font-size:11px;color:var(--muted);margin-left:8px">v4.21</span>
       </div>
     </div>
 
@@ -1847,6 +1850,21 @@ function updateDevicePill(name, ok) {
   const dot = document.getElementById("deviceDot");
   dot.className = "si-dot" + (ok === true ? " ok" : ok === false ? " warn" : "");
 }
+function showSpotifyOpenBtn(visible) {
+  const btn = document.getElementById("spotifyOpenBtn");
+  if (btn) btn.style.display = visible ? "block" : "none";
+}
+
+async function openSpotifyFromApp() {
+  if (typeof AndroidBridge !== "undefined") {
+    AndroidBridge.openSpotify();
+  }
+  // Nach 4s Gerät nochmal prüfen
+  setTimeout(async () => {
+    await checkDevice();
+  }, 4000);
+}
+
 async function checkDevice() {
   const token     = getToken();
   if (!token) return;
@@ -1856,19 +1874,25 @@ async function checkDevice() {
     const r       = await fetch("https://api.spotify.com/v1/me/player/devices", { headers:{ Authorization:"Bearer " + token } });
     const data    = await r.json();
     const devices = data.devices || [];
-    if (devices.length === 1) {
-      const d = devices[0];
+    if (devices.length >= 1) {
+      const d = devices.find(d => d.id === savedId) || devices[0];
       localStorage.setItem("spotify_device_id",   d.id);
       localStorage.setItem("spotify_device_name", d.name);
-      updateDevicePill(d.name + " (automatisch)", true);
+      updateDevicePill(d.name + (devices.length === 1 ? " (automatisch)" : ""), true);
+      showSpotifyOpenBtn(false);
     } else if (devices.length > 1) {
       const found = devices.find(d => d.id === savedId);
       if (found) updateDevicePill(savedName, true);
       else updateDevicePill("Gerät wählen ▾", false);
-    } else if (savedName) {
-      updateDevicePill(savedName + " – nicht erreichbar", false);
+      showSpotifyOpenBtn(false);
+    } else {
+      if (savedName) updateDevicePill(savedName + " – nicht erreichbar", false);
+      showSpotifyOpenBtn(true);
     }
-  } catch { if (savedName) updateDevicePill(savedName, null); }
+  } catch {
+    if (savedName) updateDevicePill(savedName, null);
+    showSpotifyOpenBtn(true);
+  }
 }
 
 // ── Autocomplete ──────────────────────────────────────────────────────────────
