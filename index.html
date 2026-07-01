@@ -1896,16 +1896,16 @@ function showSpotifyOpenBtn(visible) {
 }
 
 async function openSpotifyFromApp() {
+  const btn = document.getElementById("spotifyOpenBtn");
+  if (btn) btn.textContent = "Spotify wird gestartet…";
   if (typeof AndroidBridge !== "undefined") {
-    showError("Bridge gefunden – Spotify wird gestartet…", "");
     AndroidBridge.openSpotify();
-  } else {
-    showError("Bridge NICHT gefunden", "AndroidBridge ist undefined");
   }
-  // Nach 4s Gerät nochmal prüfen
+  // Nach 5s Gerät nochmal prüfen und Button zurücksetzen
   setTimeout(async () => {
     await checkDevice();
-  }, 4000);
+    if (btn) btn.innerHTML = '<i class="ti ti-brand-spotify" style="font-size:16px;vertical-align:middle;margin-right:6px;"></i>Spotify öffnen';
+  }, 5000);
 }
 
 async function checkDevice() {
