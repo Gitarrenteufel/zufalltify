@@ -146,6 +146,43 @@ const app = {
     sel.style.display = "block";
   },
 
+  // ── Gemeinsame Bausteine für Album-Auswahl & Wiedergabe ─────────────────────
+  // Diese drei Helfer fassen die Logik zusammen, die zuvor fast identisch in
+  // playArtist/surpriseMe/playAnother/surpriseFavs/pickAlbumOfDay stand.
+
+  // Künstler per Name auflösen (Fallback, wenn nur ein Name statt einer ID vorliegt)
+  async resolveArtistByName(name) {
+    const results = await spotify.searchArtists(name);
+    return results.find(a => a.name.toLowerCase() === name.toLowerCase()) || results[0] || null;
+  },
+
+  // Zufälliges Album eines Künstlers wählen. Berücksichtigt das Bekannt-leer-
+  // Gedächtnis, markiert neu erkannte leere Künstler. Gibt null zurück, wenn
+  // keine passenden Alben existieren; wirft bei echten API-Fehlern (Aufrufer
+  // entscheidet, ob das per try/catch pro Versuch oder pro Aufruf behandelt wird).
+  async pickRandomAlbum(artistId) {
+    const filterKey = getIncludeGroups();
+    if (isKnownEmptyArtist(artistId, filterKey)) return null;
+    const albums = filterAlbums(await spotify.fetchArtistAlbums(artistId));
+    if (!albums.length) { markArtistEmpty(artistId, filterKey); return null; }
+    return albums[Math.floor(Math.random() * albums.length)];
+  },
+
+  // Gewähltes Album als aktuelle Auswahl übernehmen: State setzen, Verlauf und
+  // "letztes Album" speichern, Karte anzeigen, danach abspielen.
+  async selectAndPlayAlbum(album, artistId, artistName, artistUrl) {
+    state.artist.id   = artistId;
+    state.artist.name = artistName;
+    state.artist.url  = artistUrl;
+    state.album.uri   = album.uri;
+    state.album.data  = { album, artistName };
+    addToHistory(album, artistName);
+    saveLastAlbum(album, artistName, artistUrl);
+    ui.showAlbumCard(album, artistName);
+    ui.hideError();
+    await app.playAlbum();
+  },
+
   // ── Wiedergabe ─────────────────────────────────────────────────────────────
   async playAlbum() {
     const exp = token.getExpiry();
@@ -191,8 +228,7 @@ const app = {
     ui.hideError();
     if (!artistId) {
       if (!artistName) return;
-      const results = await spotify.searchArtists(artistName);
-      const found   = results.find(a => a.name.toLowerCase() === artistName.toLowerCase()) || results[0];
+      const found = await app.resolveArtistByName(artistName);
       if (!found) { ui.showError("Künstler nicht gefunden", "Bitte Schreibweise prüfen."); return; }
       artistId   = found.id;
       artistName = found.name;
@@ -243,8 +279,7 @@ const app = {
     // Wenn nur Name übergeben: erst suchen
     if (!artistId) {
       if (!artistName) return;
-      const results = await spotify.searchArtists(artistName);
-      const found   = results.find(a => a.name.toLowerCase() === artistName.toLowerCase()) || results[0];
+      const found = await app.resolveArtistByName(artistName);
       if (!found) { ui.showError("Künstler nicht gefunden", "Bitte Schreibweise prüfen."); return; }
       artistId  = found.id;
       artistName = found.name;
@@ -260,36 +295,19 @@ const app = {
       } catch {}
     }
 
-    const filterKey = getIncludeGroups();
-    if (isKnownEmptyArtist(artistId, filterKey)) {
-      ui.showError("Keine Alben gefunden", "Für diesen Künstler wurden keine passenden Alben gefunden.");
-      return;
-    }
-    let studioAlbums;
+    let random;
     try {
-      studioAlbums = filterAlbums(await spotify.fetchArtistAlbums(artistId));
+      random = await app.pickRandomAlbum(artistId);
     } catch (e) {
       ui.showError("Fehler beim Laden", e.message);
       return;
     }
-    if (!studioAlbums.length) {
-      markArtistEmpty(artistId, filterKey);
+    if (!random) {
       ui.showError("Keine Alben gefunden", "Für diesen Künstler wurden keine passenden Alben gefunden.");
       return;
     }
 
-    state.artist.id   = artistId;
-    state.artist.name = artistName;
-    state.artist.url  = artistUrl;
-
-    const random = studioAlbums[Math.floor(Math.random() * studioAlbums.length)];
-    state.album.uri  = random.uri;
-    state.album.data = { album: random, artistName };
-
-    addToHistory(random, artistName);
-    saveLastAlbum(random, artistName, artistUrl);
-    ui.showAlbumCard(random, artistName);
-    await app.playAlbum();
+    await app.selectAndPlayAlbum(random, artistId, artistName, artistUrl);
   },
 
   // ── Surprise Me ────────────────────────────────────────────────────────────
@@ -314,18 +332,9 @@ const app = {
       for (let i = 0; i < 30; i++) {
         const artist = searchPool[Math.floor(Math.random() * searchPool.length)];
         try {
-          const albums = filterAlbums(await spotify.fetchArtistAlbums(artist.id));
-          if (!albums.length) { markArtistEmpty(artist.id, filterKey); continue; }
-          state.artist.id   = artist.id;
-          state.artist.name = artist.name;
-          state.artist.url  = artist.external_urls?.spotify || "";
-          const random = albums[Math.floor(Math.random() * albums.length)];
-          state.album.uri  = random.uri;
-          state.album.data = { album: random, artistName: artist.name };
-          addToHistory(random, artist.name);
-          saveLastAlbum(random, artist.name, state.artist.url);
-          ui.showAlbumCard(random, artist.name);
-          await app.playAlbum();
+          const random = await app.pickRandomAlbum(artist.id);
+          if (!random) continue;
+          await app.selectAndPlayAlbum(random, artist.id, artist.name, artist.external_urls?.spotify || "");
           return;
         } catch { continue; }
       }
@@ -341,20 +350,12 @@ const app = {
     btn.innerHTML = '<span class="spin"></span>Einen Moment…';
     try {
       if (state.artist.id) {
-        const albums = filterAlbums(await spotify.fetchArtistAlbums(state.artist.id));
-        if (!albums.length) {
-          markArtistEmpty(state.artist.id, getIncludeGroups());
+        const random = await app.pickRandomAlbum(state.artist.id);
+        if (!random) {
           ui.showError("Keine Alben gefunden", "Für diesen Künstler wurden keine passenden Alben gefunden.");
           return;
         }
-        const random = albums[Math.floor(Math.random() * albums.length)];
-        state.album.uri  = random.uri;
-        state.album.data = { album: random, artistName: state.artist.name };
-        addToHistory(random, state.artist.name);
-        saveLastAlbum(random, state.artist.name, state.artist.url);
-        ui.showAlbumCard(random, state.artist.name);
-        ui.hideError();
-        await app.playAlbum();
+        await app.selectAndPlayAlbum(random, state.artist.id, state.artist.name, state.artist.url);
       } else {
         await app.surpriseMe();
       }
@@ -383,27 +384,16 @@ const app = {
             artistName = artist.name || name;
             artistUrl  = artist.external_urls?.spotify || "";
           } else {
-            const results = await spotify.searchArtists(name);
-            const found   = results.find(a => a.name.toLowerCase() === name.toLowerCase()) || results[0];
+            const found = await app.resolveArtistByName(name);
             if (!found) continue;
             artistId   = found.id;
             artistName = found.name;
             artistUrl  = found.external_urls?.spotify || "";
           }
-          const albums = filterAlbums(await spotify.fetchArtistAlbums(artistId));
-          if (!albums.length) { markArtistEmpty(artistId, filterKey); continue; }
-          state.artist.id   = artistId;
-          state.artist.name = artistName;
-          state.artist.url  = artistUrl;
-          const random = albums[Math.floor(Math.random() * albums.length)];
-          state.album.uri  = random.uri;
-          state.album.data = { album: random, artistName };
-          addToHistory(random, artistName);
-          saveLastAlbum(random, artistName, artistUrl);
-          ui.showAlbumCard(random, artistName);
-          ui.hideError();
+          const random = await app.pickRandomAlbum(artistId);
+          if (!random) continue;
           app.switchTab('home', document.querySelector('.tab-btn'));
-          await app.playAlbum();
+          await app.selectAndPlayAlbum(random, artistId, artistName, artistUrl);
           return;
         } catch { continue; }
       }
@@ -426,9 +416,8 @@ const app = {
     for (let i = 0; i < 30; i++) {
       const artist = searchPool[Math.floor(Math.random() * searchPool.length)];
       try {
-        const albums = filterAlbums(await spotify.fetchArtistAlbums(artist.id));
-        if (!albums.length) { markArtistEmpty(artist.id, filterKey); continue; }
-        const album = albums[Math.floor(Math.random() * albums.length)];
+        const album = await app.pickRandomAlbum(artist.id);
+        if (!album) continue;
         const entry = {
           date: todayKey, uri: album.uri, name: album.name,
           artist: artist.name, artistId: artist.id,
