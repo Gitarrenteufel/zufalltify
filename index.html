@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Zufalltify v5.6</title>
+<title>Zufalltify v5.7</title>
 <link rel="manifest" href="manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -412,7 +412,7 @@
 
       <div class="system-footer">
         <button class="logout-link" onclick="app.logout()">Abmelden</button>
-        <span style="font-size:11px;color:var(--muted);margin-left:8px">v5.6</span>
+        <span style="font-size:11px;color:var(--muted);margin-left:8px">v5.7</span>
       </div>
     </div>
 
@@ -467,13 +467,14 @@
   </div>
 
   <!-- Wiedergabe-Wahl (Long-Press auf Künstler) -->
-  <div id="playbackChoiceModal">
+  <div id="playbackChoiceModal" onclick="if (event.target === this) ui.closePlaybackChoice()">
     <div class="modal-box">
       <div class="modal-title" id="choiceArtistName"></div>
       <div class="modal-text">Was möchtest du hören?</div>
       <div class="modal-btns">
         <button id="choiceAlbumBtn">🎲 Zufallsalbum</button>
         <button id="choiceTopTracksBtn">⭐ Beliebteste Songs</button>
+        <button id="choiceCancelBtn" class="modal-cancel" onclick="ui.closePlaybackChoice()">Abbrechen</button>
       </div>
     </div>
   </div>
