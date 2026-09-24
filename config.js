@@ -3,7 +3,6 @@ const CLIENT_ID  = "7f11ab0b763a4d95ba84882b55101ee1";
 const WORKER_URL = "https://zufalltify-token.summer-truth-edd2.workers.dev";
 const SCOPES     = "user-read-private user-read-playback-state user-modify-playback-state user-follow-read";
 const HISTORY_MAX = 50;
-const FAV_MAX     = 50;
 
 const IS_WEBVIEW = window.location.protocol === 'zufalltify:' ||
   (typeof Android !== 'undefined') ||

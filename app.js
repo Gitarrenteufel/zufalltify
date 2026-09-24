@@ -175,6 +175,49 @@ const app = {
     }
   },
 
+  // ── Beliebteste Songs ──────────────────────────────────────────────────────
+  async playTopTracks(artistId, artistName, artistUrl) {
+    ui.hideError();
+    if (!artistId) {
+      if (!artistName) return;
+      const results = await spotify.searchArtists(artistName);
+      const found   = results.find(a => a.name.toLowerCase() === artistName.toLowerCase()) || results[0];
+      if (!found) { ui.showError("Künstler nicht gefunden", "Bitte Schreibweise prüfen."); return; }
+      artistId   = found.id;
+      artistName = found.name;
+      artistUrl  = found.external_urls?.spotify || "";
+    }
+
+    let tracks;
+    try { tracks = await spotify.getTopTracks(artistId); }
+    catch { ui.showError("Fehler", "Top-Songs konnten nicht geladen werden."); return; }
+    if (!tracks.length) {
+      ui.showError("Keine Songs gefunden", "Für diesen Künstler wurden keine Top-Songs gefunden.");
+      return;
+    }
+
+    state.artist.id   = artistId;
+    state.artist.name = artistName;
+    state.artist.url  = artistUrl;
+    state.album.uri   = null;
+    state.album.data  = null;
+
+    ui.showTopTracksCard(tracks, artistName);
+    app.switchTab("home", document.querySelector(".tab-btn"));
+
+    let deviceId = localStorage.getItem("spotify_device_id");
+    if (!deviceId) {
+      const found = await app.waitForDevice(3, 1000);
+      if (!found) { ui.showError("Kein Gerät verbunden", "Spotify öffnen und erneut versuchen."); return; }
+      deviceId = localStorage.getItem("spotify_device_id");
+    }
+
+    await spotify.disableShuffleAndRepeat();
+    const r = await spotify.playTracks(tracks.map(t => t.uri), deviceId);
+    if (r.ok || r.status === 204) ui.hideError();
+    else ui.showError("Wiedergabe fehlgeschlagen", "Spotify öffnen und erneut versuchen.");
+  },
+
   // ── Kernfunktion: Künstler abspielen ───────────────────────────────────────
   // Ersetzt loadAlbums, loadAlbumsByName, playArtistById
   async playArtist(artistId, artistName, artistUrl) {
@@ -413,7 +456,6 @@ const app = {
     const targetKey = state.appMode === "hoerspiel" ? "zt_favorites_hoerspiel" : "zt_favorites_musik";
     let favs;
     try { favs = JSON.parse(localStorage.getItem(targetKey) || "[]"); } catch { favs = []; }
-    if (favs.length >= FAV_MAX) { ui.showError("Favoriten voll", `Maximal ${FAV_MAX} Künstler erlaubt.`); return; }
     if (favs.find(f => getFavName(f).toLowerCase() === state.artist.name.toLowerCase())) {
       btn.innerHTML = `<i class="ti ti-heart" style="font-size:20px;color:var(--accent);"></i>`;
       setTimeout(() => { btn.innerHTML = `<i class="ti ti-heart" style="font-size:20px;"></i>`; }, 2000);
@@ -580,6 +622,29 @@ const app = {
     app.initEvents();
   },
 
+  // ── Long-Press-Helfer ──────────────────────────────────────────────────────
+  // Bindet Tap (kurzer Klick/Touch) und Long-Press (gehalten) an ein Element.
+  attachLongPress(el, { onTap, onLongPress, duration = 500 }) {
+    let timer = null;
+    let fired = false;
+    const start = () => {
+      fired = false;
+      timer = setTimeout(() => { fired = true; onLongPress(); }, duration);
+    };
+    const cancel = () => { clearTimeout(timer); };
+    const end = (e) => {
+      clearTimeout(timer);
+      if (!fired) { if (e) e.preventDefault(); if (onTap) onTap(); }
+    };
+    el.addEventListener("touchstart", start, { passive: true });
+    el.addEventListener("touchend", end);
+    el.addEventListener("touchmove", cancel);
+    el.addEventListener("touchcancel", cancel);
+    el.addEventListener("mousedown", start);
+    el.addEventListener("mouseup", end);
+    el.addEventListener("mouseleave", cancel);
+  },
+
   // ── Event-Listener ─────────────────────────────────────────────────────────
   initEvents() {
     let autocompleteTimer = null;
@@ -593,6 +658,11 @@ const app = {
         ui.showDropdown(artists, artist => {
           document.getElementById("artistInput").value = "";
           app.playArtist(artist.id, artist.name, artist.external_urls?.spotify || "");
+        }, artist => {
+          document.getElementById("artistInput").value = "";
+          ui.showPlaybackChoice(artist.name,
+            () => app.playArtist(artist.id, artist.name, artist.external_urls?.spotify || ""),
+            () => app.playTopTracks(artist.id, artist.name, artist.external_urls?.spotify || ""));
         });
       }, 300);
     });

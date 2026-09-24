@@ -100,6 +100,15 @@ const spotify = {
     return all;
   },
 
+  // ── Top-Tracks ─────────────────────────────────────────────────────────────
+  async getTopTracks(artistId) {
+    const r = await fetch(`https://api.spotify.com/v1/artists/${artistId}/top-tracks?market=DE`, {
+      headers: { Authorization: "Bearer " + token.get() }
+    });
+    const d = await r.json();
+    return d.tracks || [];
+  },
+
   // ── Wiedergabe ─────────────────────────────────────────────────────────────
   async getDevices() {
     const r = await fetch("https://api.spotify.com/v1/me/player/devices", {
@@ -116,6 +125,16 @@ const spotify = {
       method:  "PUT",
       headers: { Authorization: "Bearer " + token.get(), "Content-Type": "application/json" },
       body:    JSON.stringify({ context_uri: uri })
+    });
+  },
+
+  async playTracks(uris, deviceId) {
+    let url = "https://api.spotify.com/v1/me/player/play";
+    if (deviceId) url += "?device_id=" + encodeURIComponent(deviceId);
+    return fetch(url, {
+      method:  "PUT",
+      headers: { Authorization: "Bearer " + token.get(), "Content-Type": "application/json" },
+      body:    JSON.stringify({ uris })
     });
   },
 

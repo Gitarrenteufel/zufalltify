@@ -143,25 +143,37 @@ const ui = {
   renderFavorites() {
     const favs  = getFavorites().slice().sort((a, b) => getFavName(a).localeCompare(getFavName(b), 'de'));
     const total = getFavorites().length;
-    const full  = total >= FAV_MAX;
-    document.getElementById("favCount").textContent   = `${total}/${FAV_MAX}`;
-    document.getElementById("favCount").style.color   = full ? "var(--warn)" : "var(--muted)";
-    document.getElementById("syssFavCountMusik").textContent     = getFavorites("musik").length + "/" + FAV_MAX;
-    document.getElementById("syssFavCountHoerspiel").textContent = getFavorites("hoerspiel").length + "/" + FAV_MAX;
+    document.getElementById("favCount").textContent = `${total}`;
+    document.getElementById("syssFavCountMusik").textContent     = getFavorites("musik").length;
+    document.getElementById("syssFavCountHoerspiel").textContent = getFavorites("hoerspiel").length;
     const el = document.getElementById("favList");
+    el.innerHTML = "";
     if (!favs.length) {
       el.innerHTML = '<div class="fav-empty">Noch keine Favoriten.<br>Künstler über Suche oder ♥ hinzufügen.</div>';
       return;
     }
-    el.innerHTML = favs.map(f => {
+    favs.forEach(f => {
       const name = getFavName(f);
-      const safe = name.replace(/'/g, "\\'");
-      return `
-      <div class="fav-item" onclick="app.playArtist(${f.id ? `'${f.id}'` : 'null'}, '${safe}', null)">
-        <span class="fav-name">${name}</span>
-        <button class="fav-remove" onclick="event.stopPropagation();app.removeFavorite('${safe}')">×</button>
-      </div>`;
-    }).join("");
+      const id   = getFavId(f);
+      const item = document.createElement("div");
+      item.className = "fav-item";
+      const nameSpan = document.createElement("span");
+      nameSpan.className   = "fav-name";
+      nameSpan.textContent = name;
+      const removeBtn = document.createElement("button");
+      removeBtn.className   = "fav-remove";
+      removeBtn.textContent = "×";
+      removeBtn.addEventListener("click", e => { e.stopPropagation(); app.removeFavorite(name); });
+      item.appendChild(nameSpan);
+      item.appendChild(removeBtn);
+      app.attachLongPress(item, {
+        onTap:       () => app.playArtist(id, name, null),
+        onLongPress: () => ui.showPlaybackChoice(name,
+          () => app.playArtist(id, name, null),
+          () => app.playTopTracks(id, name, null))
+      });
+      el.appendChild(item);
+    });
   },
 
   // ── Blacklist ──────────────────────────────────────────────────────────────
@@ -233,7 +245,7 @@ const ui = {
     if (n >= 1000)    return (n / 1000).toFixed(0) + 'K';
     return n;
   },
-  showDropdown(artists, onSelect) {
+  showDropdown(artists, onSelect, onLongPress) {
     const el = document.getElementById("searchDropdown");
     if (!artists.length) { el.classList.remove("visible"); return; }
     el.innerHTML = artists.map((a, i) => `
@@ -246,9 +258,9 @@ const ui = {
       </div>`).join("");
     el.classList.add("visible");
     el.querySelectorAll(".autocomplete-item").forEach((item, i) => {
-      item.addEventListener("click", () => {
-        el.classList.remove("visible");
-        onSelect(artists[i]);
+      app.attachLongPress(item, {
+        onTap:       () => { el.classList.remove("visible"); onSelect(artists[i]); },
+        onLongPress: () => { el.classList.remove("visible"); if (onLongPress) onLongPress(artists[i]); }
       });
     });
   },
@@ -272,6 +284,35 @@ const ui = {
     document.getElementById("albumCard").classList.remove("visible");
     document.getElementById("anotherBtn").classList.remove("visible");
     ui.showSessionBanner(false);
+  },
+
+  // ── Wiedergabe-Wahl (Long-Press) ───────────────────────────────────────────
+  showPlaybackChoice(artistName, onAlbum, onTopTracks) {
+    document.getElementById("choiceArtistName").textContent = artistName;
+    const albumBtn = document.getElementById("choiceAlbumBtn");
+    const topBtn   = document.getElementById("choiceTopTracksBtn");
+    albumBtn.onclick = () => { ui.closePlaybackChoice(); onAlbum(); };
+    topBtn.onclick   = () => { ui.closePlaybackChoice(); onTopTracks(); };
+    document.getElementById("playbackChoiceModal").classList.add("visible");
+  },
+  closePlaybackChoice() {
+    document.getElementById("playbackChoiceModal").classList.remove("visible");
+  },
+
+  // ── Top-Tracks-Karte ───────────────────────────────────────────────────────
+  showTopTracksCard(tracks, artistName) {
+    document.getElementById("coverArtist").textContent = artistName;
+    document.getElementById("coverTitle").textContent  = "Beliebteste Songs";
+    document.getElementById("coverYear").textContent   = `${tracks.length} Songs`;
+    document.getElementById("albumLink").href = tracks[0]?.external_urls?.spotify || "#";
+    const img   = document.getElementById("albumCover");
+    const ph    = document.getElementById("coverPlaceholder");
+    const cover = tracks[0]?.album?.images?.[0]?.url;
+    if (cover) { img.src = cover; img.style.display = "block"; ph.style.display = "none"; }
+    else        { img.style.display = "none"; ph.style.display = "flex"; }
+    document.getElementById("albumCard").classList.add("visible");
+    document.getElementById("anotherBtn").classList.remove("visible");
+    ui.updateCardIcons();
   },
 
   // ── Modal ──────────────────────────────────────────────────────────────────
