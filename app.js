@@ -126,7 +126,11 @@ const app = {
       devices.forEach(d => {
         const btn = document.createElement("button");
         btn.className = "device-btn";
-        btn.innerHTML = d.name + `<span class="device-type">(${d.type})</span>`;
+        btn.textContent = d.name;
+        const type = document.createElement("span");
+        type.className   = "device-type";
+        type.textContent = `(${d.type})`;
+        btn.appendChild(type);
         btn.onclick = () => {
           localStorage.setItem("spotify_device_id",   d.id);
           localStorage.setItem("spotify_device_name", d.name);
