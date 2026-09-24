@@ -166,12 +166,16 @@ const ui = {
       removeBtn.addEventListener("click", e => { e.stopPropagation(); app.removeFavorite(name); });
       item.appendChild(nameSpan);
       item.appendChild(removeBtn);
-      app.attachLongPress(item, {
-        onTap:       () => app.playArtist(id, name, null),
-        onLongPress: () => ui.showPlaybackChoice(name,
-          () => app.playArtist(id, name, null),
-          () => app.playTopTracks(id, name, null))
-      });
+      if (state.appMode === "hoerspiel") {
+        item.addEventListener("click", () => app.playArtist(id, name, null));
+      } else {
+        app.attachLongPress(item, {
+          onTap:       () => app.playArtist(id, name, null),
+          onLongPress: () => ui.showPlaybackChoice(name,
+            () => app.playArtist(id, name, null),
+            () => app.playTopTracks(id, name, null))
+        });
+      }
       el.appendChild(item);
     });
   },
@@ -258,10 +262,14 @@ const ui = {
       </div>`).join("");
     el.classList.add("visible");
     el.querySelectorAll(".autocomplete-item").forEach((item, i) => {
-      app.attachLongPress(item, {
-        onTap:       () => { el.classList.remove("visible"); onSelect(artists[i]); },
-        onLongPress: () => { el.classList.remove("visible"); if (onLongPress) onLongPress(artists[i]); }
-      });
+      if (onLongPress) {
+        app.attachLongPress(item, {
+          onTap:       () => { el.classList.remove("visible"); onSelect(artists[i]); },
+          onLongPress: () => { el.classList.remove("visible"); onLongPress(artists[i]); }
+        });
+      } else {
+        item.addEventListener("click", () => { el.classList.remove("visible"); onSelect(artists[i]); });
+      }
     });
   },
   hideDropdown() {

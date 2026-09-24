@@ -624,23 +624,38 @@ const app = {
 
   // ── Long-Press-Helfer ──────────────────────────────────────────────────────
   // Bindet Tap (kurzer Klick/Touch) und Long-Press (gehalten) an ein Element.
-  attachLongPress(el, { onTap, onLongPress, duration = 500 }) {
+  // Scroll-Gesten (Finger bewegt sich) zählen weder als Tap noch als Long-Press.
+  attachLongPress(el, { onTap, onLongPress, duration = 500, moveTolerance = 10 }) {
     let timer = null;
     let fired = false;
-    const start = () => {
+    let moved = false;
+    let startX = 0, startY = 0;
+    const start = (e) => {
       fired = false;
+      moved = false;
+      const t = e.touches ? e.touches[0] : e;
+      startX = t.clientX;
+      startY = t.clientY;
       timer = setTimeout(() => { fired = true; onLongPress(); }, duration);
+    };
+    const move = (e) => {
+      const t = e.touches ? e.touches[0] : e;
+      if (Math.abs(t.clientX - startX) > moveTolerance || Math.abs(t.clientY - startY) > moveTolerance) {
+        moved = true;
+        clearTimeout(timer);
+      }
     };
     const cancel = () => { clearTimeout(timer); };
     const end = (e) => {
       clearTimeout(timer);
-      if (!fired) { if (e) e.preventDefault(); if (onTap) onTap(); }
+      if (!fired && !moved) { if (e) e.preventDefault(); if (onTap) onTap(); }
     };
     el.addEventListener("touchstart", start, { passive: true });
+    el.addEventListener("touchmove", move, { passive: true });
     el.addEventListener("touchend", end);
-    el.addEventListener("touchmove", cancel);
     el.addEventListener("touchcancel", cancel);
     el.addEventListener("mousedown", start);
+    el.addEventListener("mousemove", move);
     el.addEventListener("mouseup", end);
     el.addEventListener("mouseleave", cancel);
   },
@@ -658,7 +673,7 @@ const app = {
         ui.showDropdown(artists, artist => {
           document.getElementById("artistInput").value = "";
           app.playArtist(artist.id, artist.name, artist.external_urls?.spotify || "");
-        }, artist => {
+        }, state.appMode === "hoerspiel" ? null : artist => {
           document.getElementById("artistInput").value = "";
           ui.showPlaybackChoice(artist.name,
             () => app.playArtist(artist.id, artist.name, artist.external_urls?.spotify || ""),
