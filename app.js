@@ -245,8 +245,14 @@ const app = {
       } catch {}
     }
 
-    const studioAlbums = filterAlbums(await spotify.fetchAllAlbums(artistId));
+    const filterKey = getIncludeGroups();
+    if (isKnownEmptyArtist(artistId, filterKey)) {
+      ui.showError("Keine Alben gefunden", "Für diesen Künstler wurden keine passenden Alben gefunden.");
+      return;
+    }
+    const studioAlbums = filterAlbums(await spotify.fetchArtistAlbums(artistId));
     if (!studioAlbums.length) {
+      markArtistEmpty(artistId, filterKey);
       ui.showError("Keine Alben gefunden", "Für diesen Künstler wurden keine passenden Alben gefunden.");
       return;
     }
@@ -281,11 +287,14 @@ const app = {
         );
         return;
       }
+      const filterKey = getIncludeGroups();
+      const candidates = pool.filter(a => !isKnownEmptyArtist(a.id, filterKey));
+      const searchPool = candidates.length ? candidates : pool;
       for (let i = 0; i < 30; i++) {
-        const artist = pool[Math.floor(Math.random() * pool.length)];
+        const artist = searchPool[Math.floor(Math.random() * searchPool.length)];
         try {
-          const albums = filterAlbums(await spotify.fetchAllAlbums(artist.id));
-          if (!albums.length) continue;
+          const albums = filterAlbums(await spotify.fetchArtistAlbums(artist.id));
+          if (!albums.length) { markArtistEmpty(artist.id, filterKey); continue; }
           state.artist.id   = artist.id;
           state.artist.name = artist.name;
           state.artist.url  = artist.external_urls?.spotify || "";
@@ -311,8 +320,12 @@ const app = {
     btn.innerHTML = '<span class="spin"></span>Einen Moment…';
     try {
       if (state.artist.id) {
-        const albums = filterAlbums(await spotify.fetchAllAlbums(state.artist.id));
-        if (!albums.length) { ui.showError("Keine Alben gefunden", "Für diesen Künstler wurden keine passenden Alben gefunden."); return; }
+        const albums = filterAlbums(await spotify.fetchArtistAlbums(state.artist.id));
+        if (!albums.length) {
+          markArtistEmpty(state.artist.id, getIncludeGroups());
+          ui.showError("Keine Alben gefunden", "Für diesen Künstler wurden keine passenden Alben gefunden.");
+          return;
+        }
         const random = albums[Math.floor(Math.random() * albums.length)];
         state.album.uri  = random.uri;
         state.album.data = { album: random, artistName: state.artist.name };
@@ -336,11 +349,13 @@ const app = {
     try {
       const favs = getFavorites();
       if (!favs.length) { ui.showError("Keine Favoriten", "Bitte zuerst Künstler hinzufügen."); return; }
+      const filterKey = getIncludeGroups();
       for (let i = 0; i < 20; i++) {
         const fav = favs[Math.floor(Math.random() * favs.length)];
         try {
           const id   = getFavId(fav);
           const name = getFavName(fav);
+          if (id && isKnownEmptyArtist(id, filterKey)) continue;
           let artistId = id, artistName = name, artistUrl = "";
           if (id) {
             const artist = await spotify.getArtist(id);
@@ -354,8 +369,8 @@ const app = {
             artistName = found.name;
             artistUrl  = found.external_urls?.spotify || "";
           }
-          const albums = filterAlbums(await spotify.fetchAllAlbums(artistId));
-          if (!albums.length) continue;
+          const albums = filterAlbums(await spotify.fetchArtistAlbums(artistId));
+          if (!albums.length) { markArtistEmpty(artistId, filterKey); continue; }
           state.artist.id   = artistId;
           state.artist.name = artistName;
           state.artist.url  = artistUrl;
@@ -384,11 +399,14 @@ const app = {
     if (!state.cachedArtists) state.cachedArtists = await spotify.fetchAllFollowedArtists();
     const pool = getArtistPool(state.cachedArtists);
     if (!pool.length) return;
+    const filterKey = getIncludeGroups();
+    const candidates = pool.filter(a => !isKnownEmptyArtist(a.id, filterKey));
+    const searchPool = candidates.length ? candidates : pool;
     for (let i = 0; i < 30; i++) {
-      const artist = pool[Math.floor(Math.random() * pool.length)];
+      const artist = searchPool[Math.floor(Math.random() * searchPool.length)];
       try {
-        const albums = filterAlbums(await spotify.fetchAllAlbums(artist.id));
-        if (!albums.length) continue;
+        const albums = filterAlbums(await spotify.fetchArtistAlbums(artist.id));
+        if (!albums.length) { markArtistEmpty(artist.id, filterKey); continue; }
         const album = albums[Math.floor(Math.random() * albums.length)];
         const entry = {
           date: todayKey, uri: album.uri, name: album.name,

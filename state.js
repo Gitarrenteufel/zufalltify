@@ -195,6 +195,22 @@ function saveAlbumOfDay(entry) {
   localStorage.setItem(aodKey(), JSON.stringify(entry));
 }
 
+// ── Bekannt-leere Künstler (persistiert über Sessions, je Filterkombination) ───
+function emptyArtistsKey() {
+  return "zt_empty_artists";
+}
+function getEmptyArtistsMap() {
+  try { return JSON.parse(localStorage.getItem(emptyArtistsKey()) || "{}"); } catch { return {}; }
+}
+function isKnownEmptyArtist(artistId, filterKey) {
+  return !!getEmptyArtistsMap()[artistId + "|" + filterKey];
+}
+function markArtistEmpty(artistId, filterKey) {
+  const map = getEmptyArtistsMap();
+  map[artistId + "|" + filterKey] = Date.now();
+  try { localStorage.setItem(emptyArtistsKey(), JSON.stringify(map)); } catch {}
+}
+
 // ── Letztes Album ─────────────────────────────────────────────────────────────
 function saveLastAlbum(album, artistName, artistUrl) {
   const cover    = album.images?.[0]?.url || "";

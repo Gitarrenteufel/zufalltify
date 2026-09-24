@@ -91,19 +91,17 @@ const spotify = {
   },
 
   // ── Alben ──────────────────────────────────────────────────────────────────
-  async fetchAllAlbums(artistId) {
+  // Bewusst nur die erste Seite (50 Alben) – für eine Zufallsauswahl ausreichend
+  // und reduziert die Requests pro Versuch von potenziell mehreren auf genau einen.
+  async fetchArtistAlbums(artistId) {
     const cacheKey = artistId + "|" + getIncludeGroups();
     if (spotify._albumCache.has(cacheKey)) return spotify._albumCache.get(cacheKey);
-    let all = [];
-    let url = `https://api.spotify.com/v1/artists/${artistId}/albums?include_groups=${getIncludeGroups()}&market=DE&limit=50`;
-    while (url) {
-      const r = await fetch(url, { headers: { Authorization: "Bearer " + token.get() } });
-      const d = await r.json();
-      all.push(...(d.items || []));
-      url = d.next || null;
-    }
-    spotify._albumCache.set(cacheKey, all);
-    return all;
+    const url = `https://api.spotify.com/v1/artists/${artistId}/albums?include_groups=${getIncludeGroups()}&market=DE&limit=50`;
+    const r = await fetch(url, { headers: { Authorization: "Bearer " + token.get() } });
+    const d = await r.json();
+    const albums = d.items || [];
+    spotify._albumCache.set(cacheKey, albums);
+    return albums;
   },
 
   // ── Top-Tracks ─────────────────────────────────────────────────────────────

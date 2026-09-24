@@ -72,6 +72,15 @@ test("getFavorites/saveFavorites: beliebig viele Einträge möglich (kein FAV_MA
   assert.equal(run(ctx, `getFavorites().length`), 120);
 });
 
+// ── Bekannt-leere Künstler ─────────────────────────────────────────────────────
+test("markArtistEmpty/isKnownEmptyArtist: merkt sich pro Filterkombination", () => {
+  const ctx = createContext();
+  run(ctx, `markArtistEmpty("artist1", "album");`);
+  assert.equal(run(ctx, `isKnownEmptyArtist("artist1", "album")`), true);
+  assert.equal(run(ctx, `isKnownEmptyArtist("artist1", "album,single")`), false);
+  assert.equal(run(ctx, `isKnownEmptyArtist("otherArtist", "album")`), false);
+});
+
 // ── Bookmarks: keine Duplikate nach URI ────────────────────────────────────────
 test("addBookmark fügt kein zweites Mal dieselbe Album-URI hinzu", () => {
   const ctx = createContext();
