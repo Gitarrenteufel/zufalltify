@@ -372,9 +372,11 @@ const ui = {
     albumBtn.onclick = () => { ui.closePlaybackChoice(); onAlbum(); };
     topBtn.onclick   = () => { ui.closePlaybackChoice(); onTopTracks(); };
     document.getElementById("playbackChoiceModal").classList.add("visible");
+    app.pushOverlayState("playbackChoice");
   },
-  closePlaybackChoice() {
+  closePlaybackChoice(fromPop) {
     document.getElementById("playbackChoiceModal").classList.remove("visible");
+    if (!fromPop) app.popOverlayIfMatches("playbackChoice");
   },
 
   // ── Top-Tracks-Karte ───────────────────────────────────────────────────────
@@ -398,8 +400,10 @@ const ui = {
     document.getElementById("modalText").textContent = `„${name}" aus den Favoriten entfernen?`;
     document.getElementById("modalConfirm").onclick  = () => { onConfirm(); ui.closeModal(); };
     document.getElementById("modal").classList.add("visible");
+    app.pushOverlayState("modal");
   },
-  closeModal() {
+  closeModal(fromPop) {
     document.getElementById("modal").classList.remove("visible");
+    if (!fromPop) app.popOverlayIfMatches("modal");
   },
 };

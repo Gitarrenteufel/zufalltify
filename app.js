@@ -45,10 +45,12 @@ const app = {
   openDrawer() {
     document.getElementById("drawer").classList.add("open");
     document.getElementById("drawerOverlay").style.display = "block";
+    app.pushOverlayState("drawer");
   },
-  closeDrawer() {
+  closeDrawer(fromPop) {
     document.getElementById("drawer").classList.remove("open");
     document.getElementById("drawerOverlay").style.display = "none";
+    if (!fromPop) app.popOverlayIfMatches("drawer");
   },
   openDrawerTab(name) {
     app.closeDrawer();
@@ -641,6 +643,8 @@ const app = {
       navigator.serviceWorker.register("/zufalltify/sw.js").catch(e => console.warn("SW:", e));
     }
 
+    window.addEventListener("popstate", app.handlePopState);
+
     app.initEvents();
   },
 
@@ -680,6 +684,35 @@ const app = {
     el.addEventListener("mousemove", move);
     el.addEventListener("mouseup", end);
     el.addEventListener("mouseleave", cancel);
+  },
+
+  // ── Zurück-Button-Unterstützung für Overlays (Drawer, Modals) ───────────────
+  // Jedes geöffnete Overlay legt einen History-Eintrag an. Der Android-Zurück-
+  // Button löst dadurch ein popstate aus, das wir abfangen und in ein Schließen
+  // des obersten Overlays übersetzen — statt dass die App beendet wird.
+  _overlayStack: [],
+  _suppressPop: false,
+
+  pushOverlayState(name) {
+    app._overlayStack.push(name);
+    history.pushState({ ztOverlay: name }, "");
+  },
+  // Wird aufgerufen, wenn ein Overlay über die UI (nicht über den Zurück-Button)
+  // geschlossen wird — konsumiert den zugehörigen History-Eintrag wieder.
+  popOverlayIfMatches(name) {
+    const stack = app._overlayStack;
+    if (stack.length && stack[stack.length - 1] === name) {
+      stack.pop();
+      app._suppressPop = true;
+      history.back();
+    }
+  },
+  handlePopState() {
+    if (app._suppressPop) { app._suppressPop = false; return; }
+    const top = app._overlayStack.pop();
+    if (top === "drawer")         app.closeDrawer(true);
+    else if (top === "modal")     ui.closeModal(true);
+    else if (top === "playbackChoice") ui.closePlaybackChoice(true);
   },
 
   // ── Event-Listener ─────────────────────────────────────────────────────────
