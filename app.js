@@ -119,7 +119,8 @@ const app = {
   async toggleDeviceSelector() {
     const sel = document.getElementById("deviceSelectorSys");
     if (sel.style.display === "block") { sel.style.display = "none"; return; }
-    const devices = await spotify.getDevices();
+    let devices = [];
+    try { devices = await spotify.getDevices(); } catch {}
     const list    = document.getElementById("deviceList");
     list.innerHTML = "";
     if (!devices.length) {
@@ -161,23 +162,27 @@ const app = {
       deviceId = localStorage.getItem("spotify_device_id");
     }
 
-    await spotify.disableShuffleAndRepeat();
-    const r = await spotify.play(state.album.uri, deviceId);
-    if (r.ok || r.status === 204) {
-      ui.hideError();
-    } else {
-      const data = await r.json().catch(() => ({}));
-      if (r.status === 404 || r.status === 403) {
-        const found = await app.waitForDevice(2, 1500);
-        if (found) {
-          deviceId = localStorage.getItem("spotify_device_id");
-          const r2 = await spotify.play(state.album.uri, deviceId);
-          if (r2.ok || r2.status === 204) { ui.hideError(); return; }
-        }
-        ui.showError("Kein Gerät verbunden", "Spotify öffnen und erneut versuchen.");
+    try {
+      await spotify.disableShuffleAndRepeat();
+      const r = await spotify.play(state.album.uri, deviceId);
+      if (r.ok || r.status === 204) {
+        ui.hideError();
       } else {
-        ui.showError("Wiedergabe fehlgeschlagen", data?.error?.message || "Unbekannter Fehler");
+        const data = await r.json().catch(() => ({}));
+        if (r.status === 404 || r.status === 403) {
+          const found = await app.waitForDevice(2, 1500);
+          if (found) {
+            deviceId = localStorage.getItem("spotify_device_id");
+            const r2 = await spotify.play(state.album.uri, deviceId);
+            if (r2.ok || r2.status === 204) { ui.hideError(); return; }
+          }
+          ui.showError("Kein Gerät verbunden", "Spotify öffnen und erneut versuchen.");
+        } else {
+          ui.showError("Wiedergabe fehlgeschlagen", data?.error?.message || "Unbekannter Fehler");
+        }
       }
+    } catch (e) {
+      ui.showError("Wiedergabe fehlgeschlagen", e.message);
     }
   },
 
@@ -218,10 +223,14 @@ const app = {
       deviceId = localStorage.getItem("spotify_device_id");
     }
 
-    await spotify.disableShuffleAndRepeat();
-    const r = await spotify.playTracks(tracks.map(t => t.uri), deviceId);
-    if (r.ok || r.status === 204) ui.hideError();
-    else ui.showError("Wiedergabe fehlgeschlagen", "Spotify öffnen und erneut versuchen.");
+    try {
+      await spotify.disableShuffleAndRepeat();
+      const r = await spotify.playTracks(tracks.map(t => t.uri), deviceId);
+      if (r.ok || r.status === 204) ui.hideError();
+      else ui.showError("Wiedergabe fehlgeschlagen", "Spotify öffnen und erneut versuchen.");
+    } catch (e) {
+      ui.showError("Wiedergabe fehlgeschlagen", e.message);
+    }
   },
 
   // ── Kernfunktion: Künstler abspielen ───────────────────────────────────────
@@ -256,7 +265,13 @@ const app = {
       ui.showError("Keine Alben gefunden", "Für diesen Künstler wurden keine passenden Alben gefunden.");
       return;
     }
-    const studioAlbums = filterAlbums(await spotify.fetchArtistAlbums(artistId));
+    let studioAlbums;
+    try {
+      studioAlbums = filterAlbums(await spotify.fetchArtistAlbums(artistId));
+    } catch (e) {
+      ui.showError("Fehler beim Laden", e.message);
+      return;
+    }
     if (!studioAlbums.length) {
       markArtistEmpty(artistId, filterKey);
       ui.showError("Keine Alben gefunden", "Für diesen Künstler wurden keine passenden Alben gefunden.");
@@ -559,17 +574,21 @@ const app = {
 
   async startPlaylist(uri, name) {
     const deviceId = localStorage.getItem("spotify_device_id");
-    const r = await spotify.playPlaylist(uri, deviceId);
-    if (r.ok || r.status === 204) {
-      ui.hideError();
-      state.artist.id   = null;
-      state.artist.name = null;
-      state.album.uri   = uri;
-      state.album.data  = null;
-      ui.showPlaylistCard({ name, uri });
-      app.switchTab("home", document.querySelector(".tab-btn"));
-    } else {
-      ui.showError("Wiedergabe fehlgeschlagen", "Spotify öffnen und erneut versuchen.");
+    try {
+      const r = await spotify.playPlaylist(uri, deviceId);
+      if (r.ok || r.status === 204) {
+        ui.hideError();
+        state.artist.id   = null;
+        state.artist.name = null;
+        state.album.uri   = uri;
+        state.album.data  = null;
+        ui.showPlaylistCard({ name, uri });
+        app.switchTab("home", document.querySelector(".tab-btn"));
+      } else {
+        ui.showError("Wiedergabe fehlgeschlagen", "Spotify öffnen und erneut versuchen.");
+      }
+    } catch (e) {
+      ui.showError("Wiedergabe fehlgeschlagen", e.message);
     }
   },
 
@@ -614,11 +633,17 @@ const app = {
     const code   = params.get("code");
 
     if (code) {
-      const data = await spotify.exchangeCode(code);
-      if (data.error) { ui.showError("Anmeldefehler", data.error_description); return; }
-      token.set(data.access_token, data.expires_in, data.refresh_token);
-      await spotify.getProfile();
-      history.replaceState({}, "", "/");
+      try {
+        const data = await spotify.exchangeCode(code);
+        if (data.error) { ui.showError("Anmeldefehler", data.error_description); return; }
+        token.set(data.access_token, data.expires_in, data.refresh_token);
+        await spotify.getProfile();
+      } catch (e) {
+        ui.showError("Anmeldefehler", e.message || "Verbindung zu Spotify fehlgeschlagen.");
+        return;
+      } finally {
+        history.replaceState({}, "", "/");
+      }
     }
 
     if (token.get()) {

@@ -4,6 +4,51 @@ const spotify = {
   // Session-Cache für Alben je Künstler + Filterkombination (leert sich beim Neuladen)
   _albumCache: new Map(),
 
+  // ── Zentrale Request-Schicht ─────────────────────────────────────────────────
+  // Alle authentifizierten Spotify-API-Calls laufen hier durch: Auth-Header wird
+  // automatisch angehängt, bei 401 wird einmal automatisch refresht + wiederholt,
+  // bei 429 wird die von Spotify vorgegebene Zeit (Retry-After) abgewartet und
+  // einmal wiederholt, Netzwerkfehler werden zu einer einheitlichen Exception.
+  // Gibt die rohe Response zurück, damit Aufrufer wie bisher .json() oder
+  // .ok/.status selbst prüfen können (wichtig für die Playback-Endpunkte).
+  async _request(url, options = {}, _retried = false) {
+    const headers = { ...(options.headers || {}), Authorization: "Bearer " + token.get() };
+    let r;
+    try {
+      r = await fetch(url, { ...options, headers });
+    } catch (networkErr) {
+      throw new Error("Netzwerkfehler: " + (networkErr.message || "Verbindung fehlgeschlagen"));
+    }
+
+    if (r.status === 401 && !_retried) {
+      const refreshed = await spotify.refreshToken();
+      if (refreshed) return spotify._request(url, options, true);
+      ui.showSessionBanner(true);
+      throw new Error("Sitzung abgelaufen");
+    }
+
+    if (r.status === 429 && !_retried) {
+      const waitSec = Math.min(parseInt(r.headers.get("Retry-After") || "1", 10) || 1, 10);
+      await new Promise(res => setTimeout(res, waitSec * 1000));
+      return spotify._request(url, options, true);
+    }
+
+    return r;
+  },
+
+  // Wie _request, parst aber direkt JSON und wirft bei verbleibendem Fehlerstatus
+  // (nach Refresh-/Rate-Limit-Retry) mit der Spotify-Fehlermeldung, falls vorhanden.
+  async _requestJson(url, options = {}) {
+    const r = await spotify._request(url, options);
+    if (!r.ok) {
+      let message = `HTTP ${r.status}`;
+      try { const err = await r.json(); message = err?.error?.message || message; } catch {}
+      throw new Error(message);
+    }
+    if (r.status === 204) return null;
+    try { return await r.json(); } catch { return null; }
+  },
+
   // ── Auth ───────────────────────────────────────────────────────────────────
   async exchangeCode(code) {
     const r = await fetch(WORKER_URL + "/token", {
@@ -44,28 +89,20 @@ const spotify = {
 
   // ── Profil ─────────────────────────────────────────────────────────────────
   async getProfile() {
-    const r = await fetch("https://api.spotify.com/v1/me", {
-      headers: { Authorization: "Bearer " + token.get() }
-    });
-    return r.json();
+    return spotify._requestJson("https://api.spotify.com/v1/me");
   },
 
   // ── Künstler ───────────────────────────────────────────────────────────────
   async getArtist(id) {
-    const r = await fetch(`https://api.spotify.com/v1/artists/${id}`, {
-      headers: { Authorization: "Bearer " + token.get() }
-    });
-    return r.json();
+    return spotify._requestJson(`https://api.spotify.com/v1/artists/${id}`);
   },
 
   async searchArtists(query) {
     if (!query.trim()) return [];
     try {
-      const r = await fetch(
-        "https://api.spotify.com/v1/search?q=" + encodeURIComponent(query) + "&type=artist&limit=8&market=DE",
-        { headers: { Authorization: "Bearer " + token.get() } }
+      const d = await spotify._requestJson(
+        "https://api.spotify.com/v1/search?q=" + encodeURIComponent(query) + "&type=artist&limit=8&market=DE"
       );
-      const d = await r.json();
       return d?.artists?.items || [];
     } catch { return []; }
   },
@@ -79,8 +116,7 @@ const spotify = {
     while (true) {
       let url = "https://api.spotify.com/v1/me/following?type=artist&limit=50";
       if (after) url += "&after=" + encodeURIComponent(after);
-      const r = await fetch(url, { headers: { Authorization: "Bearer " + token.get() } });
-      const d = await r.json();
+      const d = await spotify._requestJson(url);
       all.push(...(d?.artists?.items || []));
       if (!d?.artists?.cursors?.after) break;
       after = d.artists.cursors.after;
@@ -97,37 +133,30 @@ const spotify = {
     const cacheKey = artistId + "|" + getIncludeGroups();
     if (spotify._albumCache.has(cacheKey)) return spotify._albumCache.get(cacheKey);
     const url = `https://api.spotify.com/v1/artists/${artistId}/albums?include_groups=${getIncludeGroups()}&market=DE&limit=50`;
-    const r = await fetch(url, { headers: { Authorization: "Bearer " + token.get() } });
-    const d = await r.json();
-    const albums = d.items || [];
+    const d = await spotify._requestJson(url);
+    const albums = d?.items || [];
     spotify._albumCache.set(cacheKey, albums);
     return albums;
   },
 
   // ── Top-Tracks ─────────────────────────────────────────────────────────────
   async getTopTracks(artistId) {
-    const r = await fetch(`https://api.spotify.com/v1/artists/${artistId}/top-tracks?market=DE`, {
-      headers: { Authorization: "Bearer " + token.get() }
-    });
-    const d = await r.json();
-    return d.tracks || [];
+    const d = await spotify._requestJson(`https://api.spotify.com/v1/artists/${artistId}/top-tracks?market=DE`);
+    return d?.tracks || [];
   },
 
   // ── Wiedergabe ─────────────────────────────────────────────────────────────
   async getDevices() {
-    const r = await fetch("https://api.spotify.com/v1/me/player/devices", {
-      headers: { Authorization: "Bearer " + token.get() }
-    });
-    const d = await r.json();
-    return d.devices || [];
+    const d = await spotify._requestJson("https://api.spotify.com/v1/me/player/devices");
+    return d?.devices || [];
   },
 
   async play(uri, deviceId) {
     let url = "https://api.spotify.com/v1/me/player/play";
     if (deviceId) url += "?device_id=" + encodeURIComponent(deviceId);
-    return fetch(url, {
+    return spotify._request(url, {
       method:  "PUT",
-      headers: { Authorization: "Bearer " + token.get(), "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json" },
       body:    JSON.stringify({ context_uri: uri })
     });
   },
@@ -135,30 +164,25 @@ const spotify = {
   async playTracks(uris, deviceId) {
     let url = "https://api.spotify.com/v1/me/player/play";
     if (deviceId) url += "?device_id=" + encodeURIComponent(deviceId);
-    return fetch(url, {
+    return spotify._request(url, {
       method:  "PUT",
-      headers: { Authorization: "Bearer " + token.get(), "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json" },
       body:    JSON.stringify({ uris })
     });
   },
 
   async setShuffle(state, deviceId) {
     const suffix = deviceId ? "&device_id=" + encodeURIComponent(deviceId) : "";
-    return fetch(`https://api.spotify.com/v1/me/player/shuffle?state=${state}${suffix}`, {
-      method: "PUT", headers: { Authorization: "Bearer " + token.get() }
-    });
+    return spotify._request(`https://api.spotify.com/v1/me/player/shuffle?state=${state}${suffix}`, { method: "PUT" });
   },
 
   async setRepeat(state, deviceId) {
     const suffix = deviceId ? "&device_id=" + encodeURIComponent(deviceId) : "";
-    return fetch(`https://api.spotify.com/v1/me/player/repeat?state=${state}${suffix}`, {
-      method: "PUT", headers: { Authorization: "Bearer " + token.get() }
-    });
+    return spotify._request(`https://api.spotify.com/v1/me/player/repeat?state=${state}${suffix}`, { method: "PUT" });
   },
 
   async disableShuffleAndRepeat() {
     const deviceId = localStorage.getItem("spotify_device_id");
-    const suffix   = deviceId ? "&device_id=" + encodeURIComponent(deviceId) : "";
     try {
       await Promise.all([
         spotify.setShuffle(false, deviceId),
@@ -172,16 +196,14 @@ const spotify = {
     const deviceQuery = deviceId ? encodeURIComponent(deviceId) : "";
     // Shuffle setzen, dann warten, dann abspielen
     try {
-      await fetch("https://api.spotify.com/v1/me/player/shuffle?state=true" + (deviceId ? "&device_id=" + deviceQuery : ""), {
-        method: "PUT", headers: { Authorization: "Bearer " + token.get() }
-      });
+      await spotify._request("https://api.spotify.com/v1/me/player/shuffle?state=true" + (deviceId ? "&device_id=" + deviceQuery : ""), { method: "PUT" });
     } catch {}
     await new Promise(res => setTimeout(res, 1200));
     let url = "https://api.spotify.com/v1/me/player/play";
     if (deviceId) url += "?device_id=" + deviceQuery;
-    return fetch(url, {
+    return spotify._request(url, {
       method:  "PUT",
-      headers: { Authorization: "Bearer " + token.get(), "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json" },
       body:    JSON.stringify({ context_uri: uri })
     });
   },
