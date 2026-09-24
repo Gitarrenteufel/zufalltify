@@ -1,6 +1,9 @@
 // ── Spotify API-Schicht ───────────────────────────────────────────────────────
 const spotify = {
 
+  // Session-Cache für Alben je Künstler + Filterkombination (leert sich beim Neuladen)
+  _albumCache: new Map(),
+
   // ── Auth ───────────────────────────────────────────────────────────────────
   async exchangeCode(code) {
     const r = await fetch(WORKER_URL + "/token", {
@@ -89,6 +92,8 @@ const spotify = {
 
   // ── Alben ──────────────────────────────────────────────────────────────────
   async fetchAllAlbums(artistId) {
+    const cacheKey = artistId + "|" + getIncludeGroups();
+    if (spotify._albumCache.has(cacheKey)) return spotify._albumCache.get(cacheKey);
     let all = [];
     let url = `https://api.spotify.com/v1/artists/${artistId}/albums?include_groups=${getIncludeGroups()}&market=DE&limit=50`;
     while (url) {
@@ -97,6 +102,7 @@ const spotify = {
       all.push(...(d.items || []));
       url = d.next || null;
     }
+    spotify._albumCache.set(cacheKey, all);
     return all;
   },
 

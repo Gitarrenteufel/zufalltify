@@ -1,3 +1,10 @@
+// ── HTML-Escaping für dynamische Werte in innerHTML-Templates ──────────────────
+function escapeHtml(str) {
+  return String(str ?? "").replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+}
+
 // ── UI-Schicht ────────────────────────────────────────────────────────────────
 const ui = {
 
@@ -107,13 +114,13 @@ const ui = {
       return;
     }
     el.innerHTML = history.map(h => `
-      <a ${h.albumUrl ? `href="${h.albumUrl}" target="_blank"` : ""} style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;">
-        ${h.cover ? `<img src="${h.cover}" alt="" loading="lazy" style="width:40px;height:40px;border-radius:4px;object-fit:cover;flex-shrink:0;background:var(--surface2);">` : '<div style="width:40px;height:40px;border-radius:4px;background:var(--surface2);flex-shrink:0;"></div>'}
+      <a ${h.albumUrl ? `href="${escapeHtml(h.albumUrl)}" target="_blank"` : ""} style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;">
+        ${h.cover ? `<img src="${escapeHtml(h.cover)}" alt="" loading="lazy" style="width:40px;height:40px;border-radius:4px;object-fit:cover;flex-shrink:0;background:var(--surface2);">` : '<div style="width:40px;height:40px;border-radius:4px;background:var(--surface2);flex-shrink:0;"></div>'}
         <div style="flex:1;min-width:0;">
-          <div style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${h.album}</div>
-          <div style="font-size:12px;color:var(--muted);margin-top:1px;">${h.artist}</div>
+          <div style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(h.album)}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:1px;">${escapeHtml(h.artist)}</div>
         </div>
-        <div style="font-size:11px;color:var(--muted);text-align:right;flex-shrink:0;">${h.year}</div>
+        <div style="font-size:11px;color:var(--muted);text-align:right;flex-shrink:0;">${escapeHtml(h.year)}</div>
       </a>`).join("");
   },
 
@@ -121,22 +128,52 @@ const ui = {
   renderBookmarks() {
     const bookmarks = getBookmarks();
     const el = document.getElementById("bookmarkList");
+    el.innerHTML = "";
     if (!bookmarks.length) {
       el.innerHTML = '<div style="padding:20px;font-size:13px;color:var(--muted);text-align:center">Noch keine vorgemerkten Alben.<br>Lesezeichen-Icon beim Album antippen.</div>';
       return;
     }
-    el.innerHTML = bookmarks.map(b => `
-      <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
-        ${b.cover ? `<img src="${b.cover}" alt="" loading="lazy" style="width:48px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0;">` : '<div style="width:48px;height:48px;border-radius:6px;background:var(--surface2);flex-shrink:0;"></div>'}
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${b.album}</div>
-          <div style="font-size:12px;color:var(--muted);">${b.artist} · ${b.year}</div>
-        </div>
-        <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
-          <a href="${b.albumUrl}" target="_blank" style="color:var(--accent);font-size:12px;text-decoration:none;">▶</a>
-          <button onclick="app.removeBookmark('${b.uri}')" style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 4px;">×</button>
-        </div>
-      </div>`).join("");
+    bookmarks.forEach(b => {
+      const row = document.createElement("div");
+      row.style.cssText = "display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);";
+
+      if (b.cover) {
+        const img = document.createElement("img");
+        img.src = b.cover; img.alt = ""; img.loading = "lazy";
+        img.style.cssText = "width:48px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0;";
+        row.appendChild(img);
+      } else {
+        const ph = document.createElement("div");
+        ph.style.cssText = "width:48px;height:48px;border-radius:6px;background:var(--surface2);flex-shrink:0;";
+        row.appendChild(ph);
+      }
+
+      const info  = document.createElement("div");
+      info.style.cssText = "flex:1;min-width:0;";
+      const title = document.createElement("div");
+      title.style.cssText = "font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;";
+      title.textContent = b.album;
+      const sub = document.createElement("div");
+      sub.style.cssText = "font-size:12px;color:var(--muted);";
+      sub.textContent = `${b.artist} · ${b.year}`;
+      info.appendChild(title); info.appendChild(sub);
+      row.appendChild(info);
+
+      const actions = document.createElement("div");
+      actions.style.cssText = "display:flex;gap:8px;align-items:center;flex-shrink:0;";
+      const link = document.createElement("a");
+      link.href = b.albumUrl || "#"; link.target = "_blank";
+      link.style.cssText = "color:var(--accent);font-size:12px;text-decoration:none;";
+      link.textContent = "▶";
+      const removeBtn = document.createElement("button");
+      removeBtn.style.cssText = "background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 4px;";
+      removeBtn.textContent = "×";
+      removeBtn.addEventListener("click", () => app.removeBookmark(b.uri));
+      actions.appendChild(link); actions.appendChild(removeBtn);
+      row.appendChild(actions);
+
+      el.appendChild(row);
+    });
   },
 
   // ── Favoriten ──────────────────────────────────────────────────────────────
@@ -189,12 +226,26 @@ const ui = {
       return;
     }
     const sorted = list.slice().sort((a, b) => a.name.localeCompare(b.name, 'de'));
-    el.innerHTML = sorted.map(b => `
-      <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);">
-        <i class="ti ti-ban" style="font-size:20px;color:var(--muted);flex-shrink:0;"></i>
-        <span style="flex:1;font-size:15px;">${b.name}</span>
-        <button onclick="app.removeFromBlacklist('${b.id}')" style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 4px;" title="Sperre aufheben">×</button>
-      </div>`).join("");
+    el.innerHTML = "";
+    sorted.forEach(b => {
+      const row = document.createElement("div");
+      row.style.cssText = "display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);";
+      row.innerHTML = `<i class="ti ti-ban" style="font-size:20px;color:var(--muted);flex-shrink:0;"></i>`;
+
+      const nameSpan = document.createElement("span");
+      nameSpan.style.cssText = "flex:1;font-size:15px;";
+      nameSpan.textContent = b.name;
+
+      const removeBtn = document.createElement("button");
+      removeBtn.style.cssText = "background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 4px;";
+      removeBtn.title = "Sperre aufheben";
+      removeBtn.textContent = "×";
+      removeBtn.addEventListener("click", () => app.removeFromBlacklist(b.id));
+
+      row.appendChild(nameSpan);
+      row.appendChild(removeBtn);
+      el.appendChild(row);
+    });
   },
 
   // ── Playlisten ─────────────────────────────────────────────────────────────
@@ -213,14 +264,33 @@ const ui = {
         </div>
         <button onclick="app.addPlaylist()" style="background:var(--accent);border:none;color:#000;border-radius:10px;font-size:22px;font-weight:700;cursor:pointer;padding:0 16px;align-self:stretch;">+</button>
       </div>
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
-        ${list.map(p => `
-          <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;" onclick="app.startPlaylist('${p.uri}', '${p.name.replace(/'/g,"\\'")}')">
-            <i class="ti ti-playlist" style="font-size:20px;color:var(--muted);flex-shrink:0;"></i>
-            <span style="flex:1;font-size:15px;font-weight:500;">${p.name}</span>
-            ${p.id !== "37i9dQZF1F5p3rmiWPIYgZ" ? `<button onclick="event.stopPropagation();app.removePlaylist('${p.id}')" style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 4px;">×</button>` : ""}
-          </div>`).join("")}
-      </div>`;
+      <div id="playlistListContainer" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;"></div>`;
+
+    const container = document.getElementById("playlistListContainer");
+    list.forEach(p => {
+      const row = document.createElement("div");
+      row.style.cssText = "display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;";
+      row.addEventListener("click", () => app.startPlaylist(p.uri, p.name));
+
+      const icon = document.createElement("i");
+      icon.className = "ti ti-playlist";
+      icon.style.cssText = "font-size:20px;color:var(--muted);flex-shrink:0;";
+      row.appendChild(icon);
+
+      const nameSpan = document.createElement("span");
+      nameSpan.style.cssText = "flex:1;font-size:15px;font-weight:500;";
+      nameSpan.textContent = p.name;
+      row.appendChild(nameSpan);
+
+      if (p.id !== "37i9dQZF1F5p3rmiWPIYgZ") {
+        const removeBtn = document.createElement("button");
+        removeBtn.style.cssText = "background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 4px;";
+        removeBtn.textContent = "×";
+        removeBtn.addEventListener("click", e => { e.stopPropagation(); app.removePlaylist(p.id); });
+        row.appendChild(removeBtn);
+      }
+      container.appendChild(row);
+    });
   },
 
   // ── System ─────────────────────────────────────────────────────────────────
@@ -255,10 +325,10 @@ const ui = {
     el.innerHTML = artists.map((a, i) => `
       <div class="autocomplete-item" data-idx="${i}">
         ${a.images?.[2]?.url || a.images?.[1]?.url
-          ? `<img class="autocomplete-img" src="${a.images?.[2]?.url || a.images?.[1]?.url}" alt="">`
+          ? `<img class="autocomplete-img" src="${escapeHtml(a.images?.[2]?.url || a.images?.[1]?.url)}" alt="">`
           : `<div class="autocomplete-img"></div>`}
-        <span class="autocomplete-name">${a.name}</span>
-        <span class="autocomplete-followers">${ui.formatFollowers(a.followers?.total || 0)}</span>
+        <span class="autocomplete-name">${escapeHtml(a.name)}</span>
+        <span class="autocomplete-followers">${escapeHtml(String(ui.formatFollowers(a.followers?.total || 0)))}</span>
       </div>`).join("");
     el.classList.add("visible");
     el.querySelectorAll(".autocomplete-item").forEach((item, i) => {

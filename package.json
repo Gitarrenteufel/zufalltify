@@ -1,0 +1,8 @@
+{
+  "name": "zufalltify",
+  "private": true,
+  "description": "Nur für lokale Tests der reinen Funktionen in state.js — die App selbst bleibt eine statische PWA ohne Build-Schritt.",
+  "scripts": {
+    "test": "node --test tests/state.test.js"
+  }
+}
