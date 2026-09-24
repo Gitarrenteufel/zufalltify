@@ -11,7 +11,9 @@ const spotify = {
   // einmal wiederholt, Netzwerkfehler werden zu einer einheitlichen Exception.
   // Gibt die rohe Response zurück, damit Aufrufer wie bisher .json() oder
   // .ok/.status selbst prüfen können (wichtig für die Playback-Endpunkte).
-  async _request(url, options = {}, _retried = false) {
+  // 401- und 429-Retry laufen über getrennte Flags, damit z. B. ein 429 direkt
+  // nach einem 401-Refresh weiterhin korrekt abgewartet/wiederholt wird.
+  async _request(url, options = {}, _retriedAuth = false, _retriedRate = false) {
     const headers = { ...(options.headers || {}), Authorization: "Bearer " + token.get() };
     let r;
     try {
@@ -20,17 +22,17 @@ const spotify = {
       throw new Error("Netzwerkfehler: " + (networkErr.message || "Verbindung fehlgeschlagen"));
     }
 
-    if (r.status === 401 && !_retried) {
+    if (r.status === 401 && !_retriedAuth) {
       const refreshed = await spotify.refreshToken();
-      if (refreshed) return spotify._request(url, options, true);
+      if (refreshed) return spotify._request(url, options, true, _retriedRate);
       ui.showSessionBanner(true);
       throw new Error("Sitzung abgelaufen");
     }
 
-    if (r.status === 429 && !_retried) {
+    if (r.status === 429 && !_retriedRate) {
       const waitSec = Math.min(parseInt(r.headers.get("Retry-After") || "1", 10) || 1, 10);
       await new Promise(res => setTimeout(res, waitSec * 1000));
-      return spotify._request(url, options, true);
+      return spotify._request(url, options, _retriedAuth, true);
     }
 
     return r;

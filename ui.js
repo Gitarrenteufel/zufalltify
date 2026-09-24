@@ -5,6 +5,17 @@ function escapeHtml(str) {
   }[c]));
 }
 
+// ── URL-Schema-Prüfung für dynamisch gesetzte href/src ──────────────────────────
+// Lässt nur http(s) durch — verhindert, dass z. B. ein "javascript:"-Schema aus
+// (aktuell vertrauenswürdigen) Spotify-Daten als Link- oder Bildquelle landet.
+function safeUrl(url) {
+  if (!url) return "";
+  try {
+    const u = new URL(url, location.href);
+    return (u.protocol === "https:" || u.protocol === "http:") ? url : "";
+  } catch { return ""; }
+}
+
 // ── UI-Schicht ────────────────────────────────────────────────────────────────
 const ui = {
 
@@ -47,10 +58,10 @@ const ui = {
     document.getElementById("coverArtist").textContent = artistName;
     document.getElementById("coverTitle").textContent  = album.name;
     document.getElementById("coverYear").textContent   = album.release_date?.substring(0,4) || "";
-    document.getElementById("albumLink").href = album.external_urls?.spotify || "#";
+    document.getElementById("albumLink").href = safeUrl(album.external_urls?.spotify) || "#";
     const img   = document.getElementById("albumCover");
     const ph    = document.getElementById("coverPlaceholder");
-    const cover = album.images?.[0]?.url;
+    const cover = safeUrl(album.images?.[0]?.url);
     if (cover) { img.src = cover; img.style.display = "block"; ph.style.display = "none"; }
     else        { img.style.display = "none"; ph.style.display = "flex"; }
     document.getElementById("albumCard").classList.add("visible");
@@ -65,7 +76,7 @@ const ui = {
     document.getElementById("coverArtist").textContent = "Playlist";
     document.getElementById("coverTitle").textContent  = playlist.name;
     document.getElementById("coverYear").textContent   = "";
-    document.getElementById("albumLink").href = playlist.uri.replace("spotify:playlist:", "https://open.spotify.com/playlist/");
+    document.getElementById("albumLink").href = safeUrl(playlist.uri.replace("spotify:playlist:", "https://open.spotify.com/playlist/")) || "#";
     const img = document.getElementById("albumCover");
     const ph  = document.getElementById("coverPlaceholder");
     img.style.display = "none";
@@ -97,7 +108,8 @@ const ui = {
     document.getElementById("aodTitle").textContent  = entry.name;
     document.getElementById("aodArtist").textContent = entry.artist;
     const img = document.getElementById("aodCover");
-    if (entry.cover) { img.src = entry.cover; img.style.display = "block"; }
+    const cover = safeUrl(entry.cover);
+    if (cover) { img.src = cover; img.style.display = "block"; }
     else img.style.display = "none";
     document.getElementById("albumOfDayCard").classList.add("visible");
   },
@@ -113,15 +125,19 @@ const ui = {
       el.innerHTML = '<div style="padding:20px 0;font-size:13px;color:var(--muted);text-align:center">Noch nichts gespielt.</div>';
       return;
     }
-    el.innerHTML = history.map(h => `
-      <a ${h.albumUrl ? `href="${escapeHtml(h.albumUrl)}" target="_blank"` : ""} style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;">
-        ${h.cover ? `<img src="${escapeHtml(h.cover)}" alt="" loading="lazy" style="width:40px;height:40px;border-radius:4px;object-fit:cover;flex-shrink:0;background:var(--surface2);">` : '<div style="width:40px;height:40px;border-radius:4px;background:var(--surface2);flex-shrink:0;"></div>'}
+    el.innerHTML = history.map(h => {
+      const albumUrl = safeUrl(h.albumUrl);
+      const cover    = safeUrl(h.cover);
+      return `
+      <a ${albumUrl ? `href="${escapeHtml(albumUrl)}" target="_blank"` : ""} style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;">
+        ${cover ? `<img src="${escapeHtml(cover)}" alt="" loading="lazy" style="width:40px;height:40px;border-radius:4px;object-fit:cover;flex-shrink:0;background:var(--surface2);">` : '<div style="width:40px;height:40px;border-radius:4px;background:var(--surface2);flex-shrink:0;"></div>'}
         <div style="flex:1;min-width:0;">
           <div style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(h.album)}</div>
           <div style="font-size:12px;color:var(--muted);margin-top:1px;">${escapeHtml(h.artist)}</div>
         </div>
         <div style="font-size:11px;color:var(--muted);text-align:right;flex-shrink:0;">${escapeHtml(h.year)}</div>
-      </a>`).join("");
+      </a>`;
+    }).join("");
   },
 
   // ── Vorgemerkte Alben ──────────────────────────────────────────────────────
@@ -137,9 +153,10 @@ const ui = {
       const row = document.createElement("div");
       row.style.cssText = "display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);";
 
-      if (b.cover) {
+      const cover = safeUrl(b.cover);
+      if (cover) {
         const img = document.createElement("img");
-        img.src = b.cover; img.alt = ""; img.loading = "lazy";
+        img.src = cover; img.alt = ""; img.loading = "lazy";
         img.style.cssText = "width:48px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0;";
         row.appendChild(img);
       } else {
@@ -162,7 +179,7 @@ const ui = {
       const actions = document.createElement("div");
       actions.style.cssText = "display:flex;gap:8px;align-items:center;flex-shrink:0;";
       const link = document.createElement("a");
-      link.href = b.albumUrl || "#"; link.target = "_blank";
+      link.href = safeUrl(b.albumUrl) || "#"; link.target = "_blank";
       link.style.cssText = "color:var(--accent);font-size:12px;text-decoration:none;";
       link.textContent = "▶";
       const removeBtn = document.createElement("button");
@@ -322,14 +339,17 @@ const ui = {
   showDropdown(artists, onSelect, onLongPress) {
     const el = document.getElementById("searchDropdown");
     if (!artists.length) { el.classList.remove("visible"); return; }
-    el.innerHTML = artists.map((a, i) => `
+    el.innerHTML = artists.map((a, i) => {
+      const img = safeUrl(a.images?.[2]?.url || a.images?.[1]?.url);
+      return `
       <div class="autocomplete-item" data-idx="${i}">
-        ${a.images?.[2]?.url || a.images?.[1]?.url
-          ? `<img class="autocomplete-img" src="${escapeHtml(a.images?.[2]?.url || a.images?.[1]?.url)}" alt="">`
+        ${img
+          ? `<img class="autocomplete-img" src="${escapeHtml(img)}" alt="">`
           : `<div class="autocomplete-img"></div>`}
         <span class="autocomplete-name">${escapeHtml(a.name)}</span>
         <span class="autocomplete-followers">${escapeHtml(String(ui.formatFollowers(a.followers?.total || 0)))}</span>
-      </div>`).join("");
+      </div>`;
+    }).join("");
     el.classList.add("visible");
     el.querySelectorAll(".autocomplete-item").forEach((item, i) => {
       if (onLongPress) {
@@ -384,10 +404,10 @@ const ui = {
     document.getElementById("coverArtist").textContent = artistName;
     document.getElementById("coverTitle").textContent  = "Beliebteste Songs";
     document.getElementById("coverYear").textContent   = `${tracks.length} Songs`;
-    document.getElementById("albumLink").href = tracks[0]?.external_urls?.spotify || "#";
+    document.getElementById("albumLink").href = safeUrl(tracks[0]?.external_urls?.spotify) || "#";
     const img   = document.getElementById("albumCover");
     const ph    = document.getElementById("coverPlaceholder");
-    const cover = tracks[0]?.album?.images?.[0]?.url;
+    const cover = safeUrl(tracks[0]?.album?.images?.[0]?.url);
     if (cover) { img.src = cover; img.style.display = "block"; ph.style.display = "none"; }
     else        { img.style.display = "none"; ph.style.display = "flex"; }
     document.getElementById("albumCard").classList.add("visible");
