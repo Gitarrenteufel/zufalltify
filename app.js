@@ -719,6 +719,11 @@ const app = {
   initEvents() {
     let autocompleteTimer = null;
 
+    // Natives Android-Kontextmenü (Markieren/Kopieren/Web-Suche) unterdrücken —
+    // das reagiert auf das contextmenu-Event unabhängig von CSS user-select und
+    // würde sonst mit dem eigenen Long-Press (Wiedergabe-Wahl) kollidieren.
+    document.addEventListener("contextmenu", e => e.preventDefault());
+
     document.getElementById("artistInput").addEventListener("input", e => {
       clearTimeout(autocompleteTimer);
       const q = e.target.value.trim();
