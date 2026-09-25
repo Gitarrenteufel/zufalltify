@@ -67,6 +67,13 @@ const ui = {
     const saveBtn   = document.getElementById("saveAlbumBtn");
     if (followBtn) followBtn.style.display = h ? "none" : "flex";
     if (saveBtn)   saveBtn.style.display   = h ? "none" : "flex";
+    // Top10 ergibt bei Hörspielen keinen Sinn — nur im Musik-Modus anbieten,
+    // und nur wenn gerade wirklich eine Album-Ansicht (nicht Playlist/Top10) aktiv ist.
+    const topBtn = document.getElementById("topTracksBtn");
+    if (topBtn) {
+      if (h) topBtn.classList.remove("visible");
+      else if (document.getElementById("anotherBtn").classList.contains("visible")) topBtn.classList.add("visible");
+    }
     // Standardfavoriten (laden/anpassen) sind nur im Hörspiel-Modus relevant —
     // im Musik-Modus gibt's keine separate Favoritenliste mehr, die das beträfe.
     const favSection = document.getElementById("favoritenSystemSection");
@@ -98,7 +105,7 @@ const ui = {
     else        { img.style.display = "none"; ph.style.display = "flex"; }
     document.getElementById("albumCard").classList.add("visible");
     document.getElementById("anotherBtn").classList.add("visible");
-    document.getElementById("topTracksBtn").classList.add("visible");
+    if (state.appMode !== "hoerspiel") document.getElementById("topTracksBtn").classList.add("visible");
     ui.updateCardIcons();
   },
   hideAlbumCard() {
@@ -335,10 +342,6 @@ const ui = {
   // ── Playlisten ─────────────────────────────────────────────────────────────
   renderPlaylists() {
     const el = document.getElementById("playlistContent");
-    if (state.appMode === "hoerspiel") {
-      el.innerHTML = '<div style="padding:20px;font-size:13px;color:var(--muted);text-align:center">Playlisten sind nur im Musik-Modus verfügbar.</div>';
-      return;
-    }
     const list = getPlaylists();
     el.innerHTML = `
       <div style="display:flex;gap:8px;margin-bottom:16px;">

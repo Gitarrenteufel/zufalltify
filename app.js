@@ -571,7 +571,7 @@ const app = {
     else              { img.style.display = "none"; ph.style.display = "flex"; }
     document.getElementById("albumCard").classList.add("visible");
     document.getElementById("anotherBtn").classList.add("visible");
-    document.getElementById("topTracksBtn").classList.add("visible");
+    if (state.appMode !== "hoerspiel") document.getElementById("topTracksBtn").classList.add("visible");
     ui.updateCardIcons();
     await app.playAlbum();
   },
@@ -597,7 +597,7 @@ const app = {
     else          { img.style.display = "none"; ph.style.display = "flex"; }
     document.getElementById("albumCard").classList.add("visible");
     document.getElementById("anotherBtn").classList.add("visible");
-    document.getElementById("topTracksBtn").classList.add("visible");
+    if (state.appMode !== "hoerspiel") document.getElementById("topTracksBtn").classList.add("visible");
     ui.updateCardIcons();
   },
 
