@@ -389,13 +389,11 @@ const ui = {
     document.getElementById("appScreen").style.display       = "flex";
     document.getElementById("appScreen").style.flexDirection = "column";
     document.getElementById("tabBar").style.display          = "flex";
-    document.getElementById("hamburgerBtn").style.display    = "block";
   },
   showLogin() {
     document.getElementById("loginScreen").style.display  = "flex";
     document.getElementById("appScreen").style.display    = "none";
     document.getElementById("tabBar").style.display       = "none";
-    document.getElementById("hamburgerBtn").style.display = "none";
     document.getElementById("albumCard").classList.remove("visible");
     document.getElementById("anotherBtn").classList.remove("visible");
     ui.showSessionBanner(false);
