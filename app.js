@@ -20,11 +20,12 @@ const app = {
   },
 
   // ── Home-Quelle (Künstler/Alben-Bibliothek) ───────────────────────────────────
+  // Betrifft nur "Überrasch mich" — Album des Tages bleibt bewusst EIN fester
+  // Tagespick (die Quelle, aus der es kam, wird beim Umschalten nicht rückwirkend
+  // geändert), sonst fühlt sich der Wechsel nachträglich unstimmig an.
   setHomeSource(src) {
     saveHomeSource(src);
     ui.updateHomeSourceToggle();
-    ui.hideAlbumOfDay();
-    app.pickAlbumOfDay().catch(() => {});
   },
 
   // ── Auth ───────────────────────────────────────────────────────────────────
@@ -544,22 +545,23 @@ const app = {
   },
 
   // ── Favoriten-Actions ──────────────────────────────────────────────────────
+  // Echter Umschalter: Tap fügt hinzu, erneuter Tap entfernt wieder. Das Icon
+  // zeigt danach immer den tatsächlichen Favoriten-Status (über updateCardIcons),
+  // statt sich nach einer festen Zeit unabhängig vom echten Zustand zurückzusetzen.
   addCurrentArtistToFavs() {
     if (!state.artist.id || !state.artist.name) return;
-    const btn       = document.getElementById("favArtistBtn");
     const targetKey = state.appMode === "hoerspiel" ? "zt_favorites_hoerspiel" : "zt_favorites_musik";
     let favs;
     try { favs = JSON.parse(localStorage.getItem(targetKey) || "[]"); } catch { favs = []; }
-    if (favs.find(f => getFavName(f).toLowerCase() === state.artist.name.toLowerCase())) {
-      btn.innerHTML = `<i class="ti ti-heart" style="font-size:20px;color:var(--accent);"></i>`;
-      setTimeout(() => { btn.innerHTML = `<i class="ti ti-heart" style="font-size:20px;"></i>`; }, 2000);
-      return;
+    const already = favs.find(f => getFavName(f).toLowerCase() === state.artist.name.toLowerCase());
+    if (already) {
+      favs = favs.filter(f => f !== already);
+    } else {
+      favs.push({ id: state.artist.id, name: state.artist.name });
     }
-    favs.push({ id: state.artist.id, name: state.artist.name });
     localStorage.setItem(targetKey, JSON.stringify(favs));
     ui.renderFavorites();
-    btn.innerHTML = `<i class="ti ti-heart" style="font-size:20px;color:var(--accent);"></i>`;
-    setTimeout(() => { btn.innerHTML = `<i class="ti ti-heart" style="font-size:20px;"></i>`; }, 2000);
+    ui.updateCardIcons();
   },
 
   removeFavorite(name) {
@@ -682,33 +684,43 @@ const app = {
     if (code) {
       try {
         const data = await spotify.exchangeCode(code);
-        if (data.error) { ui.showError("Anmeldefehler", data.error_description); return; }
-        token.set(data.access_token, data.expires_in, data.refresh_token);
-        await spotify.getProfile();
+        if (data.error) {
+          ui.showError("Anmeldefehler", data.error_description);
+        } else {
+          token.set(data.access_token, data.expires_in, data.refresh_token);
+          await spotify.getProfile();
+        }
       } catch (e) {
         ui.showError("Anmeldefehler", e.message || "Verbindung zu Spotify fehlgeschlagen.");
-        return;
       } finally {
         history.replaceState({}, "", "/");
       }
     }
 
-    if (token.get()) {
-      ui.showApp();
-      app.restoreLastAlbum();
-      ui.renderFavorites();
-      ui.loadFilters();
+    // Ab hier läuft alles in try/catch, damit ein Fehler (z. B. beim initialen
+    // Geräte-/Bibliothek-Abruf) nie verhindert, dass app.initEvents() weiter
+    // unten noch erreicht wird — sonst bleiben Suche und Wischgesten tot.
+    try {
+      if (token.get()) {
+        ui.showApp();
+        app.restoreLastAlbum();
+        ui.renderFavorites();
+        ui.loadFilters();
 
-      spotify.fetchAllFollowedArtists().then(artists => {
-        state.cachedArtists = artists;
-        document.getElementById("followedCount").textContent = artists.length;
-      }).catch(() => {});
+        spotify.fetchAllFollowedArtists().then(artists => {
+          state.cachedArtists = artists;
+          const el = document.getElementById("followedCount");
+          if (el) el.textContent = artists.length;
+        }).catch(() => {});
 
-      await app.checkDevice();
-      app.pickAlbumOfDay().catch(() => {});
+        await app.checkDevice();
+        app.pickAlbumOfDay().catch(() => {});
+      }
+
+      await spotify.checkTokenExpiry();
+    } catch (e) {
+      console.error("init:", e);
     }
-
-    await spotify.checkTokenExpiry();
     setInterval(() => spotify.checkTokenExpiry(), 60 * 1000);
 
     if ("serviceWorker" in navigator) {

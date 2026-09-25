@@ -211,8 +211,7 @@ function filterAlbums(items) {
 
 // ── Album des Tages ───────────────────────────────────────────────────────────
 function aodKey() {
-  if (state.appMode === "hoerspiel") return "zt_album_of_day_hoerspiel";
-  return "zt_album_of_day_musik_" + getHomeSource();
+  return state.appMode === "hoerspiel" ? "zt_album_of_day_hoerspiel" : "zt_album_of_day_musik";
 }
 function getAlbumOfDay() {
   try { return JSON.parse(localStorage.getItem(aodKey()) || "null"); } catch { return null; }
