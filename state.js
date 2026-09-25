@@ -131,16 +131,34 @@ function addToHistory(album, artistName) {
   localStorage.setItem("zt_history", JSON.stringify(filtered.slice(0, HISTORY_MAX)));
 }
 
-// ── Playlisten ────────────────────────────────────────────────────────────────
-function getPlaylists() {
-  try {
-    const stored = localStorage.getItem("zt_playlists");
-    if (stored !== null) return JSON.parse(stored);
-    savePlaylists(DEFAULT_PLAYLISTS);
-    return DEFAULT_PLAYLISTS.slice();
-  } catch { return DEFAULT_PLAYLISTS.slice(); }
+// ── Playlisten (getrennt je Modus) ────────────────────────────────────────────
+function playlistsKey(mode) {
+  return (mode || state.appMode) === "hoerspiel" ? "zt_playlists_hoerspiel" : "zt_playlists_musik";
 }
-function savePlaylists(list) { localStorage.setItem("zt_playlists", JSON.stringify(list)); }
+function getPlaylists(mode) {
+  const m = mode || state.appMode;
+  try {
+    const stored = localStorage.getItem(playlistsKey(m));
+    if (stored !== null) return JSON.parse(stored);
+  } catch {}
+  if (m !== "hoerspiel") {
+    // Einmalige Migration der alten gemeinsamen Liste (vor der Modus-Trennung) zu Musik.
+    try {
+      const old = localStorage.getItem("zt_playlists");
+      if (old !== null) {
+        const migrated = JSON.parse(old);
+        savePlaylists(migrated, m);
+        localStorage.removeItem("zt_playlists");
+        return migrated;
+      }
+    } catch {}
+    savePlaylists(DEFAULT_PLAYLISTS, m);
+    return DEFAULT_PLAYLISTS.slice();
+  }
+  savePlaylists([], m);
+  return [];
+}
+function savePlaylists(list, mode) { localStorage.setItem(playlistsKey(mode), JSON.stringify(list)); }
 
 // ── Filter ────────────────────────────────────────────────────────────────────
 function getFilters() {
