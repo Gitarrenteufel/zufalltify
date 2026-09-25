@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Zufalltify v6.2</title>
+<title>Zufalltify v6.4</title>
 <link rel="manifest" href="manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -314,7 +314,6 @@
         <h2 id="favTabTitle">Favoriten</h2>
         <span class="fav-count" id="favCount"></span>
       </div>
-      <button class="btn btn-surprise" id="surpriseFavsBtn" onclick="app.surpriseFavs()" style="margin-bottom:12px;">🎲 Favoriten würfeln</button>
       <div class="fav-list" id="favList"></div>
     </div>
 
@@ -330,7 +329,7 @@
     <div class="tab-page" id="page-more">
       <div style="padding-top:16px">
         <div class="mehr-toggle">
-          <button class="mehr-toggle-btn active" onclick="app.setMehrSection('stats', this)">Verlauf</button>
+          <button class="mehr-toggle-btn active" onclick="app.setMehrSection('stats', this)">Albenverlauf</button>
           <button class="mehr-toggle-btn" onclick="app.setMehrSection('bookmarks', this)">Vorgemerkt</button>
           <button class="mehr-toggle-btn" onclick="app.setMehrSection('blacklist', this)">Gesperrt</button>
           <button class="mehr-toggle-btn" onclick="app.setMehrSection('system', this)">System</button>
@@ -391,6 +390,16 @@
           </div>
 
           <div class="system-section">
+            <h2>Wiedergabe</h2>
+            <div class="system-row">
+              <label class="filter-item" style="border-bottom:none">
+                <span class="filter-label">Nach Start automatisch zu Spotify wechseln (5s)</span>
+                <input type="checkbox" id="autoForegroundToggle" onchange="app.saveAutoForegroundSetting()">
+              </label>
+            </div>
+          </div>
+
+          <div class="system-section">
             <h2>Konto</h2>
             <div class="system-row">
               <div class="system-item">
@@ -398,8 +407,8 @@
                 <span class="si-value" id="followedCount">–</span>
               </div>
               <div class="system-item">
-                <span class="si-label">Musik-Favoriten</span>
-                <span class="si-value" id="syssFavCountMusik">–</span>
+                <span class="si-label">Alben in Bibliothek</span>
+                <span class="si-value" id="savedAlbumsCount">–</span>
               </div>
               <div class="system-item">
                 <span class="si-label">Hörspiel-Favoriten</span>
@@ -408,19 +417,23 @@
             </div>
           </div>
 
-          <div class="system-section">
-            <h2>Favoriten</h2>
+          <div class="system-section" id="favoritenSystemSection">
+            <h2>Favoriten (Hörspiel)</h2>
             <div class="system-row">
               <div class="system-item" style="cursor:pointer" onclick="app.loadDefaultFavorites()">
                 <span class="si-label">Standardfavoriten laden</span>
                 <span style="color:var(--accent);font-size:13px">+</span>
+              </div>
+              <div class="system-item" style="cursor:pointer" onclick="app.saveDefaultFavorites()">
+                <span class="si-label">Standardfavoriten anpassen</span>
+                <span style="color:var(--accent);font-size:13px">↻</span>
               </div>
             </div>
           </div>
 
           <div class="system-footer">
             <button class="logout-link" onclick="app.logout()">Abmelden</button>
-            <span style="font-size:11px;color:var(--muted);margin-left:8px">v6.2</span>
+            <span style="font-size:11px;color:var(--muted);margin-left:8px">v6.4</span>
           </div>
         </div>
       </div>

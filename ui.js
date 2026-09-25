@@ -56,6 +56,15 @@ const ui = {
     const toggle = document.getElementById("homeSourceToggle");
     if (toggle) toggle.style.display = h ? "none" : "flex";
     if (!h) ui.updateHomeSourceToggle();
+    // Herz (Künstler zu Favoriten) nur im Hörspiel-Modus sinnvoll — im Musik-
+    // Modus zeigt der Favoriten-Tab jetzt live alle gefolgten Künstler, es gibt
+    // dort keine separate, manuell pflegbare Liste mehr, zu der man hinzufügen könnte.
+    const favBtn = document.getElementById("favArtistBtn");
+    if (favBtn) favBtn.style.display = h ? "flex" : "none";
+    // Standardfavoriten (laden/anpassen) sind nur im Hörspiel-Modus relevant —
+    // im Musik-Modus gibt's keine separate Favoritenliste mehr, die das beträfe.
+    const favSection = document.getElementById("favoritenSystemSection");
+    if (favSection) favSection.style.display = h ? "block" : "none";
   },
 
   // ── Home-Quelle (Künstler/Alben-Bibliothek) ───────────────────────────────────
@@ -212,41 +221,61 @@ const ui = {
 
   // ── Favoriten ──────────────────────────────────────────────────────────────
   renderFavorites() {
-    const favs  = getFavorites().slice().sort((a, b) => getFavName(a).localeCompare(getFavName(b), 'de'));
-    const total = getFavorites().length;
-    document.getElementById("favCount").textContent = `${total}`;
-    document.getElementById("syssFavCountMusik").textContent     = getFavorites("musik").length;
     document.getElementById("syssFavCountHoerspiel").textContent = getFavorites("hoerspiel").length;
     const el = document.getElementById("favList");
     el.innerHTML = "";
-    if (!favs.length) {
-      el.innerHTML = '<div class="fav-empty">Noch keine Favoriten.<br>Künstler über Suche oder ♥ hinzufügen.</div>';
+
+    if (state.appMode === "hoerspiel") {
+      // Hörspiel: weiterhin die kuratierte, manuell pflegbare Liste.
+      const favs = getFavorites().slice().sort((a, b) => getFavName(a).localeCompare(getFavName(b), 'de'));
+      document.getElementById("favCount").textContent = `${favs.length}`;
+      if (!favs.length) {
+        el.innerHTML = '<div class="fav-empty">Noch keine Favoriten.<br>Künstler über Suche oder ♥ hinzufügen.</div>';
+        return;
+      }
+      favs.forEach(f => {
+        const name = getFavName(f);
+        const id   = getFavId(f);
+        const item = document.createElement("div");
+        item.className = "fav-item";
+        const nameSpan = document.createElement("span");
+        nameSpan.className   = "fav-name";
+        nameSpan.textContent = name;
+        const removeBtn = document.createElement("button");
+        removeBtn.className   = "fav-remove";
+        removeBtn.textContent = "×";
+        removeBtn.addEventListener("click", e => { e.stopPropagation(); app.removeFavorite(name); });
+        item.appendChild(nameSpan);
+        item.appendChild(removeBtn);
+        item.addEventListener("click", () => app.playArtist(id, name, null));
+        el.appendChild(item);
+      });
       return;
     }
-    favs.forEach(f => {
-      const name = getFavName(f);
-      const id   = getFavId(f);
+
+    // Musik: Live-Liste aller gefolgten Künstler (gleiche Filterung wie der
+    // "Überrasch mich"-Künstlerpool: Hörspiel-/Hörbuch-Künstler und Blacklist
+    // ausgeschlossen) statt einer separat gepflegten Favoritenliste. Rein zum
+    // gezielten Antippen — kein Entfernen hier (das ist jetzt Spotifys "Folgen").
+    const artists = getArtistPool(state.cachedArtists || []).slice().sort((a, b) => a.name.localeCompare(b.name, 'de'));
+    document.getElementById("favCount").textContent = `${artists.length}`;
+    if (!artists.length) {
+      el.innerHTML = '<div class="fav-empty">Noch keine gefolgten Künstler gefunden.</div>';
+      return;
+    }
+    artists.forEach(a => {
       const item = document.createElement("div");
       item.className = "fav-item";
       const nameSpan = document.createElement("span");
       nameSpan.className   = "fav-name";
-      nameSpan.textContent = name;
-      const removeBtn = document.createElement("button");
-      removeBtn.className   = "fav-remove";
-      removeBtn.textContent = "×";
-      removeBtn.addEventListener("click", e => { e.stopPropagation(); app.removeFavorite(name); });
+      nameSpan.textContent = a.name;
       item.appendChild(nameSpan);
-      item.appendChild(removeBtn);
-      if (state.appMode === "hoerspiel") {
-        item.addEventListener("click", () => app.playArtist(id, name, null));
-      } else {
-        app.attachLongPress(item, {
-          onTap:       () => app.playArtist(id, name, null),
-          onLongPress: () => ui.showPlaybackChoice(name,
-            () => app.playArtist(id, name, null),
-            () => app.playTopTracks(id, name, null))
-        });
-      }
+      app.attachLongPress(item, {
+        onTap:       () => app.playArtist(a.id, a.name, a.external_urls?.spotify || ""),
+        onLongPress: () => ui.showPlaybackChoice(a.name,
+          () => app.playArtist(a.id, a.name, a.external_urls?.spotify || ""),
+          () => app.playTopTracks(a.id, a.name, a.external_urls?.spotify || ""))
+      });
       el.appendChild(item);
     });
   },
@@ -345,6 +374,10 @@ const ui = {
     document.getElementById("filterSingle").checked      = f.single;
     document.getElementById("filterCompilation").checked = f.compilation;
     document.getElementById("filterAppearsOn").checked   = f.appears_on;
+  },
+  loadAutoForegroundSetting() {
+    const el = document.getElementById("autoForegroundToggle");
+    if (el) el.checked = getAutoForegroundSpotify();
   },
 
   // ── Autocomplete ───────────────────────────────────────────────────────────

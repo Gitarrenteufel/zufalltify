@@ -57,6 +57,17 @@ function getFavorites(mode) {
 function saveFavorites(favs, mode) {
   localStorage.setItem(favKey(mode), JSON.stringify(favs));
 }
+
+// ── Eigene Standardfavoriten (Snapshot je Modus) ──────────────────────────────
+function defaultFavKey(mode) {
+  return (mode || state.appMode) === "hoerspiel" ? "zt_default_favorites_hoerspiel" : "zt_default_favorites_musik";
+}
+function getCustomDefaultFavorites(mode) {
+  try { return JSON.parse(localStorage.getItem(defaultFavKey(mode)) || "null"); } catch { return null; }
+}
+function saveCustomDefaultFavorites(favs, mode) {
+  localStorage.setItem(defaultFavKey(mode), JSON.stringify(favs));
+}
 function getFavName(f) { return typeof f === 'object' ? f.name : f; }
 function getFavId(f)   { return typeof f === 'object' ? f.id   : null; }
 
@@ -176,6 +187,14 @@ function getAlbumPool(albums) {
     if (blacklistIds.has(artistId)) return false;
     return true;
   });
+}
+
+// ── Automatisch zu Spotify wechseln nach Wiedergabestart ──────────────────────
+function getAutoForegroundSpotify() {
+  return localStorage.getItem("zt_auto_foreground") === "1";
+}
+function saveAutoForegroundSpotify(v) {
+  localStorage.setItem("zt_auto_foreground", v ? "1" : "0");
 }
 
 // ── Home-Quelle (Künstler/Alben-Bibliothek) ───────────────────────────────────

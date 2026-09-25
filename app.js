@@ -158,7 +158,7 @@ const app = {
 
   // ── Gemeinsame Bausteine für Album-Auswahl & Wiedergabe ─────────────────────
   // Diese drei Helfer fassen die Logik zusammen, die zuvor fast identisch in
-  // playArtist/surpriseMe/playAnother/surpriseFavs/pickAlbumOfDay stand.
+  // playArtist/surpriseMe/playAnother/pickAlbumOfDay stand.
 
   // Künstler per Name auflösen (Fallback, wenn nur ein Name statt einer ID vorliegt)
   async resolveArtistByName(name) {
@@ -194,6 +194,38 @@ const app = {
   },
 
   // ── Wiedergabe ─────────────────────────────────────────────────────────────
+  // ── Automatisch zu Spotify wechseln (optionale Einstellung) ─────────────────
+  // Startet nach erfolgreicher Wiedergabe einen 5s-Timer; jede Interaktion in
+  // der App währenddessen bricht ihn ab. Läuft er ab, wird Spotify per
+  // AndroidBridge in den Vordergrund geholt (ohne Bridge, z. B. im Browser, passiert nichts).
+  _autoForegroundTimer: null,
+  _autoForegroundHandler: null,
+  scheduleAutoForeground() {
+    if (!getAutoForegroundSpotify()) return;
+    if (typeof AndroidBridge === "undefined") return;
+    app.cancelAutoForeground();
+    app._autoForegroundHandler = () => app.cancelAutoForeground();
+    document.addEventListener("click", app._autoForegroundHandler, { once: true });
+    document.addEventListener("touchstart", app._autoForegroundHandler, { once: true, passive: true });
+    app._autoForegroundTimer = setTimeout(() => {
+      app.cancelAutoForeground();
+      AndroidBridge.openSpotify();
+    }, 5000);
+  },
+  cancelAutoForeground() {
+    if (app._autoForegroundTimer) { clearTimeout(app._autoForegroundTimer); app._autoForegroundTimer = null; }
+    if (app._autoForegroundHandler) {
+      document.removeEventListener("click", app._autoForegroundHandler);
+      document.removeEventListener("touchstart", app._autoForegroundHandler);
+      app._autoForegroundHandler = null;
+    }
+  },
+
+  saveAutoForegroundSetting() {
+    const checked = document.getElementById("autoForegroundToggle").checked;
+    saveAutoForegroundSpotify(checked);
+  },
+
   // Gemeinsame Wiedergabe-Ausführung mit Geräte-Retry. playFn(deviceId) muss die
   // rohe Response zurückgeben (spotify.play/playTracks/playPlaylist). Stellt ein
   // Gerät sicher, versucht bei 404/403 (Gerät nicht erreichbar) einmal erneut
@@ -209,14 +241,14 @@ const app = {
 
     try {
       const r = await playFn(deviceId);
-      if (r.ok || r.status === 204) { ui.hideError(); return true; }
+      if (r.ok || r.status === 204) { ui.hideError(); app.scheduleAutoForeground(); return true; }
 
       if (r.status === 404 || r.status === 403) {
         const found = await app.waitForDevice(2, 1500);
         if (found) {
           deviceId = localStorage.getItem("spotify_device_id");
           const r2 = await playFn(deviceId);
-          if (r2.ok || r2.status === 204) { ui.hideError(); return true; }
+          if (r2.ok || r2.status === 204) { ui.hideError(); app.scheduleAutoForeground(); return true; }
         }
         ui.showError("Kein Gerät verbunden", "Spotify öffnen und erneut versuchen.");
       } else {
@@ -400,44 +432,8 @@ const app = {
     finally { btn.disabled = false; btn.innerHTML = "🔀 Anderes Album"; }
   },
 
-  // ── Favoriten würfeln ──────────────────────────────────────────────────────
-  async surpriseFavs() {
-    const btn = document.getElementById("surpriseFavsBtn");
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spin"></span>Einen Moment…';
-    try {
-      const favs = getFavorites();
-      if (!favs.length) { ui.showError("Keine Favoriten", "Bitte zuerst Künstler hinzufügen."); return; }
-      const filterKey = getIncludeGroups();
-      for (let i = 0; i < 20; i++) {
-        const fav = favs[Math.floor(Math.random() * favs.length)];
-        try {
-          const id   = getFavId(fav);
-          const name = getFavName(fav);
-          if (id && isKnownEmptyArtist(id, filterKey)) continue;
-          let artistId = id, artistName = name, artistUrl = "";
-          if (id) {
-            const artist = await spotify.getArtist(id);
-            artistName = artist.name || name;
-            artistUrl  = artist.external_urls?.spotify || "";
-          } else {
-            const found = await app.resolveArtistByName(name);
-            if (!found) continue;
-            artistId   = found.id;
-            artistName = found.name;
-            artistUrl  = found.external_urls?.spotify || "";
-          }
-          const random = await app.pickRandomAlbum(artistId);
-          if (!random) continue;
-          app.switchTab('home', document.querySelector('.tab-btn'));
-          await app.selectAndPlayAlbum(random, artistId, artistName, artistUrl);
-          return;
-        } catch { continue; }
-      }
-      ui.showError("Kein passendes Album", "Bitte erneut versuchen.");
-    } catch(e) { ui.showError("Fehler", e.message); }
-    finally { btn.disabled = false; btn.innerHTML = "🎲 Favoriten würfeln"; }
-  },
+  // (surpriseFavs entfernt — Favoriten-Tab ist jetzt eine reine Anzeige/Auswahl-
+  // liste ohne eigenen Zufallspool; "Überrasch mich" deckt das ab.)
 
   // ── Album des Tages ────────────────────────────────────────────────────────
   // Folgt derselben Quelle wie der Home-Umschalter (eigener Tages-Eintrag pro
@@ -657,8 +653,11 @@ const app = {
   },
 
   // ── Standardfavoriten ──────────────────────────────────────────────────────
+  // Nutzt einen selbst gesicherten Snapshot, falls vorhanden, sonst die fest im
+  // Code hinterlegten Standardnamen. Rein additiv — nichts wird entfernt/überschrieben.
   loadDefaultFavorites() {
-    const defaults = state.appMode === "hoerspiel" ? DEFAULT_FAVORITES_HOERSPIEL : DEFAULT_FAVORITES_MUSIK;
+    const custom   = getCustomDefaultFavorites();
+    const defaults = custom || (state.appMode === "hoerspiel" ? DEFAULT_FAVORITES_HOERSPIEL : DEFAULT_FAVORITES_MUSIK);
     const current  = getFavorites();
     let added = 0;
     for (const d of defaults) {
@@ -670,6 +669,13 @@ const app = {
     saveFavorites(current);
     ui.renderFavorites();
     ui.showInfo(added > 0 ? `${added} Künstler hinzugefügt.` : "Alle bereits vorhanden.");
+  },
+
+  // Sichert die aktuelle Favoritenliste (des aktiven Modus) als neuen Standard-
+  // Snapshot — verändert die laufende Liste selbst nicht, nur den Snapshot.
+  saveDefaultFavorites() {
+    saveCustomDefaultFavorites(getFavorites());
+    ui.showInfo("Standardfavoriten aktualisiert.");
   },
 
   // ── Init ───────────────────────────────────────────────────────────────────
@@ -706,11 +712,19 @@ const app = {
         app.restoreLastAlbum();
         ui.renderFavorites();
         ui.loadFilters();
+        ui.loadAutoForegroundSetting();
 
         spotify.fetchAllFollowedArtists().then(artists => {
           state.cachedArtists = artists;
           const el = document.getElementById("followedCount");
           if (el) el.textContent = artists.length;
+          if (document.getElementById("page-favs").classList.contains("active")) ui.renderFavorites();
+        }).catch(() => {});
+
+        spotify.fetchAllSavedAlbums().then(albums => {
+          state.cachedSavedAlbums = albums;
+          const el = document.getElementById("savedAlbumsCount");
+          if (el) el.textContent = albums.length;
         }).catch(() => {});
 
         await app.checkDevice();
