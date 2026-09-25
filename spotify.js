@@ -171,6 +171,22 @@ const spotify = {
     return d?.tracks || [];
   },
 
+  // ── Künstler folgen ────────────────────────────────────────────────────────
+  async followArtist(id) {
+    return spotify._request(`https://api.spotify.com/v1/me/following?type=artist&ids=${encodeURIComponent(id)}`, { method: "PUT" });
+  },
+  async unfollowArtist(id) {
+    return spotify._request(`https://api.spotify.com/v1/me/following?type=artist&ids=${encodeURIComponent(id)}`, { method: "DELETE" });
+  },
+
+  // ── Album in Bibliothek speichern ─────────────────────────────────────────
+  async saveAlbum(id) {
+    return spotify._request(`https://api.spotify.com/v1/me/albums?ids=${encodeURIComponent(id)}`, { method: "PUT" });
+  },
+  async removeAlbum(id) {
+    return spotify._request(`https://api.spotify.com/v1/me/albums?ids=${encodeURIComponent(id)}`, { method: "DELETE" });
+  },
+
   // ── Wiedergabe ─────────────────────────────────────────────────────────────
   async getDevices() {
     const d = await spotify._requestJson("https://api.spotify.com/v1/me/player/devices");

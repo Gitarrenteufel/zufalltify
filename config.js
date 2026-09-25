@@ -1,7 +1,7 @@
 // ── Konfiguration ─────────────────────────────────────────────────────────────
 const CLIENT_ID  = "7f11ab0b763a4d95ba84882b55101ee1";
 const WORKER_URL = "https://zufalltify-token.summer-truth-edd2.workers.dev";
-const SCOPES     = "user-read-private user-read-playback-state user-modify-playback-state user-follow-read user-library-read";
+const SCOPES     = "user-read-private user-read-playback-state user-modify-playback-state user-follow-read user-follow-modify user-library-read user-library-modify";
 const HISTORY_MAX = 50;
 
 const IS_WEBVIEW = window.location.protocol === 'zufalltify:' ||

@@ -19,6 +19,50 @@ const app = {
     if (document.getElementById("albumCard").classList.contains("visible"))     ui.updateCardIcons();
   },
 
+  // ── Künstler folgen/entfolgen (Musik-Modus) ──────────────────────────────────
+  async toggleFollowArtist() {
+    if (!state.artist.id) return;
+    const artists = state.cachedArtists || [];
+    const isFollowing = artists.some(a => a.id === state.artist.id);
+    try {
+      if (isFollowing) {
+        await spotify.unfollowArtist(state.artist.id);
+        state.cachedArtists = artists.filter(a => a.id !== state.artist.id);
+      } else {
+        await spotify.followArtist(state.artist.id);
+        state.cachedArtists = [...artists, { id: state.artist.id, name: state.artist.name, external_urls: { spotify: state.artist.url || "" } }];
+      }
+      const el = document.getElementById("followedCount");
+      if (el) el.textContent = state.cachedArtists.length;
+      ui.updateCardIcons();
+      if (document.getElementById("page-favs").classList.contains("active")) ui.renderFavorites();
+    } catch (e) {
+      ui.showError("Fehler", e.message);
+    }
+  },
+
+  // ── Album in Spotify-Bibliothek speichern/entfernen ──────────────────────────
+  async toggleSaveAlbum() {
+    if (!state.album.uri) return;
+    const albumId = state.album.uri.split(":").pop();
+    const saved    = state.cachedSavedAlbums || [];
+    const isSaved  = saved.some(a => a.uri?.split(":").pop() === albumId);
+    try {
+      if (isSaved) {
+        await spotify.removeAlbum(albumId);
+        state.cachedSavedAlbums = saved.filter(a => a.uri?.split(":").pop() !== albumId);
+      } else {
+        await spotify.saveAlbum(albumId);
+        state.cachedSavedAlbums = [...saved, state.album.data?.album || { uri: state.album.uri }];
+      }
+      const el = document.getElementById("savedAlbumsCount");
+      if (el) el.textContent = state.cachedSavedAlbums.length;
+      ui.updateCardIcons();
+    } catch (e) {
+      ui.showError("Fehler", e.message);
+    }
+  },
+
   // ── Home-Quelle (Künstler/Alben-Bibliothek) ───────────────────────────────────
   // Betrifft nur "Überrasch mich" — Album des Tages bleibt bewusst EIN fester
   // Tagespick (die Quelle, aus der es kam, wird beim Umschalten nicht rückwirkend
@@ -432,6 +476,21 @@ const app = {
     finally { btn.disabled = false; btn.innerHTML = "🔀 Anderes Album"; }
   },
 
+  // Top-10-Alternative zum aktuell angezeigten Künstler, ohne erneute Suche.
+  async playTopTracksForCurrent() {
+    if (!state.artist.name) return;
+    const btn = document.getElementById("topTracksBtn");
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spin"></span>Einen Moment…';
+    try {
+      await app.playTopTracks(state.artist.id, state.artist.name, state.artist.url);
+    } catch (e) {
+      ui.showError("Fehler", e.message);
+    } finally {
+      btn.disabled = false; btn.innerHTML = "⭐ Top 10";
+    }
+  },
+
   // (surpriseFavs entfernt — Favoriten-Tab ist jetzt eine reine Anzeige/Auswahl-
   // liste ohne eigenen Zufallspool; "Überrasch mich" deckt das ab.)
 
@@ -512,6 +571,7 @@ const app = {
     else              { img.style.display = "none"; ph.style.display = "flex"; }
     document.getElementById("albumCard").classList.add("visible");
     document.getElementById("anotherBtn").classList.add("visible");
+    document.getElementById("topTracksBtn").classList.add("visible");
     ui.updateCardIcons();
     await app.playAlbum();
   },
@@ -537,6 +597,7 @@ const app = {
     else          { img.style.display = "none"; ph.style.display = "flex"; }
     document.getElementById("albumCard").classList.add("visible");
     document.getElementById("anotherBtn").classList.add("visible");
+    document.getElementById("topTracksBtn").classList.add("visible");
     ui.updateCardIcons();
   },
 
@@ -650,6 +711,19 @@ const app = {
       filters.album = true;
     }
     saveFilters(filters);
+  },
+
+  // ── Gefolgte Künstler manuell aktualisieren ──────────────────────────────────
+  // Umgeht den Tages-Cache (der sich sonst erst am nächsten Kalendertag von
+  // selbst erneuert) — z. B. wenn man gerade jemanden entfolgt hat und das
+  // sofort in der App sehen will, statt bis morgen zu warten.
+  async refreshFollowedArtists() {
+    try { localStorage.removeItem("zt_followed_cache"); } catch {}
+    state.cachedArtists = await spotify.fetchAllFollowedArtists();
+    const el = document.getElementById("followedCount");
+    if (el) el.textContent = state.cachedArtists.length;
+    if (document.getElementById("page-favs").classList.contains("active")) ui.renderFavorites();
+    ui.showInfo("Gefolgte Künstler aktualisiert.");
   },
 
   // ── Standardfavoriten ──────────────────────────────────────────────────────

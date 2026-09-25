@@ -61,6 +61,12 @@ const ui = {
     // dort keine separate, manuell pflegbare Liste mehr, zu der man hinzufügen könnte.
     const favBtn = document.getElementById("favArtistBtn");
     if (favBtn) favBtn.style.display = h ? "flex" : "none";
+    // Folgen/Bibliothek-Buttons nur im Musik-Modus — im Hörspiel-Modus bleibt's
+    // beim bisherigen lokalen Favoriten-Herz.
+    const followBtn = document.getElementById("followArtistBtn");
+    const saveBtn   = document.getElementById("saveAlbumBtn");
+    if (followBtn) followBtn.style.display = h ? "none" : "flex";
+    if (saveBtn)   saveBtn.style.display   = h ? "none" : "flex";
     // Standardfavoriten (laden/anpassen) sind nur im Hörspiel-Modus relevant —
     // im Musik-Modus gibt's keine separate Favoritenliste mehr, die das beträfe.
     const favSection = document.getElementById("favoritenSystemSection");
@@ -92,11 +98,13 @@ const ui = {
     else        { img.style.display = "none"; ph.style.display = "flex"; }
     document.getElementById("albumCard").classList.add("visible");
     document.getElementById("anotherBtn").classList.add("visible");
+    document.getElementById("topTracksBtn").classList.add("visible");
     ui.updateCardIcons();
   },
   hideAlbumCard() {
     document.getElementById("albumCard").classList.remove("visible");
     document.getElementById("anotherBtn").classList.remove("visible");
+    document.getElementById("topTracksBtn").classList.remove("visible");
   },
   showPlaylistCard(playlist) {
     document.getElementById("coverArtist").textContent = "Playlist";
@@ -110,6 +118,7 @@ const ui = {
     ph.textContent    = "🎵";
     document.getElementById("albumCard").classList.add("visible");
     document.getElementById("anotherBtn").classList.remove("visible");
+    document.getElementById("topTracksBtn").classList.remove("visible");
   },
   updateCardIcons() {
     if (!state.artist.id && !state.album.uri) return;
@@ -127,6 +136,17 @@ const ui = {
     if (favBtn)  favBtn.innerHTML  = `<i class="ti ti-heart" style="font-size:20px;${isFav ? 'color:var(--accent);' : ''}"></i>`;
     if (bookBtn) bookBtn.innerHTML = `<i class="ti ti-bookmark" style="font-size:20px;${isBookmarked ? 'color:var(--accent);' : ''}"></i>`;
     if (banBtn)  banBtn.innerHTML  = `<i class="ti ti-ban" style="font-size:20px;${isBanned ? 'color:var(--danger);' : ''}"></i>`;
+
+    // Folgen/Bibliothek-Status aus bereits geladenen Listen ableiten (kein
+    // zusätzlicher API-Call pro Kartenanzeige nötig).
+    const isFollowing = state.artist.id && (state.cachedArtists || []).some(a => a.id === state.artist.id);
+    const albumId      = state.album.uri ? state.album.uri.split(":").pop() : null;
+    const isSaved       = albumId && (state.cachedSavedAlbums || []).some(a => a.uri?.split(":").pop() === albumId);
+
+    const followBtn = document.getElementById("followArtistBtn");
+    const saveBtn   = document.getElementById("saveAlbumBtn");
+    if (followBtn) followBtn.innerHTML = `<i class="ti ${isFollowing ? 'ti-user-check' : 'ti-user-plus'}" style="font-size:20px;${isFollowing ? 'color:var(--accent);' : ''}"></i>`;
+    if (saveBtn)   saveBtn.innerHTML   = `<i class="ti ${isSaved ? 'ti-square-rounded-check' : 'ti-square-rounded-plus'}" style="font-size:20px;${isSaved ? 'color:var(--accent);' : ''}"></i>`;
   },
 
   // ── Album des Tages ────────────────────────────────────────────────────────
@@ -247,7 +267,10 @@ const ui = {
         removeBtn.addEventListener("click", e => { e.stopPropagation(); app.removeFavorite(name); });
         item.appendChild(nameSpan);
         item.appendChild(removeBtn);
-        item.addEventListener("click", () => app.playArtist(id, name, null));
+        item.addEventListener("click", () => {
+          app.switchTab("home", document.querySelector(".tab-btn"));
+          app.playArtist(id, name, null);
+        });
         el.appendChild(item);
       });
       return;
@@ -270,11 +293,9 @@ const ui = {
       nameSpan.className   = "fav-name";
       nameSpan.textContent = a.name;
       item.appendChild(nameSpan);
-      app.attachLongPress(item, {
-        onTap:       () => app.playArtist(a.id, a.name, a.external_urls?.spotify || ""),
-        onLongPress: () => ui.showPlaybackChoice(a.name,
-          () => app.playArtist(a.id, a.name, a.external_urls?.spotify || ""),
-          () => app.playTopTracks(a.id, a.name, a.external_urls?.spotify || ""))
+      item.addEventListener("click", () => {
+        app.switchTab("home", document.querySelector(".tab-btn"));
+        app.playArtist(a.id, a.name, a.external_urls?.spotify || "");
       });
       el.appendChild(item);
     });
@@ -429,6 +450,7 @@ const ui = {
     document.getElementById("tabBar").style.display       = "none";
     document.getElementById("albumCard").classList.remove("visible");
     document.getElementById("anotherBtn").classList.remove("visible");
+    document.getElementById("topTracksBtn").classList.remove("visible");
     ui.showSessionBanner(false);
   },
 
@@ -460,6 +482,7 @@ const ui = {
     else        { img.style.display = "none"; ph.style.display = "flex"; }
     document.getElementById("albumCard").classList.add("visible");
     document.getElementById("anotherBtn").classList.remove("visible");
+    document.getElementById("topTracksBtn").classList.remove("visible");
     ui.updateCardIcons();
   },
 
