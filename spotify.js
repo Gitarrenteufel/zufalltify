@@ -128,6 +128,30 @@ const spotify = {
     return slim;
   },
 
+  // ── Bibliothek (gespeicherte Alben) ───────────────────────────────────────────
+  async fetchAllSavedAlbums() {
+    try {
+      const cached = JSON.parse(localStorage.getItem("zt_saved_albums_cache") || "null");
+      if (cached && cached.date === getTodayKey() && cached.albums?.length) return cached.albums;
+    } catch {}
+    let all = [], url = "https://api.spotify.com/v1/me/albums?limit=50";
+    while (url) {
+      const d = await spotify._requestJson(url);
+      all.push(...(d?.items || []));
+      url = d?.next || null;
+    }
+    const slim = all.map(item => {
+      const a = item.album || {};
+      return {
+        uri: a.uri, name: a.name, release_date: a.release_date,
+        images: a.images, external_urls: a.external_urls,
+        artists: (a.artists || []).map(ar => ({ id: ar.id, name: ar.name, external_urls: ar.external_urls }))
+      };
+    });
+    try { localStorage.setItem("zt_saved_albums_cache", JSON.stringify({ date: getTodayKey(), albums: slim })); } catch {}
+    return slim;
+  },
+
   // ── Alben ──────────────────────────────────────────────────────────────────
   // Bewusst nur die erste Seite (50 Alben) – für eine Zufallsauswahl ausreichend
   // und reduziert die Requests pro Versuch von potenziell mehreren auf genau einen.

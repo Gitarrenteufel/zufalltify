@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Zufalltify v5.14</title>
+<title>Zufalltify v6.0</title>
 <link rel="manifest" href="manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -42,19 +42,19 @@
 
   /* Mode Toggle */
   .mode-toggle { display: flex; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 3px; gap: 2px; flex-shrink: 0; }
+
+  /* Mehr-Tab: flacher Umschalter statt Sub-Navigation (kein Zurück-Button-Bedarf) */
+  .mehr-toggle { display: flex; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 4px; gap: 4px; margin-bottom: 16px; }
+  .mehr-toggle-btn { flex: 1; background: transparent; border: none; border-radius: 9px; color: var(--muted); font-family: inherit; font-weight: 600; font-size: 12px; padding: 10px 2px; cursor: pointer; }
+  .mehr-toggle-btn.active { background: var(--accent); color: #000; }
+  .mehr-section { display: none; }
+  .mehr-section.active { display: block; }
   .mode-btn { font-size: 10px; font-weight: 600; padding: 5px 11px; border-radius: 999px; border: none; cursor: pointer; font-family: inherit; letter-spacing: 0.03em; background: transparent; color: var(--muted); transition: background 0.2s, color 0.2s; }
   .mode-btn.active { background: var(--accent); color: #000; }
 
   /* Hamburger */
-  #hamburgerBtn { display: none; background: none; border: none; cursor: pointer; padding: 2px 0; color: var(--text); font-size: 22px; line-height: 1; flex-shrink: 0; }
 
   /* Drawer */
-  #drawer { display: none; }
-  #drawer.open { display: flex !important; }
-  .drawer-header { padding: 16px 20px 12px; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
-  .drawer-item { display: flex; align-items: center; gap: 14px; padding: 15px 20px; font-size: 15px; cursor: pointer; transition: background 0.15s; color: var(--text); }
-  .drawer-item:hover { background: var(--surface2); }
-  .drawer-item i { font-size: 20px; width: 24px; text-align: center; flex-shrink: 0; color: var(--muted); }
 
   /* Error card */
   #errorCard { display: none; margin: 0 20px 12px; background: rgba(224,92,92,0.1); border: 1px solid var(--danger); border-radius: var(--radius); padding: 14px 16px; align-items: center; gap: 12px; }
@@ -222,9 +222,6 @@
       <button class="mode-btn active" id="btnMusik" onclick="app.setMode('musik')">Musik</button>
       <button class="mode-btn" id="btnHoerspiel" onclick="app.setMode('hoerspiel')">Hörspiel</button>
     </div>
-    <button id="hamburgerBtn" onclick="app.openDrawer()" aria-label="Menü">
-      <i class="ti ti-menu-2"></i>
-    </button>
   </header>
 
   <div id="errorCard">
@@ -266,7 +263,13 @@
         <i class="ti ti-brand-spotify" style="font-size:16px;vertical-align:middle;margin-right:6px;"></i>Spotify öffnen
       </button>
 
-      <button class="btn btn-surprise" id="surpriseBtn" onclick="app.surpriseMe()">🎲 Überrasch mich</button>
+      <div class="mode-toggle" id="homeSourceToggle" style="width:100%;box-sizing:border-box;justify-content:center;margin-bottom:10px;">
+        <button class="mode-btn" id="homeSourceKuenstler" onclick="app.setHomeSource('kuenstler')" style="flex:1;padding:8px 0;">Künstler</button>
+        <button class="mode-btn" id="homeSourceAlben" onclick="app.setHomeSource('alben')" style="flex:1;padding:8px 0;">Alben</button>
+      </div>
+
+      <button class="btn btn-surprise" id="surpriseBtn" onclick="app.surprise()">🎲 Überrasch mich</button>
+      <div id="surpriseCaption" style="text-align:center;font-size:12px;color:var(--muted);margin-top:-6px;margin-bottom:12px;">Aus deinen gefolgten Künstlern</div>
 
       <div class="search-row">
         <div class="autocomplete-wrap">
@@ -315,6 +318,7 @@
       <div class="fav-list" id="favList"></div>
     </div>
 
+    <!-- BIBLIOTHEK (ALBEN) -->
     <!-- PLAYLISTEN -->
     <div class="tab-page" id="page-playlists">
       <div style="padding-top:16px">
@@ -322,97 +326,103 @@
       </div>
     </div>
 
-    <!-- BLACKLIST -->
-    <div class="tab-page" id="page-blacklist">
+    <!-- MEHR: flacher Umschalter statt Drawer/Sub-Navigation — kein Zurück-Button-Bedarf -->
+    <div class="tab-page" id="page-more">
       <div style="padding-top:16px">
-        <div id="blacklistList"></div>
-      </div>
-    </div>
+        <div class="mehr-toggle">
+          <button class="mehr-toggle-btn active" onclick="app.setMehrSection('stats', this)">Verlauf</button>
+          <button class="mehr-toggle-btn" onclick="app.setMehrSection('bookmarks', this)">Vorgemerkt</button>
+          <button class="mehr-toggle-btn" onclick="app.setMehrSection('blacklist', this)">Gesperrt</button>
+          <button class="mehr-toggle-btn" onclick="app.setMehrSection('system', this)">System</button>
+        </div>
 
-    <!-- VERLAUF -->
-    <div class="tab-page" id="page-stats">
-      <div style="padding-top:16px">
-        <div id="historyList"></div>
-      </div>
-    </div>
+        <!-- VERLAUF -->
+        <div class="mehr-section active" id="mehrSection-stats">
+          <div id="historyList"></div>
+        </div>
 
-    <!-- VORGEMERKTE ALBEN -->
-    <div class="tab-page" id="page-bookmarks">
-      <div style="padding-top:16px">
-        <div id="bookmarkList"></div>
-      </div>
-    </div>
+        <!-- VORGEMERKTE ALBEN -->
+        <div class="mehr-section" id="mehrSection-bookmarks">
+          <div id="bookmarkList"></div>
+        </div>
 
-    <!-- SYSTEM -->
-    <div class="tab-page" id="page-system">
-      <div class="system-section">
-        <h2>Gerät</h2>
-        <div class="system-row">
-          <div class="device-pill-sys" onclick="app.toggleDeviceSelector()">
-            <span class="si-dot" id="deviceDot"></span>
-            <span id="deviceLabel" style="flex:1;font-size:14px">Kein Gerät gewählt</span>
-            <span style="color:var(--border);font-size:11px">▾</span>
+        <!-- GESPERRTE KÜNSTLER -->
+        <div class="mehr-section" id="mehrSection-blacklist">
+          <div id="blacklistList"></div>
+        </div>
+
+        <!-- SYSTEM -->
+        <div class="mehr-section" id="mehrSection-system">
+          <div class="system-section">
+            <h2>Gerät</h2>
+            <div class="system-row">
+              <div class="device-pill-sys" onclick="app.toggleDeviceSelector()">
+                <span class="si-dot" id="deviceDot"></span>
+                <span id="deviceLabel" style="flex:1;font-size:14px">Kein Gerät gewählt</span>
+                <span style="color:var(--border);font-size:11px">▾</span>
+              </div>
+              <div id="deviceSelectorSys">
+                <p>Abspielgerät wählen</p>
+                <div id="deviceList"></div>
+              </div>
+            </div>
           </div>
-          <div id="deviceSelectorSys">
-            <p>Abspielgerät wählen</p>
-            <div id="deviceList"></div>
+
+          <div class="system-section">
+            <h2>Filtereinstellungen</h2>
+            <div class="system-row">
+              <label class="filter-item">
+                <span class="filter-label">Alben</span>
+                <input type="checkbox" id="filterAlbum" checked onchange="app.saveFilters()">
+              </label>
+              <label class="filter-item">
+                <span class="filter-label">Singles und EPs</span>
+                <input type="checkbox" id="filterSingle" onchange="app.saveFilters()">
+              </label>
+              <label class="filter-item">
+                <span class="filter-label">Compilations</span>
+                <input type="checkbox" id="filterCompilation" onchange="app.saveFilters()">
+              </label>
+              <label class="filter-item" style="border-bottom:none">
+                <span class="filter-label">Mit dabei in</span>
+                <input type="checkbox" id="filterAppearsOn" onchange="app.saveFilters()">
+              </label>
+            </div>
+          </div>
+
+          <div class="system-section">
+            <h2>Konto</h2>
+            <div class="system-row">
+              <div class="system-item">
+                <span class="si-label">Gefolgte Künstler</span>
+                <span class="si-value" id="followedCount">–</span>
+              </div>
+              <div class="system-item">
+                <span class="si-label">Musik-Favoriten</span>
+                <span class="si-value" id="syssFavCountMusik">–</span>
+              </div>
+              <div class="system-item">
+                <span class="si-label">Hörspiel-Favoriten</span>
+                <span class="si-value" id="syssFavCountHoerspiel">–</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="system-section">
+            <h2>Favoriten</h2>
+            <div class="system-row">
+              <div class="system-item" style="cursor:pointer" onclick="app.loadDefaultFavorites()">
+                <span class="si-label">Standardfavoriten laden</span>
+                <span style="color:var(--accent);font-size:13px">+</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="system-footer">
+            <button class="logout-link" onclick="app.logout()">Abmelden</button>
+            <span style="font-size:11px;color:var(--muted);margin-left:8px">v6.0</span>
           </div>
         </div>
-      </div>
-
-      <div class="system-section">
-        <h2>Filtereinstellungen</h2>
-        <div class="system-row">
-          <label class="filter-item">
-            <span class="filter-label">Alben</span>
-            <input type="checkbox" id="filterAlbum" checked onchange="app.saveFilters()">
-          </label>
-          <label class="filter-item">
-            <span class="filter-label">Singles und EPs</span>
-            <input type="checkbox" id="filterSingle" onchange="app.saveFilters()">
-          </label>
-          <label class="filter-item">
-            <span class="filter-label">Compilations</span>
-            <input type="checkbox" id="filterCompilation" onchange="app.saveFilters()">
-          </label>
-          <label class="filter-item" style="border-bottom:none">
-            <span class="filter-label">Mit dabei in</span>
-            <input type="checkbox" id="filterAppearsOn" onchange="app.saveFilters()">
-          </label>
-        </div>
-      </div>
-
-      <div class="system-section">
-        <h2>Konto</h2>
-        <div class="system-row">
-          <div class="system-item">
-            <span class="si-label">Gefolgte Künstler</span>
-            <span class="si-value" id="followedCount">–</span>
-          </div>
-          <div class="system-item">
-            <span class="si-label">Musik-Favoriten</span>
-            <span class="si-value" id="syssFavCountMusik">–</span>
-          </div>
-          <div class="system-item">
-            <span class="si-label">Hörspiel-Favoriten</span>
-            <span class="si-value" id="syssFavCountHoerspiel">–</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="system-section">
-        <h2>Favoriten</h2>
-        <div class="system-row">
-          <div class="system-item" style="cursor:pointer" onclick="app.loadDefaultFavorites()">
-            <span class="si-label">Standardfavoriten laden</span>
-            <span style="color:var(--accent);font-size:13px">+</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="system-footer">
-        <button class="logout-link" onclick="app.logout()">Abmelden</button>
-        <span style="font-size:11px;color:var(--muted);margin-left:8px">v5.14</span>
       </div>
     </div>
 
@@ -429,30 +439,10 @@
     <button class="tab-btn" id="playlistTabBtn" onclick="app.switchTab('playlists', this)">
       <i class="ti ti-playlist"></i><span>Playlisten</span>
     </button>
+    <button class="tab-btn" onclick="app.switchTab('more', this)">
+      <i class="ti ti-dots"></i><span>Mehr</span>
+    </button>
   </nav>
-
-  <!-- Drawer Overlay -->
-  <div id="drawerOverlay" onclick="app.closeDrawer()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100"></div>
-
-  <!-- Drawer -->
-  <div id="drawer" style="display:none;position:fixed;top:0;right:0;bottom:0;width:260px;max-width:85vw;background:#1a1a1a;border-left:1px solid #2a2a2a;z-index:101;flex-direction:column;">
-    <div class="drawer-header">
-      <i class="ti ti-menu-2"></i> Menü
-    </div>
-    <div class="drawer-item" onclick="app.openDrawerTab('stats')">
-      <i class="ti ti-history"></i><span>Verlauf</span>
-    </div>
-    <div class="drawer-item" onclick="app.openDrawerTab('bookmarks')">
-      <i class="ti ti-bookmark"></i><span>Vorgemerkte Alben</span>
-    </div>
-    <div class="drawer-item" onclick="app.openDrawerTab('blacklist')">
-      <i class="ti ti-ban"></i><span>Gesperrte Künstler</span>
-    </div>
-    <div style="border-top:1px solid #2a2a2a;margin:4px 0"></div>
-    <div class="drawer-item" onclick="app.openDrawerTab('system')">
-      <i class="ti ti-settings"></i><span>System</span>
-    </div>
-  </div>
 
   <!-- Modal -->
   <div id="modal">

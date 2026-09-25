@@ -51,6 +51,23 @@ const ui = {
     const h = state.appMode === "hoerspiel";
     document.getElementById("aodLabel").textContent    = h ? "🎧 Hörspiel des Tages" : "🌅 Album des Tages";
     document.getElementById("favTabTitle").textContent = h ? "Hörspiel-Favoriten"    : "Musik-Favoriten";
+    // Künstler/Alben-Umschalter nur im Musik-Modus — im Hörspiel-Modus hört
+    // man gezielt, kein Zufalls-Umschalter zwischen Quellen nötig.
+    const toggle = document.getElementById("homeSourceToggle");
+    if (toggle) toggle.style.display = h ? "none" : "flex";
+    if (!h) ui.updateHomeSourceToggle();
+  },
+
+  // ── Home-Quelle (Künstler/Alben-Bibliothek) ───────────────────────────────────
+  updateHomeSourceToggle() {
+    const src = getHomeSource();
+    const kBtn = document.getElementById("homeSourceKuenstler");
+    const aBtn = document.getElementById("homeSourceAlben");
+    if (!kBtn || !aBtn) return;
+    kBtn.classList.toggle("active", src === "kuenstler");
+    aBtn.classList.toggle("active", src === "alben");
+    const caption = document.getElementById("surpriseCaption");
+    if (caption) caption.textContent = src === "alben" ? "Aus deiner Bibliothek" : "Aus deinen gefolgten Künstlern";
   },
 
   // ── Album-Karte ────────────────────────────────────────────────────────────

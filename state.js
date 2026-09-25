@@ -2,6 +2,7 @@
 const state = {
   appMode:       localStorage.getItem("zt_mode") || "musik",
   cachedArtists: null,
+  cachedSavedAlbums: null,
   artist: {
     id:   null,
     name: null,
@@ -162,6 +163,30 @@ function getArtistPool(artists) {
   return artists.filter(a => !HOERSPIEL_IDS.has(a.id) && !HOERBUCH_IDS.has(a.id) && !blacklistIds.has(a.id));
 }
 
+// ── Alben-Pool (Bibliothek) ─────────────────────────────────────────────────────
+// Nur im Musik-Modus relevant: schließt Alben aus, deren Hauptkünstler zu den
+// Hörspiel-/Hörbuch-Ausschlusslisten gehört oder auf der (Musik-)Blacklist steht.
+function getAlbumPool(albums) {
+  const blacklist    = getBlacklist();
+  const blacklistIds = new Set(blacklist.map(b => b.id));
+  return albums.filter(a => {
+    const artistId = a.artists?.[0]?.id;
+    if (!artistId) return true;
+    if (HOERSPIEL_IDS.has(artistId) || HOERBUCH_IDS.has(artistId)) return false;
+    if (blacklistIds.has(artistId)) return false;
+    return true;
+  });
+}
+
+// ── Home-Quelle (Künstler/Alben-Bibliothek) ───────────────────────────────────
+// Nur im Musik-Modus wählbar; wird über App-Neustarts hinweg gemerkt.
+function getHomeSource() {
+  return localStorage.getItem("zt_home_source") || "kuenstler";
+}
+function saveHomeSource(src) {
+  localStorage.setItem("zt_home_source", src);
+}
+
 // ── Album-Normalisierung ──────────────────────────────────────────────────────
 function normalizeAlbumName(name) {
   return name.toLowerCase()
@@ -186,7 +211,8 @@ function filterAlbums(items) {
 
 // ── Album des Tages ───────────────────────────────────────────────────────────
 function aodKey() {
-  return state.appMode === "hoerspiel" ? "zt_album_of_day_hoerspiel" : "zt_album_of_day_musik";
+  if (state.appMode === "hoerspiel") return "zt_album_of_day_hoerspiel";
+  return "zt_album_of_day_musik_" + getHomeSource();
 }
 function getAlbumOfDay() {
   try { return JSON.parse(localStorage.getItem(aodKey()) || "null"); } catch { return null; }

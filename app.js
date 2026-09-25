@@ -10,10 +10,21 @@ const app = {
     ui.renderFavorites();
     ui.hideAlbumOfDay();
     app.pickAlbumOfDay().catch(() => {});
-    if (document.getElementById("page-bookmarks").classList.contains("active")) ui.renderBookmarks();
-    if (document.getElementById("page-blacklist").classList.contains("active")) ui.renderBlacklist();
+    if (document.getElementById("page-more").classList.contains("active")) {
+      const activeSection = document.querySelector(".mehr-section.active");
+      if (activeSection?.id === "mehrSection-bookmarks") ui.renderBookmarks();
+      if (activeSection?.id === "mehrSection-blacklist") ui.renderBlacklist();
+    }
     if (document.getElementById("page-playlists").classList.contains("active")) ui.renderPlaylists();
     if (document.getElementById("albumCard").classList.contains("visible"))     ui.updateCardIcons();
+  },
+
+  // ── Home-Quelle (Künstler/Alben-Bibliothek) ───────────────────────────────────
+  setHomeSource(src) {
+    saveHomeSource(src);
+    ui.updateHomeSourceToggle();
+    ui.hideAlbumOfDay();
+    app.pickAlbumOfDay().catch(() => {});
   },
 
   // ── Auth ───────────────────────────────────────────────────────────────────
@@ -36,27 +47,25 @@ const app = {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.getElementById('page-' + name).classList.add('active');
     if (btn) btn.classList.add('active');
-    if (name === 'stats')      ui.renderHistory();
-    if (name === 'bookmarks')  ui.renderBookmarks();
-    if (name === 'blacklist')  ui.renderBlacklist();
     if (name === 'favs')       ui.renderFavorites();
     if (name === 'playlists')  ui.renderPlaylists();
+    // "Mehr" landet immer auf dem ersten Unterpunkt (Verlauf) — kein gemerkter
+    // Zustand zwischen Tab-Wechseln, bewusst flach (kein Zurück-Button-Bedarf).
+    if (name === 'more') {
+      document.querySelectorAll('.mehr-toggle-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
+      document.querySelectorAll('.mehr-section').forEach((s, i) => s.classList.toggle('active', i === 0));
+      ui.renderHistory();
+    }
   },
-  openDrawer() {
-    document.getElementById("drawer").classList.add("open");
-    document.getElementById("drawerOverlay").style.display = "block";
-    app.pushOverlayState("drawer");
-  },
-  closeDrawer(fromPop) {
-    document.getElementById("drawer").classList.remove("open");
-    document.getElementById("drawerOverlay").style.display = "none";
-    if (!fromPop) app.popOverlayIfMatches("drawer");
-  },
-  openDrawerTab(name) {
-    app.closeDrawer();
-    document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('page-' + name).classList.add('active');
+
+  // "Mehr"-Unterbereich wechseln: reines Ein-/Ausblenden, kein Navigations-
+  // Stack, kein History-Eintrag nötig — Android-Zurück verlässt wie jeder
+  // andere Tab auch einfach die App.
+  setMehrSection(name, btn) {
+    document.querySelectorAll('.mehr-toggle-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.mehr-section').forEach(s => s.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    document.getElementById('mehrSection-' + name).classList.add('active');
     if (name === 'stats')     ui.renderHistory();
     if (name === 'bookmarks') ui.renderBookmarks();
     if (name === 'blacklist') ui.renderBlacklist();
@@ -310,36 +319,64 @@ const app = {
   },
 
   // ── Surprise Me ────────────────────────────────────────────────────────────
-  async surpriseMe() {
+  // "Überrasch mich": im Musik-Modus je nach Home-Umschalter aus gefolgten
+  // Künstlern oder direkt aus der Alben-Bibliothek; im Hörspiel-Modus immer
+  // aus den Hörspiel-Favoriten (kein Umschalter dort).
+  async surprise() {
     const btn = document.getElementById("surpriseBtn");
     btn.disabled = true;
     btn.innerHTML = '<span class="spin"></span>Einen Moment…';
     ui.hideError();
     try {
-      if (!state.cachedArtists) state.cachedArtists = await spotify.fetchAllFollowedArtists();
-      const pool = getArtistPool(state.cachedArtists);
-      if (!pool.length) {
-        ui.showError(
-          state.appMode === "hoerspiel" ? "Keine Hörspiel-Künstler gefunden" : "Keine gefolgten Künstler",
-          state.appMode === "hoerspiel" ? "Hörspiel-Favoriten sind leer."   : "Bitte Künstler auf Spotify folgen."
-        );
+      if (state.appMode === "musik" && getHomeSource() === "alben") {
+        await app.surpriseFromAlbumLibrary();
+      } else {
+        await app.surpriseFromArtists();
+      }
+    } catch (e) {
+      ui.showError("Fehler", e.message);
+    } finally {
+      btn.disabled = false; btn.innerHTML = "🎲 Überrasch mich";
+    }
+  },
+
+  async surpriseFromArtists() {
+    if (!state.cachedArtists) state.cachedArtists = await spotify.fetchAllFollowedArtists();
+    const pool = getArtistPool(state.cachedArtists);
+    if (!pool.length) {
+      ui.showError(
+        state.appMode === "hoerspiel" ? "Keine Hörspiel-Künstler gefunden" : "Keine gefolgten Künstler",
+        state.appMode === "hoerspiel" ? "Hörspiel-Favoriten sind leer."   : "Bitte Künstler auf Spotify folgen."
+      );
+      return;
+    }
+    const filterKey = getIncludeGroups();
+    const candidates = pool.filter(a => !isKnownEmptyArtist(a.id, filterKey));
+    const searchPool = candidates.length ? candidates : pool;
+    for (let i = 0; i < 30; i++) {
+      const artist = searchPool[Math.floor(Math.random() * searchPool.length)];
+      try {
+        const random = await app.pickRandomAlbum(artist.id);
+        if (!random) continue;
+        await app.selectAndPlayAlbum(random, artist.id, artist.name, artist.external_urls?.spotify || "");
         return;
-      }
-      const filterKey = getIncludeGroups();
-      const candidates = pool.filter(a => !isKnownEmptyArtist(a.id, filterKey));
-      const searchPool = candidates.length ? candidates : pool;
-      for (let i = 0; i < 30; i++) {
-        const artist = searchPool[Math.floor(Math.random() * searchPool.length)];
-        try {
-          const random = await app.pickRandomAlbum(artist.id);
-          if (!random) continue;
-          await app.selectAndPlayAlbum(random, artist.id, artist.name, artist.external_urls?.spotify || "");
-          return;
-        } catch { continue; }
-      }
-      ui.showError("Kein passendes Album", "Bitte erneut versuchen.");
-    } catch(e) { ui.showError("Fehler", e.message); }
-    finally { btn.disabled = false; btn.innerHTML = "🎲 Überrasch mich"; }
+      } catch { continue; }
+    }
+    ui.showError("Kein passendes Album", "Bitte erneut versuchen.");
+  },
+
+  async surpriseFromAlbumLibrary() {
+    if (!state.cachedSavedAlbums) state.cachedSavedAlbums = await spotify.fetchAllSavedAlbums();
+    const pool = getAlbumPool(state.cachedSavedAlbums);
+    if (!pool.length) {
+      ui.showError("Keine Alben in der Bibliothek", "Speichere zuerst Alben in deiner Spotify-Bibliothek.");
+      return;
+    }
+    const album = pool[Math.floor(Math.random() * pool.length)];
+    const artistName = album.artists?.[0]?.name || "";
+    const artistId    = album.artists?.[0]?.id || null;
+    const artistUrl   = album.artists?.[0]?.external_urls?.spotify || "";
+    await app.selectAndPlayAlbum(album, artistId, artistName, artistUrl);
   },
 
   // ── Anderes Album ──────────────────────────────────────────────────────────
@@ -356,7 +393,7 @@ const app = {
         }
         await app.selectAndPlayAlbum(random, state.artist.id, state.artist.name, state.artist.url);
       } else {
-        await app.surpriseMe();
+        await app.surprise();
       }
     } catch(e) { ui.showError("Fehler", e.message); }
     finally { btn.disabled = false; btn.innerHTML = "🔀 Anderes Album"; }
@@ -402,10 +439,20 @@ const app = {
   },
 
   // ── Album des Tages ────────────────────────────────────────────────────────
+  // Folgt derselben Quelle wie der Home-Umschalter (eigener Tages-Eintrag pro
+  // Quelle, siehe aodKey() in state.js — kein Vermischen von Künstler-/Bibliothek-Pick).
   async pickAlbumOfDay() {
     const todayKey = getTodayKey();
     const existing = getAlbumOfDay();
     if (existing && existing.date === todayKey) { ui.showAlbumOfDay(existing); return; }
+    if (state.appMode === "musik" && getHomeSource() === "alben") {
+      await app.pickAlbumOfDayFromLibrary(todayKey);
+    } else {
+      await app.pickAlbumOfDayFromArtists(todayKey);
+    }
+  },
+
+  async pickAlbumOfDayFromArtists(todayKey) {
     if (!state.cachedArtists) state.cachedArtists = await spotify.fetchAllFollowedArtists();
     const pool = getArtistPool(state.cachedArtists);
     if (!pool.length) return;
@@ -429,6 +476,24 @@ const app = {
         return;
       } catch { continue; }
     }
+  },
+
+  async pickAlbumOfDayFromLibrary(todayKey) {
+    try {
+      if (!state.cachedSavedAlbums) state.cachedSavedAlbums = await spotify.fetchAllSavedAlbums();
+      const pool = getAlbumPool(state.cachedSavedAlbums);
+      if (!pool.length) return;
+      const album = pool[Math.floor(Math.random() * pool.length)];
+      const entry = {
+        date: todayKey, uri: album.uri, name: album.name,
+        artist: album.artists?.[0]?.name || "", artistId: album.artists?.[0]?.id || null,
+        artistUrl: album.artists?.[0]?.external_urls?.spotify || "",
+        albumUrl:  album.external_urls?.spotify || "",
+        cover:     album.images?.[1]?.url || album.images?.[0]?.url || "",
+      };
+      saveAlbumOfDay(entry);
+      ui.showAlbumOfDay(entry);
+    } catch {}
   },
 
   async playAlbumOfDay() {
@@ -693,10 +758,11 @@ const app = {
     el.addEventListener("mouseleave", cancel);
   },
 
-  // ── Zurück-Button-Unterstützung für Overlays (Drawer, Modals) ───────────────
+  // ── Zurück-Button-Unterstützung für Overlays (Modals) ───────────────────────
   // Jedes geöffnete Overlay legt einen History-Eintrag an. Der Android-Zurück-
   // Button löst dadurch ein popstate aus, das wir abfangen und in ein Schließen
-  // des obersten Overlays übersetzen — statt dass die App beendet wird.
+  // des obersten Overlays übersetzen — statt dass die App beendet wird. Der
+  // "Mehr"-Tab braucht das bewusst NICHT (flacher Umschalter, kein Sub-Stack).
   _overlayStack: [],
   _suppressPop: false,
 
@@ -717,8 +783,7 @@ const app = {
   handlePopState() {
     if (app._suppressPop) { app._suppressPop = false; return; }
     const top = app._overlayStack.pop();
-    if (top === "drawer")         app.closeDrawer(true);
-    else if (top === "modal")     ui.closeModal(true);
+    if (top === "modal")               ui.closeModal(true);
     else if (top === "playbackChoice") ui.closePlaybackChoice(true);
   },
 
@@ -770,7 +835,7 @@ const app = {
     });
 
     // Swipe-Gesten
-    const TABS = ["home", "favs", "playlists"];
+    const TABS = ["home", "favs", "playlists", "more"];
     let swipeStartX = 0, swipeStartY = 0;
     document.getElementById("appScreen").addEventListener("touchstart", e => {
       swipeStartX = e.touches[0].clientX;
