@@ -342,7 +342,11 @@ const ui = {
   // ── Playlisten ─────────────────────────────────────────────────────────────
   renderPlaylists() {
     const el = document.getElementById("playlistContent");
-    const list = getPlaylists();
+    // Der mitgelieferte Standardeintrag "Lieblingssongs" ist Spotifys eigene
+    // Musik-Merkliste — im Hörspiel-Modus nicht anzeigen (eigene, selbst
+    // hinzugefügte Playlisten bleiben in beiden Modi sichtbar).
+    let list = getPlaylists();
+    if (state.appMode === "hoerspiel") list = list.filter(p => p.id !== "37i9dQZF1F5p3rmiWPIYgZ");
     el.innerHTML = `
       <div style="display:flex;gap:8px;margin-bottom:16px;">
         <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
