@@ -153,15 +153,31 @@ const spotify = {
   },
 
   // ── Alben ──────────────────────────────────────────────────────────────────
-  // Bewusst nur die erste Seite (50 Alben) – für eine Zufallsauswahl ausreichend
-  // und reduziert die Requests pro Versuch von potenziell mehreren auf genau einen.
+  // Lädt alle Seiten (je 50) über das von Spotify gelieferte "next". Spotify sortiert
+  // nach Erscheinungsdatum absteigend, mit nur der ersten Seite fehlen bei großen
+  // Katalogen (z. B. Hörspielserien) die älteren Alben komplett.
+  // Schlägt eine Folgeseite fehl, wird mit dem bisherigen Stand weitergearbeitet,
+  // dieser Teilstand wird aber nicht gecacht.
   async fetchArtistAlbums(artistId) {
     const cacheKey = artistId + "|" + getIncludeGroups();
     if (spotify._albumCache.has(cacheKey)) return spotify._albumCache.get(cacheKey);
-    const url = `https://api.spotify.com/v1/artists/${artistId}/albums?include_groups=${getIncludeGroups()}&market=DE&limit=50`;
-    const d = await spotify._requestJson(url);
-    const albums = d?.items || [];
-    spotify._albumCache.set(cacheKey, albums);
+
+    let url = `https://api.spotify.com/v1/artists/${artistId}/albums?include_groups=${getIncludeGroups()}&market=DE&limit=50`;
+    const albums = [];
+    let complete = true;
+    for (let page = 0; url && page < 20; page++) {
+      try {
+        const d = await spotify._requestJson(url);
+        albums.push(...(d?.items || []));
+        url = d?.next || null;
+      } catch (err) {
+        if (page === 0) throw err;   // erste Seite fehlgeschlagen: Fehler wie bisher melden
+        complete = false;
+        break;
+      }
+    }
+    if (url) complete = false;       // Sicherheitslimit (20 Seiten = 1000 Alben) erreicht
+    if (complete) spotify._albumCache.set(cacheKey, albums);
     return albums;
   },
 
