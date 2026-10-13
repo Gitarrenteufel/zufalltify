@@ -258,14 +258,19 @@ function saveAlbumOfDay(entry) {
 }
 
 // ── Bekannt-leere Künstler (persistiert über Sessions, je Filterkombination) ───
+// Einträge verfallen nach 7 Tagen, damit eine einmalige leere Antwort einen
+// Künstler nicht dauerhaft sperrt. Der neue Key verwirft die alten, nie
+// ablaufenden Einträge aus "zt_empty_artists".
+const EMPTY_ARTIST_TTL = 7 * 24 * 60 * 60 * 1000;
 function emptyArtistsKey() {
-  return "zt_empty_artists";
+  return "zt_empty_artists_v2";
 }
 function getEmptyArtistsMap() {
   try { return JSON.parse(localStorage.getItem(emptyArtistsKey()) || "{}"); } catch { return {}; }
 }
 function isKnownEmptyArtist(artistId, filterKey) {
-  return !!getEmptyArtistsMap()[artistId + "|" + filterKey];
+  const ts = getEmptyArtistsMap()[artistId + "|" + filterKey];
+  return !!ts && (Date.now() - ts) < EMPTY_ARTIST_TTL;
 }
 function markArtistEmpty(artistId, filterKey) {
   const map = getEmptyArtistsMap();
